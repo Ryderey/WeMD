@@ -138,6 +138,20 @@ pnpm --filter wemd-electron run build:mac  # macOS
 pnpm --filter wemd-electron run build:win  # Windows
 ```
 
+桌面端打包会读取 `apps/web/dist`，因此打包前请先构建 Web。Windows 打包产物位于 `apps/electron/release/`：
+
+- `WeMD Setup <版本号>.exe`：安装包
+- `WeMD-<版本号>-win.zip`：免安装压缩包
+- `win-unpacked/`：解包后的应用目录
+
+如果 Windows 打包时下载 Electron 运行时失败，可在 PowerShell 中临时使用镜像源后重试：
+
+```powershell
+$env:ELECTRON_MIRROR='https://npmmirror.com/mirrors/electron/'
+$env:ELECTRON_BUILDER_BINARIES_MIRROR='https://npmmirror.com/mirrors/electron-builder-binaries/'
+pnpm --filter wemd-electron build:win
+```
+
 ---
 
 ## 📁 项目结构

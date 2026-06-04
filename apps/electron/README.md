@@ -1,75 +1,77 @@
 # WeMD Electron App
 
-基于 Electron 的 WeMD 桌面应用，完全复用 Web 端代码。
+WeMD 桌面端基于 Electron，复用 `apps/web` 的前端产物。生产打包时，Electron Builder 会把 `apps/web/dist` 复制到应用资源目录。
 
 ## 开发
 
-### 前置条件
-确保 Web 应用的开发服务器正在运行：
+在项目根目录安装依赖：
 
 ```bash
-# 在项目根目录或 apps/web 目录
-cd apps/web
-npm run dev
+pnpm install
 ```
 
-### 启动 Electron
+启动 Web 开发服务器：
+
 ```bash
-cd apps/electron
-npm run dev
+pnpm dev:web
 ```
 
-Electron 会自动加载 `http://localhost:5173`。
+另开一个终端启动桌面端：
+
+```bash
+pnpm dev:desktop
+```
+
+开发模式下，Electron 会加载 `http://localhost:5173`。
 
 ## 生产构建
 
-### 1. 构建 Web 应用
+先构建 Web：
+
 ```bash
-cd apps/web
-npm run build
+pnpm --filter @wemd/web build
 ```
 
-### 2. 打包 Electron
+再按目标平台打包桌面端：
 
-#### macOS
 ```bash
-cd apps/electron
-npm run build:mac
+pnpm --filter wemd-electron build:mac
+pnpm --filter wemd-electron build:win
+pnpm --filter wemd-electron build:linux
 ```
 
-生成的 `.dmg` 和 `.zip` 文件在 `apps/electron/dist/` 目录。
+打包产物输出到 `apps/electron/release/`。
 
-#### Windows
-```bash
-npm run build:win
+### Windows 产物
+
+Windows 打包会生成：
+
+- `WeMD Setup <版本号>.exe`：NSIS 安装包
+- `WeMD-<版本号>-win.zip`：免安装压缩包
+- `win-unpacked/`：解包后的应用目录，便于本地检查
+
+如果下载 Electron 或 NSIS 依赖时遇到 GitHub 证书或网络问题，可在 PowerShell 中临时切换镜像源：
+
+```powershell
+$env:ELECTRON_MIRROR='https://npmmirror.com/mirrors/electron/'
+$env:ELECTRON_BUILDER_BINARIES_MIRROR='https://npmmirror.com/mirrors/electron-builder-binaries/'
+pnpm --filter wemd-electron build:win
 ```
-
-#### Linux
-```bash
-npm run build:linux
-```
-
-## 功能特性
-
-- ✅ 完全复用 Web 端代码和样式
-- ✅ 支持所有微信公众号自定义 CSS
-- ✅ 原生 macOS 窗口体验
-- ✅ 中文菜单
-- ✅ 开发模式热重载
 
 ## 目录结构
 
-```
+```text
 apps/electron/
-├── main.js                 # Electron 主进程
-├── preload.js             # 预加载脚本
-├── package.json           # 依赖配置
-├── electron-builder.json  # 打包配置
-└── dist/                  # 构建产物（打包后生成）
+├── assets/                # 平台图标
+├── src/                   # Electron 主进程、preload、更新逻辑
+├── dist/                  # TypeScript 编译产物
+├── release/               # Electron Builder 打包产物
+├── package.json           # 桌面端脚本和依赖
+└── electron-builder.json  # 打包配置
 ```
 
 ## 注意事项
 
-1. **开发模式**：必须先启动 Web 开发服务器（`npm run dev` in apps/web）
-2. **生产构建**：必须先构建 Web 应用（`npm run build` in apps/web）
-3. **图标**：如需自定义图标，请在 `apps/electron/assets/` 目录放置图标文件
+- 生产打包前必须先构建 `apps/web/dist`。
+- Windows 安装包未签名时，系统可能提示“未知发布者”。
+- 修改图标时，请同步维护 `apps/electron/assets/` 下对应平台的图标文件。
