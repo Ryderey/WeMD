@@ -15,6 +15,7 @@ import {
   getThemedMermaidDiagram,
 } from "../../utils/mermaidConfig";
 import { renderTableBlocksForPreview } from "../../services/wechatTableRenderer";
+import { shouldRenderMacCodeBarNode } from "../../services/macCodeBar";
 import "./MarkdownPreview.css";
 
 const SYNC_SCROLL_EVENT = "wemd-sync-scroll";
@@ -44,7 +45,16 @@ export function MarkdownPreview() {
       state.getAllThemes().find((t) => t.id === state.themeId),
   );
   const designerVars = currentTheme?.designerVariables;
-  const showMacBar = designerVars?.showMacBar ?? false;
+  const isDarkMode = uiTheme === "dark";
+  const themeCss = useMemo(
+    () => getThemeCSS(theme, isDarkMode),
+    [theme, customCSS, getThemeCSS, isDarkMode],
+  );
+  const explicitShowMacBar = designerVars?.showMacBar;
+  const showMacBar = useMemo(
+    () => shouldRenderMacCodeBarNode(themeCss, explicitShowMacBar),
+    [themeCss, explicitShowMacBar],
+  );
 
   // 缓存 parser 实例，避免每次渲染都创建新实例
   const parser = useMemo(
@@ -59,21 +69,11 @@ export function MarkdownPreview() {
       : rawHtml;
 
     // 使用 store 中的 getThemeCSS 方法，根据 UI 主题决定是否追加深色模式覆盖
-    const isDarkMode = uiTheme === "dark";
-    const css = getThemeCSS(theme, isDarkMode);
     // 预览模式不使用内联样式，直接注入 style 标签，大幅降低内存占用
-    const styledHtml = processHtml(previewHtml, css, false);
+    const styledHtml = processHtml(previewHtml, themeCss, false);
 
     setHtml(styledHtml);
-  }, [
-    markdown,
-    theme,
-    customCSS,
-    getThemeCSS,
-    parser,
-    uiTheme,
-    linkToFootnoteEnabled,
-  ]);
+  }, [markdown, parser, themeCss, linkToFootnoteEnabled]);
 
   // KaTeX 渲染：轻量级、快速，解决内存问题
   // MathJax 仅在复制到微信时使用
@@ -259,7 +259,7 @@ export function MarkdownPreview() {
         <div className="preview-content">
           <style
             dangerouslySetInnerHTML={{
-              __html: getThemeCSS(theme, uiTheme === "dark"),
+              __html: themeCss,
             }}
           />
           <div ref={previewRef} dangerouslySetInnerHTML={{ __html: html }} />

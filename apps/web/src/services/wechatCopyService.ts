@@ -25,6 +25,7 @@ import {
 } from "./wechatCopyNormalizer";
 import { renderMermaidBlocks } from "./wechatMermaidRenderer";
 import { renderTableBlocks } from "./wechatTableRenderer";
+import { shouldRenderMacCodeBarNode } from "./macCodeBar";
 
 // re-export 保持外部引用兼容
 export { normalizeCopyContainer, stripCopyMetadata };
@@ -195,11 +196,11 @@ export async function copyToWechat(
     if (shouldLoadMath) {
       await loadMathJax();
     }
+    const themedCss = buildCopyCss(css);
     const parser = createMarkdownParser({
-      showMacBar: options.showMacBar === true,
+      showMacBar: shouldRenderMacCodeBarNode(themedCss, options.showMacBar),
     });
     const rawHtml = parser.render(markdown);
-    const themedCss = buildCopyCss(css);
     const sanitizedCss = stripCounterPseudoRules(themedCss);
     const sourceHtml = getLinkToFootnoteEnabled()
       ? convertLinksToFootnotes(rawHtml)

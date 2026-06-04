@@ -12,6 +12,7 @@ import {
   getMermaidConfig,
   getThemedMermaidDiagram,
 } from "../../utils/mermaidConfig";
+import { shouldRenderMacCodeBarNode } from "../../services/macCodeBar";
 
 // 主题预览用的示例 Markdown 内容
 const PREVIEW_MARKDOWN = `# 一级标题示例
@@ -90,11 +91,6 @@ export const ThemeLivePreview = memo(function ThemeLivePreview({
   const currentMarkdown = useEditorStore((state) =>
     useCurrentArticle ? state.markdown : "",
   );
-  const showMacBar = designerVariables?.showMacBar ?? false;
-  const parser = useMemo(
-    () => createMarkdownParser({ showMacBar }),
-    [showMacBar],
-  );
   const uiTheme = useUITheme((state) => state.theme);
   const isDarkMode = uiTheme === "dark";
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -132,6 +128,15 @@ export const ThemeLivePreview = memo(function ThemeLivePreview({
   const finalCss = useMemo(
     () => (isDarkMode ? convertCssToWeChatDarkMode(css) : css),
     [css, isDarkMode],
+  );
+  const explicitShowMacBar = designerVariables?.showMacBar;
+  const showMacBar = useMemo(
+    () => shouldRenderMacCodeBarNode(finalCss, explicitShowMacBar),
+    [finalCss, explicitShowMacBar],
+  );
+  const parser = useMemo(
+    () => createMarkdownParser({ showMacBar }),
+    [showMacBar],
   );
   const previewContent =
     useCurrentArticle && currentMarkdown !== undefined

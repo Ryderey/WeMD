@@ -348,6 +348,32 @@ describe("wechatCopyService clipboard strategy", () => {
     expect(htmlBlob.size).toBeGreaterThan(plainBlob.size);
   });
 
+  it("infers mac bar nodes from mac-sign css", async () => {
+    vi.spyOn(document, "execCommand").mockReturnValue(true);
+
+    await copyToWechat(
+      "```ts\nconst a = 1;\n```",
+      "#wemd pre.custom > .mac-sign { display: block; }",
+    );
+
+    expect(mocked.createMarkdownParserMock).toHaveBeenCalledWith({
+      showMacBar: true,
+    });
+  });
+
+  it("keeps mac bar nodes disabled for ordinary css", async () => {
+    vi.spyOn(document, "execCommand").mockReturnValue(true);
+
+    await copyToWechat(
+      "```ts\nconst a = 1;\n```",
+      "#wemd pre code { display: block; padding: 16px; }",
+    );
+
+    expect(mocked.createMarkdownParserMock).toHaveBeenCalledWith({
+      showMacBar: false,
+    });
+  });
+
   it("normalizes text color for nodes inserted by mermaid renderer", async () => {
     mocked.renderMermaidBlocks.mockImplementationOnce(
       async (container?: Element) => {
