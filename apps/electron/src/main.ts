@@ -1,7 +1,6 @@
 import { app, BrowserWindow, Menu, dialog, ipcMain, nativeImage, IpcMainInvokeEvent, shell, clipboard } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import { checkForUpdates, openReleasesPage } from './updater';
 import { extractFrontmatterMeta } from './utils/frontmatter';
 
 // 判断是否为开发模式 - 使用 app.isPackaged 是最可靠的方式
@@ -695,12 +694,6 @@ ipcMain.handle('clipboard:writeText', async (_event: IpcMainInvokeEvent, text: s
     }
 });
 
-// 更新相关
-ipcMain.handle('update:openReleases', () => {
-    openReleasesPage();
-});
-
-
 // 创建应用菜单
 function createMenu() {
     const template: Electron.MenuItemConstructorOptions[] = [
@@ -778,11 +771,6 @@ function createMenu() {
             label: '帮助',
             submenu: [
                 {
-                    label: '检查更新...',
-                    click: () => checkForUpdates(mainWindow, true),
-                },
-                { type: 'separator' },
-                {
                     label: '访问官网',
                     click: () => shell.openExternal('https://wemd.app'),
                 },
@@ -802,11 +790,6 @@ app.whenReady().then(() => {
     // macOS 会自动使用 app bundle 中的 icon.icns 作为 dock 图标
     createWindow();
     createMenu();
-
-    // 延迟 3 秒检查更新，避免阻塞启动
-    setTimeout(() => {
-        checkForUpdates(mainWindow);
-    }, 3000);
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {

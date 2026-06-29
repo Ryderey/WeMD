@@ -1,4 +1,4 @@
-import type { FileItem, TreeItem } from "../store/fileTypes";
+import type { FileItem, FolderItem, TreeItem } from "../store/fileTypes";
 import type { FileItem as AdapterFileItem } from "../storage/types";
 
 export interface ElectronFileItem {
@@ -142,6 +142,17 @@ export function flattenFiles(items: TreeItem[]): FileItem[] {
       result.push(...flattenFiles(item.children));
     } else {
       result.push(item as FileItem);
+    }
+  }
+  return result;
+}
+
+export function flattenFolders(items: TreeItem[]): FolderItem[] {
+  const result: FolderItem[] = [];
+  for (const item of items) {
+    if (item.isDirectory) {
+      result.push(item as FolderItem);
+      result.push(...flattenFolders(item.children));
     }
   }
   return result;

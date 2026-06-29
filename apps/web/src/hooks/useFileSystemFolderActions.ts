@@ -1,12 +1,15 @@
 import { useCallback } from "react";
 import toast from "react-hot-toast";
 import type { StorageAdapter } from "../storage/StorageAdapter";
-import type { FileItem } from "../store/fileTypes";
+import type { FileItem, TreeItem } from "../store/fileTypes";
 import { useFileStore } from "../store/fileStore";
+import { generateUniqueFileName, sanitizeFileName } from "../utils/fileNaming";
 import {
+  flattenFolders,
   isPathWithinFolder,
   joinPath,
   LAST_FILE_KEY,
+  normalizePath,
   replacePathPrefix,
   splitPath,
   type ElectronAPI,
@@ -16,6 +19,7 @@ interface UseFileSystemFolderActionsParams {
   electron: ElectronAPI | null;
   adapter: StorageAdapter | null;
   refreshFiles: () => Promise<void>;
+  files: TreeItem[];
   currentFile: FileItem | null;
   setCurrentFile: (file: FileItem | null) => void;
   setMarkdown: (value: string) => void;
@@ -27,6 +31,7 @@ export function useFileSystemFolderActions({
   electron,
   adapter,
   refreshFiles,
+  files,
   currentFile,
   setCurrentFile,
   setMarkdown,
@@ -49,7 +54,24 @@ export function useFileSystemFolderActions({
 
   const createFolder = useCallback(
     async (folderName: string, parentFolder?: string) => {
-      const fullPath = joinPath(parentFolder, folderName);
+      const safeBaseName = sanitizeFileName(folderName);
+      if (!safeBaseName) {
+        toast.error("文件夹名称不能为空");
+        return null;
+      }
+
+      const parentPath = parentFolder || "";
+      const siblingFolders = flattenFolders(files).filter((folder) => {
+        const { dir } = splitPath(folder.path);
+        return normalizePath(dir) === normalizePath(parentPath);
+      });
+      const existingNames = siblingFolders.map((folder) => folder.name);
+      const uniqueName = generateUniqueFileName(
+        safeBaseName,
+        "",
+        existingNames,
+      );
+      const fullPath = joinPath(parentFolder, uniqueName);
 
       if (electron) {
         const res = await electron.fs.createFolder(fullPath);
@@ -76,7 +98,7 @@ export function useFileSystemFolderActions({
       toast.error("当前存储模式不支持文件夹操作");
       return null;
     },
-    [electron, adapter, refreshFiles],
+    [electron, adapter, refreshFiles, files],
   );
 
   const moveToFolder = useCallback(

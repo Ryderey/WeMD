@@ -12,6 +12,7 @@ import {
   stripMarkdownExtension,
 } from "../utils/markdownFileMeta";
 import { resolveNewArticleThemeSnapshot } from "../utils/newArticleTheme";
+import { generateUniqueFileName } from "../utils/fileNaming";
 import {
   convertAdapterFilesToTreeItems,
   convertToTreeItems,
@@ -19,6 +20,8 @@ import {
   getElectron,
   joinPath,
   LAST_FILE_KEY,
+  normalizePath,
+  splitPath,
   WORKSPACE_KEY,
 } from "./useFileSystemHelpers";
 import { useFileSystemFolderActions } from "./useFileSystemFolderActions";
@@ -231,14 +234,23 @@ export function useFileSystem(options: UseFileSystemOptions = {}) {
         themeState.getAllThemes(),
       );
       const initialContent = buildMarkdownFileContent({
-        body: "# 新文章\n\n",
+        body: "",
         theme: targetTheme.themeId,
         themeName: targetTheme.themeName,
-        title: initialTitle,
       });
 
       try {
-        const filename = `未命名文章-${Date.now()}.md`;
+        const parentPath = folderPath || workspacePath || "";
+        const siblingFiles = flattenFiles(files).filter((file) => {
+          const { dir } = splitPath(file.path);
+          return normalizePath(dir) === normalizePath(parentPath);
+        });
+        const existingNames = siblingFiles.map((file) => file.name);
+        const filename = generateUniqueFileName(
+          initialTitle,
+          ".md",
+          existingNames,
+        );
         const targetPath = joinPath(folderPath, filename);
 
         if (electron) {
@@ -255,7 +267,6 @@ export function useFileSystem(options: UseFileSystemOptions = {}) {
               createdAt: new Date(),
               updatedAt: new Date(),
               size: 0,
-              title: initialTitle,
               themeName: targetTheme.themeName,
             };
             await openFile(newFile);
@@ -273,7 +284,6 @@ export function useFileSystem(options: UseFileSystemOptions = {}) {
             createdAt: new Date(),
             updatedAt: new Date(),
             size: initialContent.length,
-            title: initialTitle,
             themeName: targetTheme.themeName,
           };
           await openFile(newFile);
@@ -285,7 +295,15 @@ export function useFileSystem(options: UseFileSystemOptions = {}) {
         isCreating.current = false;
       }
     },
-    [workspacePath, refreshFiles, openFile, electron, adapter, storageReady],
+    [
+      workspacePath,
+      files,
+      refreshFiles,
+      openFile,
+      electron,
+      adapter,
+      storageReady,
+    ],
   );
 
   const saveFile = useCallback(
@@ -456,6 +474,7 @@ export function useFileSystem(options: UseFileSystemOptions = {}) {
     electron,
     adapter,
     refreshFiles,
+    files,
     currentFile,
     setCurrentFile,
     setMarkdown,

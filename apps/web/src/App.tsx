@@ -31,29 +31,7 @@ const HistoryManager = lazy(() =>
 const Welcome = lazy(() =>
   import("./components/Welcome/Welcome").then((m) => ({ default: m.Welcome })),
 );
-const UpdateModal = lazy(() =>
-  import("./components/UpdateModal/UpdateModal").then((m) => ({
-    default: m.UpdateModal,
-  })),
-);
 import { MobileThemeSelector } from "./components/Theme/MobileThemeSelector";
-
-interface UpdateEventData {
-  latestVersion: string;
-  currentVersion: string;
-  releaseNotes?: string;
-  force?: boolean;
-}
-
-interface ElectronUpdateAPI {
-  onUpdateAvailable?: (callback: (data: UpdateEventData) => void) => () => void;
-  onUpToDate?: (
-    callback: (data: { currentVersion: string }) => void,
-  ) => () => void;
-  onUpdateError?: (callback: () => void) => () => void;
-  removeUpdateListener?: (handler: (() => void) | undefined) => void;
-  openReleases?: () => void;
-}
 
 function App() {
   const { workspacePath, saveFile } = useFileSystem({ enableEffects: true });
@@ -83,58 +61,6 @@ function App() {
   }, [saveFile]);
 
   const isElectron = platform.isElectron;
-
-  // 更新提示状态
-  const [updateInfo, setUpdateInfo] = useState<{
-    latestVersion: string;
-    currentVersion: string;
-    releaseNotes: string;
-  } | null>(null);
-
-  // 监听 Electron 更新事件
-  useEffect(() => {
-    if (!isElectron) return;
-    const electron = window.electron as { update?: ElectronUpdateAPI };
-    if (!electron?.update?.onUpdateAvailable) return;
-
-    const availableHandler = electron.update.onUpdateAvailable(
-      (data: UpdateEventData) => {
-        // 检查是否跳过了此版本（除非是强制检查）
-        const skippedVersion = localStorage.getItem("wemd-skipped-version");
-        if (!data.force && skippedVersion === data.latestVersion) {
-          return; // 用户之前选择跳过此版本
-        }
-
-        setUpdateInfo({
-          latestVersion: data.latestVersion,
-          currentVersion: data.currentVersion,
-          releaseNotes: data.releaseNotes || "",
-        });
-      },
-    );
-
-    const upToDateHandler = electron.update.onUpToDate?.(
-      (data: { currentVersion: string }) => {
-        // 使用 react-hot-toast 显示已是最新版本
-        import("react-hot-toast").then(({ default: toast }) => {
-          toast.success(`当前已是最新版本 (${data.currentVersion})`);
-        });
-      },
-    );
-
-    const errorHandler = electron.update.onUpdateError?.(() => {
-      import("react-hot-toast").then(({ default: toast }) => {
-        toast.error("检查更新失败，请稍后重试");
-      });
-    });
-
-    return () => {
-      electron.update?.removeUpdateListener?.(availableHandler);
-      if (upToDateHandler)
-        electron.update?.removeUpdateListener?.(upToDateHandler);
-      if (errorHandler) electron.update?.removeUpdateListener?.(errorHandler);
-    };
-  }, [isElectron]);
 
   const [showHistory, setShowHistory] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -191,30 +117,6 @@ function App() {
 
   return (
     <div className="app" data-layout-mode={isMobile ? "mobile" : "desktop"}>
-      {/* 更新提示 Modal */}
-      {updateInfo && (
-        <Suspense fallback={null}>
-          <UpdateModal
-            latestVersion={updateInfo.latestVersion}
-            currentVersion={updateInfo.currentVersion}
-            releaseNotes={updateInfo.releaseNotes}
-            onClose={() => setUpdateInfo(null)}
-            onDownload={() => {
-              (
-                window.electron as { update?: ElectronUpdateAPI }
-              )?.update?.openReleases?.();
-              setUpdateInfo(null);
-            }}
-            onSkipVersion={() => {
-              localStorage.setItem(
-                "wemd-skipped-version",
-                updateInfo.latestVersion,
-              );
-              setUpdateInfo(null);
-            }}
-          />
-        </Suspense>
-      )}
       {/* 只在存储上下文完全就绪且确认为 IndexedDB 模式时才渲染 HistoryManager */}
       {!isElectron && ready && storageType === "indexeddb" && (
         <Suspense fallback={null}>
