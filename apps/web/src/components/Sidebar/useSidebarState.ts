@@ -29,7 +29,7 @@ export function useSidebarState() {
     currentFile,
     openFile,
     createFile,
-    updateFileTitle,
+    renameFile,
     deleteFile,
     selectWorkspace,
     workspacePath,
@@ -211,11 +211,11 @@ export function useSidebarState() {
       const flatFiles = flattenFiles(files);
       const file = flatFiles.find((f) => f.path === renamingPath);
       if (file) {
-        await updateFileTitle(file, renameValue);
+        await renameFile(file, renameValue);
       }
     }
     setRenamingPath(null);
-  }, [renamingPath, renameValue, files, flattenFiles, updateFileTitle]);
+  }, [renamingPath, renameValue, files, flattenFiles, renameFile]);
 
   const handleCreateFolder = useCallback(async () => {
     if (!newFolderName.trim()) {

@@ -12,7 +12,7 @@ import {
   stripMarkdownExtension,
 } from "../utils/markdownFileMeta";
 import { resolveNewArticleThemeSnapshot } from "../utils/newArticleTheme";
-import { generateUniqueFileName } from "../utils/fileNaming";
+import { generateUniqueFileName, sanitizeFileName } from "../utils/fileNaming";
 import {
   convertAdapterFilesToTreeItems,
   convertToTreeItems,
@@ -363,6 +363,142 @@ export function useFileSystem(options: UseFileSystemOptions = {}) {
     [currentFile, electron, adapter, storageReady],
   );
 
+  const renameFile = useCallback(
+    async (file: FileItem, newName: string) => {
+      const nextTitle = newName.trim();
+      if (!nextTitle) {
+        toast.error("文件名不能为空");
+        return;
+      }
+
+      const safeBaseName = sanitizeFileName(nextTitle);
+      if (!safeBaseName || safeBaseName === "未命名") {
+        toast.error("文件名不能为空");
+        return;
+      }
+
+      const { dir, sep } = splitPath(file.path);
+      const newFileName = safeBaseName.endsWith(".md")
+        ? safeBaseName
+        : `${safeBaseName}.md`;
+      const newPath = dir ? `${dir}${sep}${newFileName}` : newFileName;
+
+      if (normalizePath(newPath) === normalizePath(file.path)) {
+        return;
+      }
+
+      const siblingFiles = flattenFiles(files).filter((f) => {
+        const fDir = splitPath(f.path).dir;
+        return normalizePath(fDir) === normalizePath(dir);
+      });
+      const nameExists = siblingFiles.some(
+        (f) =>
+          normalizePath(f.path) !== normalizePath(file.path) &&
+          f.name.toLowerCase() === newFileName.toLowerCase(),
+      );
+      if (nameExists) {
+        toast.error("该文件名已存在");
+        return;
+      }
+
+      if (currentFile && currentFile.path === file.path) {
+        const isDirty = useFileStore.getState().isDirty;
+        if (isDirty) {
+          await saveFile();
+          if (useFileStore.getState().isDirty) {
+            toast.error("保存失败，无法重命名");
+            return;
+          }
+        }
+      }
+
+      let content = "";
+      if (electron) {
+        const readRes = await electron.fs.readFile(file.path);
+        if (!readRes.success || typeof readRes.content !== "string") {
+          toast.error(readRes.error || "读取文件失败");
+          return;
+        }
+        content = readRes.content;
+      } else if (adapter && storageReady) {
+        try {
+          content = await adapter.readFile(file.path);
+        } catch {
+          toast.error("读取文件失败");
+          return;
+        }
+      } else {
+        toast.error("当前模式不支持此操作");
+        return;
+      }
+
+      const parsed = parseMarkdownFileContent(content);
+      const fullContent = applyMarkdownFileMeta(content, {
+        body: parsed.body,
+        theme: parsed.theme,
+        themeName: parsed.themeName,
+        title: nextTitle,
+      });
+
+      let success = false;
+      let errorMsg = "";
+
+      if (electron) {
+        const writeRes = await electron.fs.saveFile({
+          filePath: file.path,
+          content: fullContent,
+        });
+        if (!writeRes.success) {
+          toast.error(writeRes.error || "保存文件失败");
+          return;
+        }
+        const renameRes = await electron.fs.renameFile({
+          oldPath: file.path,
+          newName: newFileName,
+        });
+        success = renameRes.success;
+        errorMsg = renameRes.error || "";
+      } else if (adapter && storageReady) {
+        try {
+          await adapter.writeFile(file.path, fullContent);
+          await adapter.renameFile(file.path, newPath);
+          success = true;
+        } catch (error: unknown) {
+          errorMsg = error instanceof Error ? error.message : String(error);
+        }
+      }
+
+      if (!success) {
+        toast.error(errorMsg || "重命名失败");
+        return;
+      }
+
+      if (currentFile && currentFile.path === file.path) {
+        setCurrentFile({
+          ...currentFile,
+          name: newFileName,
+          path: newPath,
+          title: nextTitle,
+        });
+        setLastSavedContent(fullContent);
+        localStorage.setItem(LAST_FILE_KEY, newPath);
+      }
+
+      toast.success("重命名成功");
+      await refreshFiles();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      currentFile,
+      files,
+      refreshFiles,
+      saveFile,
+      electron,
+      adapter,
+      storageReady,
+    ],
+  );
+
   const updateFileTitle = useCallback(
     async (file: FileItem, newName: string) => {
       const nextTitle = newName.trim();
@@ -520,7 +656,7 @@ export function useFileSystem(options: UseFileSystemOptions = {}) {
     createFile,
     saveFile,
     updateFileTitle,
-    renameFile: updateFileTitle,
+    renameFile,
     deleteFile,
     ...folderActions,
     flattenFiles,

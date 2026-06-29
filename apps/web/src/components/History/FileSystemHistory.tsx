@@ -15,6 +15,8 @@ import {
   stripMarkdownExtension,
 } from "../../utils/markdownFileMeta";
 import { resolveNewArticleThemeSnapshot } from "../../utils/newArticleTheme";
+import { sanitizeFileName } from "../../utils/fileNaming";
+import { normalizePath, splitPath } from "../../hooks/useFileSystemHelpers";
 
 function getFileTitle(file: StorageFileItem): string {
   const fromMeta =
@@ -208,25 +210,71 @@ export function FileSystemHistory({ adapter }: FileSystemHistoryProps) {
   const submitRename = async () => {
     if (!renamingPath || !renameValue.trim()) return;
     const nextTitle = renameValue.trim();
+    const safeBaseName = sanitizeFileName(nextTitle);
+    if (!safeBaseName || safeBaseName === "未命名") {
+      toast.error("文件名不能为空");
+      return;
+    }
+
+    const { dir, sep } = splitPath(renamingPath);
+    const newFileName = safeBaseName.endsWith(".md")
+      ? safeBaseName
+      : `${safeBaseName}.md`;
+    const newPath = dir ? `${dir}${sep}${newFileName}` : newFileName;
+
+    if (normalizePath(newPath) === normalizePath(renamingPath)) {
+      setRenamingPath(null);
+      setRenameValue("");
+      return;
+    }
+
+    const nameExists = files.some(
+      (f) =>
+        normalizePath(f.path) !== normalizePath(renamingPath) &&
+        f.name.toLowerCase() === newFileName.toLowerCase(),
+    );
+    if (nameExists) {
+      toast.error("该文件名已存在");
+      return;
+    }
+
+    if (currentFile?.path === renamingPath && useFileStore.getState().isDirty) {
+      await handleSave();
+      if (useFileStore.getState().isDirty) {
+        toast.error("保存失败，无法重命名");
+        return;
+      }
+    }
+
     try {
       const current = await adapter.readFile(renamingPath);
+      const parsed = parseMarkdownFileContent(current);
       const nextContent = applyMarkdownFileMeta(current, {
+        body: parsed.body,
+        theme: parsed.theme,
+        themeName: parsed.themeName,
         title: nextTitle,
       });
       await adapter.writeFile(renamingPath, nextContent);
-      toast.success("标题已更新");
+      await adapter.renameFile(renamingPath, newPath);
+
       if (currentFile?.path === renamingPath) {
-        setCurrentFile({ ...currentFile, title: nextTitle });
-        if (!useFileStore.getState().isDirty) {
-          setLastSavedContent(nextContent);
-        }
+        setCurrentFile({
+          ...currentFile,
+          name: newFileName,
+          path: newPath,
+          title: nextTitle,
+        });
+        setLastSavedContent(nextContent);
       }
+
+      toast.success("重命名成功");
       setRenamingPath(null);
       setRenameValue("");
       await refreshFiles();
     } catch (error) {
       console.error(error);
-      toast.error("更新标题失败");
+      toast.error("重命名失败");
     }
   };
 
