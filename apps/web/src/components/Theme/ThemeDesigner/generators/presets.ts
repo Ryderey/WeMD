@@ -15,18 +15,31 @@ const headingPresetTemplates: Record<
   simple: () => ({ content: "" }),
   "left-border": () => ({
     content: `
+            display: inline-block;
+            width: -webkit-fit-content;
+            width: -moz-fit-content;
+            width: fit-content;
+            max-width: 100%;
             border-left: 4px solid var(--wemd-primary-color);
             padding-left: 10px;
         `,
   }),
   "bottom-border": () => ({
     content: `
+            display: inline;
+            -webkit-box-decoration-break: clone;
+            box-decoration-break: clone;
             border-bottom: 2px solid var(--wemd-primary-color);
             padding-bottom: 8px;
         `,
   }),
   "double-line": () => ({
     content: `
+            display: inline-block;
+            width: -webkit-fit-content;
+            width: -moz-fit-content;
+            width: fit-content;
+            max-width: 100%;
             border-top: 2px solid var(--wemd-primary-color);
             border-bottom: 2px solid var(--wemd-primary-color);
             padding: 8px 0;
@@ -34,6 +47,11 @@ const headingPresetTemplates: Record<
   }),
   boxed: () => ({
     content: `
+            display: inline-block;
+            width: -webkit-fit-content;
+            width: -moz-fit-content;
+            width: fit-content;
+            max-width: 100%;
             background: var(--wemd-primary-color-20);
             border-left: 4px solid var(--wemd-primary-color);
             padding: 8px 12px;
@@ -42,23 +60,33 @@ const headingPresetTemplates: Record<
   }),
   "bottom-highlight": () => ({
     content: `
-            display: inline-block;
+            display: inline;
+            -webkit-box-decoration-break: clone;
+            box-decoration-break: clone;
             background: linear-gradient(to bottom, transparent 60%, var(--wemd-primary-color-30) 60%);
             padding: 0 4px;
         `,
   }),
   pill: () => ({
     content: `
+            display: inline-block;
+            width: -webkit-fit-content;
+            width: -moz-fit-content;
+            width: fit-content;
+            max-width: 100%;
             background: var(--wemd-primary-color);
             color: #fff;
             padding: 4px 16px;
             border-radius: 20px;
-            display: inline-block;
         `,
   }),
   bracket: (tag) => ({
     content: `
             display: inline-block;
+            width: -webkit-fit-content;
+            width: -moz-fit-content;
+            width: fit-content;
+            max-width: 100%;
             position: relative;
             padding: 0 10px;
         `,
