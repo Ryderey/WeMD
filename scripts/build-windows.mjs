@@ -9,7 +9,8 @@
  *   pnpm run build:windows -- --zip
  *
  * 选项:
- *   --zip, -z   额外生成 zip 便携版压缩包（默认仅生成 NSIS .exe 安装包）
+ *   --zip, -z    额外生成 zip 便携版压缩包（默认仅生成 NSIS .exe 安装包）
+ *   --no-bump    打包前不自动递增 patch 版本号
  *
  * 默认不进行代码签名。如需签名，请自行设置 electron-builder 签名相关的环境变量。
  */
@@ -17,13 +18,16 @@
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 const electronDir = path.join(rootDir, 'apps', 'electron');
+const webDir = path.join(rootDir, 'apps', 'web');
 
 const args = process.argv.slice(2);
 const includeZip = args.includes('--zip') || args.includes('-z') || args.includes('--include-zip');
+const noBump = args.includes('--no-bump');
 const showHelp = args.includes('--help') || args.includes('-h');
 
 if (showHelp) {
@@ -31,6 +35,7 @@ if (showHelp) {
 
 options:
   --zip, -z    额外生成 zip 便携版压缩包（默认仅生成 .exe 安装包）
+  --no-bump    打包前不自动递增 patch 版本号
   --help, -h   显示帮助信息
 
 environment:
@@ -65,8 +70,38 @@ function run(label, command, args, options = {}) {
   });
 }
 
+function bumpPatch(version) {
+  const match = version.match(/^(\d+)\.(\d+)\.(\d+)(.*)$/);
+  if (!match) {
+    throw new Error(`无法解析版本号: ${version}`);
+  }
+  const [, major, minor, patch, rest] = match;
+  return `${major}.${minor}.${Number(patch) + 1}${rest}`;
+}
+
+function bumpPackageJson(filePath) {
+  const raw = fs.readFileSync(filePath, 'utf8');
+  const pkg = JSON.parse(raw);
+  const oldVersion = pkg.version;
+  const newVersion = bumpPatch(oldVersion);
+  pkg.version = newVersion;
+  fs.writeFileSync(filePath, JSON.stringify(pkg, null, 2) + '\n');
+  return { name: pkg.name, oldVersion, newVersion };
+}
+
 async function main() {
-  console.log('🔨 步骤 1/2：构建前端、核心库与 Electron 主进程...');
+  if (!noBump) {
+    console.log('🔢 自动递增 patch 版本号...');
+    const results = [
+      bumpPackageJson(path.join(electronDir, 'package.json')),
+      bumpPackageJson(path.join(webDir, 'package.json')),
+    ];
+    for (const { name, oldVersion, newVersion } of results) {
+      console.log(`   ${name}: ${oldVersion} → ${newVersion}`);
+    }
+  }
+
+  console.log('\n🔨 步骤 1/2：构建前端、核心库与 Electron 主进程...');
   await run('构建项目', 'pnpm', ['run', 'build'], { cwd: rootDir });
 
   console.log('\n📦 步骤 2/2：使用 electron-builder 打包 Windows 应用...');

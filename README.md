@@ -150,13 +150,24 @@ pnpm run build:windows
 
 # 同时生成 zip 便携版压缩包
 pnpm run build:windows -- --zip
+
+# 不自动递增版本号（默认会自动 +1）
+pnpm run build:windows -- --no-bump
 ```
 
-脚本等价于先执行 `pnpm run build`，再调用 `electron-builder --win nsis`；加 `--zip` 时额外生成 `zip` 目标。产物位于 `apps/electron/release/`：
+脚本执行流程：
+
+1. 自动递增 `apps/electron/package.json` 和 `apps/web/package.json` 的 patch 版本号（例如 `1.2.10` → `1.2.11`）。
+2. 执行 `pnpm run build`，构建 Web / Core / Electron。
+3. 调用 `electron-builder --win nsis` 生成安装包；加 `--zip` 时额外生成 `zip` 目标。
+
+产物位于 `apps/electron/release/`，版本号取自 `apps/electron/package.json`：
 
 - `WeMD Setup <版本号>.exe`：安装包
 - `WeMD-<版本号>-win.zip`：免安装压缩包（仅 `--zip` 时生成）
 - `win-unpacked/`：解包后的应用目录
+
+> 提示：递增版本号会修改 `package.json` 文件，请记得在发布前提交改动。如需跳过版本递增，请加 `--no-bump`。
 
 如果 Windows 打包时下载 Electron 运行时失败，可在 PowerShell 中临时使用镜像源后重试：
 

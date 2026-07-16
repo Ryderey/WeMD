@@ -40,6 +40,21 @@ pnpm --filter wemd-electron build:win
 pnpm --filter wemd-electron build:linux
 ```
 
+也可以使用项目根目录的一键打包脚本（推荐 Windows 使用）：
+
+```bash
+# 仅生成 NSIS 安装包（.exe），并自动递增 patch 版本号
+pnpm run build:windows
+
+# 同时生成 zip 便携版压缩包
+pnpm run build:windows -- --zip
+
+# 跳过自动版本递增
+pnpm run build:windows -- --no-bump
+```
+
+一键打包脚本会同时更新 `apps/electron/package.json` 和 `apps/web/package.json` 的 patch 版本号，确保安装包文件名与 UI 展示版本一致。
+
 打包产物输出到 `apps/electron/release/`。
 
 ### Windows 产物
