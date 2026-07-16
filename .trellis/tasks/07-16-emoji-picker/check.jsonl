@@ -1,0 +1,2 @@
+{"file":".trellis/spec/web/frontend/quality.md","reason":"Frontend lint, type-check, test, and file-quality requirements."}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"Verify reuse of existing toolbar and local-storage patterns."}

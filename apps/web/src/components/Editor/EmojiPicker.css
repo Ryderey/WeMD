@@ -1,0 +1,101 @@
+.emoji-picker {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 1100;
+  width: 320px;
+  max-width: calc(100vw - 24px);
+  padding: 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+}
+
+.emoji-picker__categories {
+  display: flex;
+  gap: 2px;
+  padding-bottom: 8px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border-light);
+  scrollbar-width: none;
+}
+
+.emoji-picker__categories::-webkit-scrollbar {
+  display: none;
+}
+
+.emoji-picker__category {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.emoji-picker__category:hover,
+.emoji-picker__category--active {
+  background: var(--bg-hover);
+}
+
+.emoji-picker__category:focus-visible,
+.emoji-picker__emoji:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 1px;
+}
+
+.emoji-picker__title {
+  padding: 8px 2px 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.emoji-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.emoji-picker__emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  font-family:
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-size: 20px;
+  line-height: 1;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.emoji-picker__emoji:hover {
+  background: var(--bg-hover);
+  transform: scale(1.12);
+}
+
+.emoji-picker__emoji:active {
+  transform: scale(0.96);
+}
+
+@media (max-width: 600px) {
+  .emoji-picker {
+    position: fixed;
+    inset: auto 12px 72px;
+    width: auto;
+  }
+}

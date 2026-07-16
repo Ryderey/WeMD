@@ -17,6 +17,7 @@ import { SaveIndicator } from "./SaveIndicator";
 import toast from "react-hot-toast";
 import "./MarkdownEditor.css";
 import { customKeymap } from "./editorShortcuts";
+import { insertTextAtSelection } from "./editorInsert";
 import { paragraphSelectionStyle } from "./mouseSelectionStyle";
 import {
   WECHAT_IMAGE_MAX_SIZE_BYTES,
@@ -268,12 +269,18 @@ export function MarkdownEditor() {
     view.focus();
   };
 
+  const handleInsertText = (text: string) => {
+    const view = viewRef.current;
+    if (!view) return;
+    insertTextAtSelection(view, text);
+  };
+
   return (
     <div className="markdown-editor">
       <div className="editor-header">
         <span className="editor-title">Markdown 编辑器</span>
       </div>
-      <Toolbar onInsert={handleInsert} />
+      <Toolbar onInsert={handleInsert} onInsertText={handleInsertText} />
       {showSearch && viewRef.current && (
         <SearchPanel
           view={viewRef.current}

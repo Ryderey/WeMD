@@ -8,6 +8,7 @@ import {
   ChevronRight,
   ChevronLeft,
   ListEnd,
+  Smile,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -25,23 +26,27 @@ import {
   textFormatTools,
 } from "./toolbarConfigs";
 import { setLinkToFootnoteEnabled } from "./ToolbarState";
+import { EmojiPicker } from "./EmojiPicker";
 import { SyntaxHelpPopover } from "./SyntaxHelpPopover";
 import "./Toolbar.css";
 
 interface ToolbarProps {
   onInsert: (prefix: string, suffix: string, placeholder: string) => void;
+  onInsertText: (text: string) => void;
 }
 
-export function Toolbar({ onInsert }: ToolbarProps) {
+export function Toolbar({ onInsert, onInsertText }: ToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [showMermaidMenu, setShowMermaidMenu] = useState(false);
   const [showMermaidMore, setShowMermaidMore] = useState(false);
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showListMenu, setShowListMenu] = useState(false);
+  const [showEmojiMenu, setShowEmojiMenu] = useState(false);
   const mermaidMenuRef = useRef<HTMLDivElement>(null);
   const headingMenuRef = useRef<HTMLDivElement>(null);
   const listMenuRef = useRef<HTMLDivElement>(null);
+  const emojiMenuRef = useRef<HTMLDivElement>(null);
   const mermaidMoreRef = useRef<HTMLDivElement>(null);
   const mermaidSubmenuRef = useRef<HTMLDivElement>(null);
   const [mermaidSubmenuSide, setMermaidSubmenuSide] = useState<
@@ -75,16 +80,31 @@ export function Toolbar({ onInsert }: ToolbarProps) {
         setShowMermaidMenu(false);
         setShowMermaidMore(false);
       }
+      if (emojiMenuRef.current && !emojiMenuRef.current.contains(target)) {
+        setShowEmojiMenu(false);
+      }
     };
 
-    const anyMenuOpen = showHeadingMenu || showListMenu || showMermaidMenu;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setShowHeadingMenu(false);
+      setShowListMenu(false);
+      setShowMermaidMenu(false);
+      setShowMermaidMore(false);
+      setShowEmojiMenu(false);
+    };
+
+    const anyMenuOpen =
+      showHeadingMenu || showListMenu || showMermaidMenu || showEmojiMenu;
     if (anyMenuOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showHeadingMenu, showListMenu, showMermaidMenu]);
+  }, [showEmojiMenu, showHeadingMenu, showListMenu, showMermaidMenu]);
 
   useEffect(() => {
     if (!showMermaidMore) return;
@@ -128,6 +148,20 @@ export function Toolbar({ onInsert }: ToolbarProps) {
         // 关闭其他菜单
         setShowHeadingMenu(false);
         setShowListMenu(false);
+        setShowEmojiMenu(false);
+      }
+      return next;
+    });
+  };
+
+  const toggleEmojiMenu = () => {
+    setShowEmojiMenu((prev) => {
+      const next = !prev;
+      if (next) {
+        setShowHeadingMenu(false);
+        setShowListMenu(false);
+        setShowMermaidMenu(false);
+        setShowMermaidMore(false);
       }
       return next;
     });
@@ -211,6 +245,7 @@ export function Toolbar({ onInsert }: ToolbarProps) {
             setShowHeadingMenu((prev) => !prev);
             setShowListMenu(false);
             setShowMermaidMenu(false);
+            setShowEmojiMenu(false);
           }}
           data-tooltip="标题"
         >
@@ -243,6 +278,7 @@ export function Toolbar({ onInsert }: ToolbarProps) {
             setShowListMenu((prev) => !prev);
             setShowHeadingMenu(false);
             setShowMermaidMenu(false);
+            setShowEmojiMenu(false);
           }}
           data-tooltip="列表"
         >
@@ -353,6 +389,7 @@ export function Toolbar({ onInsert }: ToolbarProps) {
         onClick={handleImageClick}
         disabled={uploading}
         data-tooltip="上传图片"
+        aria-label="上传图片"
       >
         {uploading ? (
           <Loader2 size={16} className="spinning" />
@@ -360,6 +397,22 @@ export function Toolbar({ onInsert }: ToolbarProps) {
           <Image size={16} />
         )}
       </button>
+
+      {/* Emoji 选择器 */}
+      <div className="md-toolbar-dropdown-container" ref={emojiMenuRef}>
+        <button
+          type="button"
+          className={"md-toolbar-btn " + (showEmojiMenu ? "active" : "")}
+          onClick={toggleEmojiMenu}
+          data-tooltip="插入 Emoji"
+          aria-label="插入 Emoji"
+          aria-expanded={showEmojiMenu}
+          aria-haspopup="dialog"
+        >
+          <Smile size={16} />
+        </button>
+        {showEmojiMenu && <EmojiPicker onSelect={onInsertText} />}
+      </div>
 
       {/* 分隔符 */}
       <div className="md-toolbar-divider" />
