@@ -73,9 +73,11 @@ export const headingStylePresets: StylePresetOption[] = [
   { id: "simple", label: "简约" },
   { id: "left-border", label: "左侧竖线" },
   { id: "bottom-border", label: "底部下划线" },
+  { id: "gradient-underline", label: "渐变横线" },
   { id: "double-line", label: "双线装饰" },
   { id: "boxed", label: "背景块" },
   { id: "bottom-highlight", label: "底部高亮" },
+  { id: "gradient-highlight", label: "渐变高亮" },
   { id: "pill", label: "高亮胶囊" },
   { id: "bracket", label: "括号装饰" },
 ];

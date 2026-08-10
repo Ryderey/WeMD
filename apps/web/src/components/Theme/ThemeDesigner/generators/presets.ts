@@ -33,6 +33,21 @@ const headingPresetTemplates: Record<
             padding-bottom: 8px;
         `,
   }),
+  "gradient-underline": () => ({
+    content: `
+            display: inline-block;
+            width: -webkit-fit-content;
+            width: -moz-fit-content;
+            width: fit-content;
+            max-width: 100%;
+            box-sizing: border-box;
+            background-image: linear-gradient(to right, transparent, var(--wemd-primary-color-50), transparent);
+            background-repeat: no-repeat;
+            background-position: left bottom;
+            background-size: 100% 2px;
+            padding-bottom: 12px;
+        `,
+  }),
   "double-line": () => ({
     content: `
             display: inline-block;
@@ -65,6 +80,20 @@ const headingPresetTemplates: Record<
             box-decoration-break: clone;
             background: linear-gradient(to bottom, transparent 60%, var(--wemd-primary-color-30) 60%);
             padding: 0 4px;
+        `,
+  }),
+  "gradient-highlight": () => ({
+    content: `
+            display: inline-block;
+            width: -webkit-fit-content;
+            width: -moz-fit-content;
+            width: fit-content;
+            max-width: 100%;
+            box-sizing: border-box;
+            background: linear-gradient(to right, var(--wemd-primary-color-20), transparent);
+            color: var(--wemd-primary-color);
+            padding: 4px 12px;
+            border-radius: 6px;
         `,
   }),
   pill: () => ({
