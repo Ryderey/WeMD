@@ -1377,7 +1377,7 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
   align-items: flex-start;
 }
 
-/* 代码块：优先使用 renderer 输出的 .mac-sign；无 .mac-sign 时保留 CSS 背景红绿灯兜底 */
+/* 代码块：红绿灯由 renderer 输出的普通 HTML 圆点承载；背景只绘制标题栏 */
 #wemd pre {
   margin: 18px 0 !important;
   padding: 0 !important;
@@ -1385,32 +1385,13 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
   border-radius: 14px !important;
   border: 1px solid #e5e5ea !important;
   background-color: #f5f5f7 !important;
-  background-image:
-    radial-gradient(
-      circle at 18px 17px,
-      #ff5f57 0,
-      #ff5f57 5px,
-      transparent 6px
-    ),
-    radial-gradient(
-      circle at 38px 17px,
-      #febc2e 0,
-      #febc2e 5px,
-      transparent 6px
-    ),
-    radial-gradient(
-      circle at 58px 17px,
-      #28c840 0,
-      #28c840 5px,
-      transparent 6px
-    ),
-    linear-gradient(
-      to bottom,
-      #f2f2f7 0,
-      #f2f2f7 34px,
-      #f5f5f7 34px,
-      #f5f5f7 100%
-    ) !important;
+  background-image: linear-gradient(
+    to bottom,
+    #f2f2f7 0,
+    #f2f2f7 34px,
+    #f5f5f7 34px,
+    #f5f5f7 100%
+  ) !important;
   background-repeat: no-repeat !important;
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.08) !important;
   overflow-x: auto !important;
@@ -1436,22 +1417,6 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
   box-sizing: border-box !important;
   line-height: 0 !important;
   background: #f2f2f7 !important;
-}
-
-#wemd pre.custom > .mac-sign svg,
-#wemd pre.custom > .mac-sign img,
-#wemd pre.code__pre > .mac-sign svg,
-#wemd pre.code__pre > .mac-sign img,
-#wemd .hljs.code__pre > .mac-sign svg,
-#wemd .hljs.code__pre > .mac-sign img {
-  display: block !important;
-  width: 45px !important;
-  height: 13px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
 }
 
 #wemd pre code,

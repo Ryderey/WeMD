@@ -37,16 +37,16 @@ export interface MarkdownParserOptions {
   showMacBar?: boolean;
 }
 
-const MAC_CODE_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" x="0px" y="0px" width="45px" height="13px" viewBox="0 0 450 130">
-  <ellipse cx="50" cy="65" rx="50" ry="52" stroke="rgb(220,60,54)" stroke-width="2" fill="rgb(237,108,96)" />
-  <ellipse cx="225" cy="65" rx="50" ry="52" stroke="rgb(218,151,33)" stroke-width="2" fill="rgb(247,193,81)" />
-  <ellipse cx="400" cy="65" rx="50" ry="52" stroke="rgb(27,161,37)" stroke-width="2" fill="rgb(100,200,86)" />
-</svg>
-`.trim();
+const MAC_CODE_BAR =
+  '<span class="mac-sign" aria-hidden="true" style="padding: 10px 14px 0; line-height: 0;">' +
+  '<span class="mac-dot mac-dot-red" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: rgb(237, 108, 96); font-size: 0; line-height: 0; vertical-align: top;">&nbsp;</span>' +
+  '<span class="mac-dot mac-dot-yellow" style="display: inline-block; width: 10px; height: 10px; margin-left: 7px; border-radius: 50%; background: rgb(247, 193, 81); font-size: 0; line-height: 0; vertical-align: top;">&nbsp;</span>' +
+  '<span class="mac-dot mac-dot-green" style="display: inline-block; width: 10px; height: 10px; margin-left: 7px; border-radius: 50%; background: rgb(100, 200, 86); font-size: 0; line-height: 0; vertical-align: top;">&nbsp;</span>' +
+  "</span>";
 
 export const createMarkdownParser = (options: MarkdownParserOptions = {}) => {
   const showMacBar = options.showMacBar === true;
+  const macSign = showMacBar ? MAC_CODE_BAR : "";
   const markdownParser: MarkdownIt = new MarkdownIt({
     html: true,
     highlight: (str: string, lang: string): string => {
@@ -63,9 +63,6 @@ export const createMarkdownParser = (options: MarkdownParserOptions = {}) => {
       if (lang && highlightjs.getLanguage(lang)) {
         try {
           const formatted = highlightjs.highlight(lang, str, true).value;
-          const macSign = showMacBar
-            ? `<span class="mac-sign" style="padding: 10px 14px 0;">${MAC_CODE_SVG}</span>`
-            : "";
           return (
             '<pre class="custom">' +
             macSign +
@@ -77,9 +74,6 @@ export const createMarkdownParser = (options: MarkdownParserOptions = {}) => {
           // Ignore highlight errors
         }
       }
-      const macSign = showMacBar
-        ? `<span class="mac-sign" style="padding: 10px 14px 0;">${MAC_CODE_SVG}</span>`
-        : "";
       return (
         '<pre class="custom">' +
         macSign +

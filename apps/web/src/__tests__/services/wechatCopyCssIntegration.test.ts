@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { processHtml } from "@wemd/core";
+import { createMarkdownParser, processHtml } from "@wemd/core";
 import {
   applyLightRootVars,
   resolveInlineStyleVariablesForCopy,
@@ -288,9 +288,11 @@ describe("wechat copy css integration", () => {
     expect(calloutTitle.style.color).toBe("rgb(26, 26, 26)");
   });
 
-  it("keeps mac bar svg outside code in copy pipeline", () => {
-    const html =
-      '<pre class="custom"><span class="mac-sign" style="padding: 10px 14px 0;"><svg xmlns="http://www.w3.org/2000/svg" width="45" height="13" viewBox="0 0 450 130"></svg></span><code class="hljs language-ts">  const a = 1;\n    console.log(a);</code></pre>';
+  it("keeps NBSP-backed mac dots outside code in copy pipeline", () => {
+    const parser = createMarkdownParser({ showMacBar: true });
+    const html = parser.render(
+      "```ts\n  const a = 1;\n    console.log(a);\n```",
+    );
     const css = `
       #wemd pre.custom > .mac-sign {
         display: block;
@@ -306,15 +308,33 @@ describe("wechat copy css integration", () => {
     normalizeCopyContainer(container);
 
     const pre = container.querySelector("pre") as HTMLElement | null;
-    const svg = container.querySelector("pre > span > svg");
     const code = container.querySelector("pre > code");
+    const dots = container.querySelectorAll("pre > .mac-sign > .mac-dot");
 
     expect(pre).toBeTruthy();
-    expect(svg).toBeTruthy();
     expect(code).toBeTruthy();
-    expect(code!.querySelector("svg")).toBeNull();
+    expect(dots).toHaveLength(3);
+    expect(Array.from(dots, (dot) => (dot as HTMLElement).style.width)).toEqual(
+      ["10px", "10px", "10px"],
+    );
+    expect(
+      Array.from(dots, (dot) => (dot as HTMLElement).style.backgroundColor),
+    ).toEqual(["rgb(237, 108, 96)", "rgb(247, 193, 81)", "rgb(100, 200, 86)"]);
+    expect(Array.from(dots, (dot) => dot.textContent)).toEqual([
+      "\u00a0",
+      "\u00a0",
+      "\u00a0",
+    ]);
+    expect(code?.querySelector(".mac-dot")).toBeNull();
+    const preWithoutBar = pre?.cloneNode(true) as HTMLElement | undefined;
+    preWithoutBar?.querySelector(".mac-sign")?.remove();
+    expect(preWithoutBar?.textContent).toBe(code?.textContent);
+    expect(output).not.toContain("<svg");
+    expect(output).not.toContain("<img");
 
-    const preChildren = Array.from(pre!.children).map((el) => el.tagName);
+    const preChildren = Array.from(pre?.children ?? []).map(
+      (element) => element.tagName,
+    );
     expect(preChildren[0]).toBe("SPAN");
     expect(preChildren[1]).toBe("CODE");
   });
