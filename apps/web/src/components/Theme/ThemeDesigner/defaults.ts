@@ -16,6 +16,7 @@ export const defaultVariables: DesignerVariables = {
   fontFamily: fontFamilyOptions[0].value,
   fontSize: fontSizeOptions[2].value,
   primaryColor: primaryColorOptions[0].value,
+  primaryGradient: "",
   lineHeight: lineHeightOptions[2].value,
   pagePadding: 8,
   baseLetterSpacing: 0,

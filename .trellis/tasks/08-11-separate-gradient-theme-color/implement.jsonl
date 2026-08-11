@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/web/frontend/index.md", "reason": "Frontend entrypoint and pre-development checklist"}
+{"file": ".trellis/spec/web/frontend/components.md", "reason": "Component and accessibility conventions"}
+{"file": ".trellis/spec/web/frontend/css-design.md", "reason": "CSS variables and component styling conventions"}
+{"file": ".trellis/spec/web/frontend/type-safety.md", "reason": "Type safety requirements"}

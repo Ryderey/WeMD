@@ -76,6 +76,17 @@
   color: var(--text-secondary);
 }
 
+.designer-field-hint {
+  margin: -2px 0 0;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.designer-gradient-preview {
+  flex: none;
+}
+
 /* 选项按钮组 */
 /* 选项按钮组 - 使用更整齐的 3 列布局 */
 .designer-options {

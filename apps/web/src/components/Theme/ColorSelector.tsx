@@ -79,12 +79,16 @@ interface ColorSelectorProps {
   value: string;
   presets: (string | ColorPreset)[];
   onChange: (color: string) => void;
+  allowCustomColor?: boolean;
+  trailingContent?: React.ReactNode;
 }
 
 export function ColorSelector({
   value,
   presets,
   onChange,
+  allowCustomColor = true,
+  trailingContent,
 }: ColorSelectorProps) {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [tempColor, setTempColor] = useState(value);
@@ -174,16 +178,19 @@ export function ColorSelector({
   return (
     <div className="designer-colors">
       {uniquePresets.map((item, idx) => {
+        const displayPaint = item.displayColor || item.value;
         const itemResolved = normalizeColor(item.displayColor || item.value);
         const isActive = itemResolved === currentValueResolved;
         const isTransparent = itemResolved === "TRANSPARENT";
+        const isGradient = displayPaint.toLowerCase().includes("gradient(");
 
         return (
           <button
             key={`${item.value}-${idx}`}
             className={`color-btn ${isActive ? "active" : ""}`}
             style={{
-              backgroundColor: itemResolved,
+              backgroundColor: isGradient ? undefined : itemResolved,
+              backgroundImage: isGradient ? displayPaint : undefined,
               ...(isTransparent ? transparentPattern : {}),
             }}
             onClick={() => onChange(item.value)}
@@ -192,7 +199,7 @@ export function ColorSelector({
         );
       })}
 
-      {customColor && (
+      {allowCustomColor && customColor && (
         <button
           className="color-btn active"
           style={{
@@ -208,131 +215,134 @@ export function ColorSelector({
         />
       )}
 
-      <div className="custom-color-wrapper" style={{ position: "relative" }}>
-        <button
-          ref={triggerRef}
-          className="color-btn custom-color-picker"
-          title="选择新颜色"
-          onClick={() => setShowColorPicker(!showColorPicker)}
-        >
-          <Plus size={14} className="plus-icon" />
-        </button>
+      {allowCustomColor && (
+        <div className="custom-color-wrapper" style={{ position: "relative" }}>
+          <button
+            ref={triggerRef}
+            className="color-btn custom-color-picker"
+            title="选择新颜色"
+            onClick={() => setShowColorPicker(!showColorPicker)}
+          >
+            <Plus size={14} className="plus-icon" />
+          </button>
 
-        {showColorPicker &&
-          popoverPos &&
-          createPortal(
-            <>
-              <div
-                className="color-picker-mask"
-                style={{ position: "fixed", inset: 0, zIndex: 999 }}
-                onClick={() => setShowColorPicker(false)}
-              />
-              <div
-                className="custom-color-popover"
-                style={{
-                  position: "fixed",
-                  bottom: `${window.innerHeight - popoverPos.top + 10}px`,
-                  left: `${popoverPos.left}px`,
-                  transform: "translateX(-50%)",
-                  zIndex: 1000,
-                  margin: 0,
-                  top: "auto",
-                  background: "white",
-                }}
-              >
+          {showColorPicker &&
+            popoverPos &&
+            createPortal(
+              <>
                 <div
-                  className="popover-arrow"
+                  className="color-picker-mask"
+                  style={{ position: "fixed", inset: 0, zIndex: 999 }}
+                  onClick={() => setShowColorPicker(false)}
+                />
+                <div
+                  className="custom-color-popover"
                   style={{
-                    bottom: "-6px",
+                    position: "fixed",
+                    bottom: `${window.innerHeight - popoverPos.top + 10}px`,
+                    left: `${popoverPos.left}px`,
+                    transform: "translateX(-50%)",
+                    zIndex: 1000,
+                    margin: 0,
                     top: "auto",
-                    borderTop: "none",
-                    borderLeft: "none",
-                    borderBottom: "1px solid var(--border-light)",
-                    borderRight: "1px solid var(--border-light)",
-                    transform: "translateX(-50%) rotate(45deg)",
                     background: "white",
                   }}
-                />
-
-                <div
-                  className="color-preview"
-                  style={{ backgroundColor: tempColor }}
-                />
-
-                <div className="color-slider-row">
-                  <span className="label">H</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="360"
-                    value={hsl.h}
-                    className="hue-slider"
-                    style={{
-                      background:
-                        "linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)",
-                    }}
-                    onChange={(e) => updateHsl("h", parseInt(e.target.value))}
-                  />
-                </div>
-
-                <div className="color-slider-row">
-                  <span className="label">S</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={hsl.s}
-                    className="saturation-slider"
-                    style={{
-                      background: `linear-gradient(to right, hsl(${hsl.h}, 0%, 50%), hsl(${hsl.h}, 100%, 50%))`,
-                    }}
-                    onChange={(e) => updateHsl("s", parseInt(e.target.value))}
-                  />
-                </div>
-
-                <div className="color-slider-row">
-                  <span className="label">L</span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={hsl.l}
-                    className="lightness-slider"
-                    style={{
-                      background: `linear-gradient(to right, #000 0%, hsl(${hsl.h}, ${hsl.s}%, 50%) 50%, #fff 100%)`,
-                    }}
-                    onChange={(e) => updateHsl("l", parseInt(e.target.value))}
-                  />
-                </div>
-
-                <input
-                  type="text"
-                  value={tempColor}
-                  placeholder="#000000"
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setTempColor(v);
-                    if (/^#[0-9A-Fa-f]{3,6}$/.test(v)) {
-                      setHsl(hexToHsl(v));
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleConfirm();
-                  }}
-                />
-
-                <button
-                  className="confirm-btn"
-                  disabled={!/^#[0-9A-Fa-f]{3,6}$/.test(tempColor)}
-                  onClick={handleConfirm}
                 >
-                  确定
-                </button>
-              </div>
-            </>,
-            document.body,
-          )}
-      </div>
+                  <div
+                    className="popover-arrow"
+                    style={{
+                      bottom: "-6px",
+                      top: "auto",
+                      borderTop: "none",
+                      borderLeft: "none",
+                      borderBottom: "1px solid var(--border-light)",
+                      borderRight: "1px solid var(--border-light)",
+                      transform: "translateX(-50%) rotate(45deg)",
+                      background: "white",
+                    }}
+                  />
+
+                  <div
+                    className="color-preview"
+                    style={{ backgroundColor: tempColor }}
+                  />
+
+                  <div className="color-slider-row">
+                    <span className="label">H</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="360"
+                      value={hsl.h}
+                      className="hue-slider"
+                      style={{
+                        background:
+                          "linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)",
+                      }}
+                      onChange={(e) => updateHsl("h", parseInt(e.target.value))}
+                    />
+                  </div>
+
+                  <div className="color-slider-row">
+                    <span className="label">S</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={hsl.s}
+                      className="saturation-slider"
+                      style={{
+                        background: `linear-gradient(to right, hsl(${hsl.h}, 0%, 50%), hsl(${hsl.h}, 100%, 50%))`,
+                      }}
+                      onChange={(e) => updateHsl("s", parseInt(e.target.value))}
+                    />
+                  </div>
+
+                  <div className="color-slider-row">
+                    <span className="label">L</span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={hsl.l}
+                      className="lightness-slider"
+                      style={{
+                        background: `linear-gradient(to right, #000 0%, hsl(${hsl.h}, ${hsl.s}%, 50%) 50%, #fff 100%)`,
+                      }}
+                      onChange={(e) => updateHsl("l", parseInt(e.target.value))}
+                    />
+                  </div>
+
+                  <input
+                    type="text"
+                    value={tempColor}
+                    placeholder="#000000"
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setTempColor(v);
+                      if (/^#[0-9A-Fa-f]{3,6}$/.test(v)) {
+                        setHsl(hexToHsl(v));
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleConfirm();
+                    }}
+                  />
+
+                  <button
+                    className="confirm-btn"
+                    disabled={!/^#[0-9A-Fa-f]{3,6}$/.test(tempColor)}
+                    onClick={handleConfirm}
+                  >
+                    确定
+                  </button>
+                </div>
+              </>,
+              document.body,
+            )}
+        </div>
+      )}
+      {trailingContent}
     </div>
   );
 }

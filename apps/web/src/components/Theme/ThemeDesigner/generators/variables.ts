@@ -45,6 +45,9 @@ const toAlphaColor = (color: string, alpha: number): string => {
   return color;
 };
 
+const toAlphaGradient = (gradient: string, alpha: number): string =>
+  gradient.replace(/#[0-9a-f]{3,8}\b/gi, (color) => toAlphaColor(color, alpha));
+
 export function generateVariables(
   v: DesignerVariables,
   safeFontFamily: string,
@@ -52,6 +55,16 @@ export function generateVariables(
   const primaryColor20 = toAlphaColor(v.primaryColor, 0.12);
   const primaryColor30 = toAlphaColor(v.primaryColor, 0.18);
   const primaryColor50 = toAlphaColor(v.primaryColor, 0.5);
+  const primaryGradient = v.primaryGradient?.trim();
+  const primaryGradient20 = primaryGradient
+    ? toAlphaGradient(primaryGradient, 0.12)
+    : primaryColor20;
+  const primaryGradientLine =
+    primaryGradient ||
+    `linear-gradient(to right, transparent, ${primaryColor50}, transparent)`;
+  const primaryGradientHighlight = primaryGradient
+    ? toAlphaGradient(primaryGradient, 0.18)
+    : `linear-gradient(to right, ${primaryColor20}, transparent)`;
   const underlineStyle = v.underlineStyle || "solid";
   const underlineColor = v.underlineColor || "currentColor";
   return `#wemd {
@@ -67,6 +80,10 @@ export function generateVariables(
   --wemd-primary-color-20: ${primaryColor20};
   --wemd-primary-color-30: ${primaryColor30};
   --wemd-primary-color-50: ${primaryColor50};
+  --wemd-primary-gradient: ${primaryGradient || v.primaryColor};
+  --wemd-primary-gradient-20: ${primaryGradient20};
+  --wemd-primary-gradient-line: ${primaryGradientLine};
+  --wemd-primary-gradient-highlight: ${primaryGradientHighlight};
   --wemd-letter-spacing: ${v.baseLetterSpacing || 0}px;
   --wemd-underline-style: ${underlineStyle};
   --wemd-underline-color: ${underlineColor};

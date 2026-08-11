@@ -4,21 +4,25 @@
 
 ## 全局
 
-| 变量名                     | 说明                | 示例值                     |
-| -------------------------- | ------------------- | -------------------------- |
-| `--wemd-page-padding`      | 页面左右内边距      | `20px`                     |
-| `--wemd-font-size`         | 正文字体大小        | `16px`                     |
-| `--wemd-line-height`       | 正文行高            | `1.7`                      |
-| `--wemd-paragraph-margin`  | 段落上下间距        | `16px`                     |
-| `--wemd-paragraph-padding` | 段落上下内边距      | `0px`                      |
-| `--wemd-text-color`        | 正文颜色            | `#333`                     |
-| `--wemd-primary-color`     | 主题色              | `#1e6bb8`                  |
-| `--wemd-primary-color-20`  | 主题色 (透明度 12%) | `rgba(30, 107, 184, 0.12)` |
-| `--wemd-primary-color-30`  | 主题色 (透明度 18%) | `rgba(30, 107, 184, 0.18)` |
-| `--wemd-primary-color-50`  | 主题色 (透明度 50%) | `#1e6bb850`                |
-| `--wemd-letter-spacing`    | 全局字间距          | `0px`                      |
-| `--wemd-underline-style`   | 下划线样式          | `solid`                    |
-| `--wemd-underline-color`   | 下划线颜色          | `currentColor`             |
+| 变量名                              | 说明                             | 示例值                                                                       |
+| ----------------------------------- | -------------------------------- | ---------------------------------------------------------------------------- |
+| `--wemd-page-padding`               | 页面左右内边距                   | `20px`                                                                       |
+| `--wemd-font-size`                  | 正文字体大小                     | `16px`                                                                       |
+| `--wemd-line-height`                | 正文行高                         | `1.7`                                                                        |
+| `--wemd-paragraph-margin`           | 段落上下间距                     | `16px`                                                                       |
+| `--wemd-paragraph-padding`          | 段落上下内边距                   | `0px`                                                                        |
+| `--wemd-text-color`                 | 正文颜色                         | `#333`                                                                       |
+| `--wemd-primary-color`              | 主题色                           | `#1e6bb8`                                                                    |
+| `--wemd-primary-color-20`           | 主题色 (透明度 12%)              | `rgba(30, 107, 184, 0.12)`                                                   |
+| `--wemd-primary-color-30`           | 主题色 (透明度 18%)              | `rgba(30, 107, 184, 0.18)`                                                   |
+| `--wemd-primary-color-50`           | 主题色 (透明度 50%)              | `#1e6bb850`                                                                  |
+| `--wemd-primary-gradient`           | 渐变主题色（未选择时使用主题色） | `linear-gradient(135deg, #4158D0, #C850C0)`                                  |
+| `--wemd-primary-gradient-20`        | 渐变主题色（透明度 12%）         | `linear-gradient(135deg, rgba(65, 88, 208, 0.12), rgba(200, 80, 192, 0.12))` |
+| `--wemd-primary-gradient-line`      | 渐变横线绘制色                   | `linear-gradient(to right, transparent, #1e6bb880, transparent)`             |
+| `--wemd-primary-gradient-highlight` | 渐变高亮背景色                   | `linear-gradient(to right, rgba(30, 107, 184, 0.12), transparent)`           |
+| `--wemd-letter-spacing`             | 全局字间距                       | `0px`                                                                        |
+| `--wemd-underline-style`            | 下划线样式                       | `solid`                                                                      |
+| `--wemd-underline-color`            | 下划线颜色                       | `currentColor`                                                               |
 
 ## 标题
 

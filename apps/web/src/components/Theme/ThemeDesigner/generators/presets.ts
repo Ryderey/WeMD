@@ -41,7 +41,7 @@ const headingPresetTemplates: Record<
             width: fit-content;
             max-width: 100%;
             box-sizing: border-box;
-            background-image: linear-gradient(to right, transparent, var(--wemd-primary-color-50), transparent);
+            background-image: var(--wemd-primary-gradient-line);
             background-repeat: no-repeat;
             background-position: left bottom;
             background-size: 100% 2px;
@@ -67,7 +67,7 @@ const headingPresetTemplates: Record<
             width: -moz-fit-content;
             width: fit-content;
             max-width: 100%;
-            background: var(--wemd-primary-color-20);
+            background: var(--wemd-primary-gradient-20);
             border-left: 4px solid var(--wemd-primary-color);
             padding: 8px 12px;
             border-radius: 4px;
@@ -90,7 +90,7 @@ const headingPresetTemplates: Record<
             width: fit-content;
             max-width: 100%;
             box-sizing: border-box;
-            background: linear-gradient(to right, var(--wemd-primary-color-20), transparent);
+            background: var(--wemd-primary-gradient-highlight);
             color: var(--wemd-primary-color);
             padding: 4px 12px;
             border-radius: 6px;
@@ -103,7 +103,7 @@ const headingPresetTemplates: Record<
             width: -moz-fit-content;
             width: fit-content;
             max-width: 100%;
-            background: var(--wemd-primary-color);
+            background: var(--wemd-primary-gradient);
             color: #fff;
             padding: 4px 16px;
             border-radius: 20px;

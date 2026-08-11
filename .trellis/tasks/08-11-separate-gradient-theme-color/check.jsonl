@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/web/frontend/index.md", "reason": "Frontend quality checklist entrypoint"}
+{"file": ".trellis/spec/web/frontend/quality.md", "reason": "Lint, type and manual verification standards"}
+{"file": ".trellis/spec/web/frontend/components.md", "reason": "UI semantics and accessibility review"}
+{"file": ".trellis/spec/web/frontend/css-design.md", "reason": "CSS design review"}

@@ -2,6 +2,7 @@ export interface StyleOption<T = string> {
   label: string;
   value: T;
   desc?: string;
+  displayColor?: string;
 }
 
 export const fontFamilyOptions: StyleOption[] = [
@@ -41,6 +42,30 @@ export const primaryColorOptions: StyleOption[] = [
   { label: "琥珀黄", value: "#FAAD14", desc: "明亮温暖" },
   { label: "极客蓝", value: "#1890FF", desc: "科技感" },
   { label: "酱紫", value: "#722ED1", desc: "高贵典雅" },
+];
+
+export const primaryGradientOptions: StyleOption[] = [
+  { label: "无渐变", value: "", displayColor: "transparent" },
+  {
+    label: "极光玻璃",
+    value: "linear-gradient(135deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%)",
+    desc: "蓝紫金渐变",
+  },
+  {
+    label: "深海流光",
+    value: "linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)",
+    desc: "清透蓝渐变",
+  },
+  {
+    label: "落日珊瑚",
+    value: "linear-gradient(135deg, #FF512F 0%, #DD2476 100%)",
+    desc: "橙粉渐变",
+  },
+  {
+    label: "薄荷青柠",
+    value: "linear-gradient(135deg, #00B09B 0%, #96C93D 100%)",
+    desc: "青绿渐变",
+  },
 ];
 
 export const lineHeightOptions: StyleOption[] = [
