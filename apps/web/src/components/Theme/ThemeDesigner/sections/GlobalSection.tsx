@@ -7,6 +7,7 @@ import {
   fontFamilyOptions,
   fontSizeOptions,
   lineHeightOptions,
+  pageBackgroundColorOptions,
   primaryColorOptions,
   primaryGradientOptions,
   boldStyleOptions,
@@ -138,6 +139,16 @@ export function GlobalSection({
             { label: "灰色", value: "#666666" },
           ]}
           onChange={(color) => updateVariable("paragraphColor", color)}
+        />
+      </div>
+
+      <div className="designer-field">
+        <label>文章底色</label>
+        <ColorSelector
+          value={variables.pageBackgroundColor || "transparent"}
+          presets={pageBackgroundColorOptions}
+          onChange={(color) => updateVariable("pageBackgroundColor", color)}
+          allowCustomColor={false}
         />
       </div>
 

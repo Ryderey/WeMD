@@ -4,7 +4,7 @@
  * - root section → div 转换
  * - 元数据属性清理
  * - 根节点 padding 迁移到内层元素
- * - 背景色下沉到子块
+ * - 背景色下沉到连续内层和子块
  */
 
 // ── 颜色透明度判断 ──────────────────────────────────
@@ -468,6 +468,37 @@ const normalizeBlockBackgroundForWechat = (
   });
 };
 
+/**
+ * 根背景除下沉到内容块外，还需要一个连续内层承接块间 margin。
+ * 否则微信清洗根样式后，每个段落只剩独立色块，间距会露出白色。
+ */
+const wrapRootContentWithBackground = (
+  container: HTMLElement,
+  rootBgColor: string | null,
+): void => {
+  if (!rootBgColor) return;
+
+  const root = container.firstElementChild;
+  if (!(root instanceof HTMLElement) || !root.hasChildNodes()) return;
+
+  // 微信编辑器会解包普通 div，但会保留 section 及其背景样式。
+  const backgroundLayer = document.createElement("section");
+  backgroundLayer.style.display = "block";
+  backgroundLayer.style.width = "100%";
+  backgroundLayer.style.boxSizing = "border-box";
+  backgroundLayer.style.setProperty(
+    "background-color",
+    rootBgColor,
+    "important",
+  );
+  backgroundLayer.style.setProperty("background-image", "none", "important");
+
+  while (root.firstChild) {
+    backgroundLayer.appendChild(root.firstChild);
+  }
+  root.appendChild(backgroundLayer);
+};
+
 // ── 对外入口 ────────────────────────────────────────
 
 export const normalizeCopyContainer = (container: HTMLElement): void => {
@@ -476,5 +507,6 @@ export const normalizeCopyContainer = (container: HTMLElement): void => {
   const rootBgColor = extractRootBackgroundColor(container);
   relocateRootPaddingToInnerWrapper(container);
   normalizeBlockBackgroundForWechat(container, rootBgColor);
+  wrapRootContentWithBackground(container, rootBgColor);
   materializeTextColorForWechat(container);
 };

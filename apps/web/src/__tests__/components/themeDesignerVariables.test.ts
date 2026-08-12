@@ -42,4 +42,26 @@ describe("theme designer variables generator", () => {
       "--wemd-primary-gradient-line: linear-gradient(to right, transparent, rgba(7, 193, 96, 0.5), transparent);",
     );
   });
+
+  it("applies only non-transparent article backgrounds to #wemd", () => {
+    const transparentCss = generateVariables(
+      defaultVariables,
+      "PingFang SC, sans-serif",
+    );
+    const coloredCss = generateVariables(
+      { ...defaultVariables, pageBackgroundColor: "#F2FAF5" },
+      "PingFang SC, sans-serif",
+    );
+
+    expect(transparentCss).not.toContain("background-color:");
+    expect(coloredCss).toContain("background-color: #F2FAF5;");
+  });
+
+  it("keeps legacy variables without article background transparent", () => {
+    const legacyVariables = { ...defaultVariables };
+    delete legacyVariables.pageBackgroundColor;
+    const css = generateVariables(legacyVariables, "PingFang SC, sans-serif");
+
+    expect(css).not.toContain("background-color:");
+  });
 });

@@ -251,9 +251,11 @@ describe("wechatCopyNormalizer", () => {
 
     const blockquote = container.querySelector("blockquote") as HTMLElement;
     const innerP = blockquote.querySelector("p") as HTMLElement;
-    const outerP = container.querySelector("div > p") as HTMLElement;
+    const outerP = Array.from(container.querySelectorAll("p")).find(
+      (paragraph) => !paragraph.closest("blockquote"),
+    ) as HTMLElement | undefined;
 
     expect(innerP.style.backgroundColor).toBe("");
-    expect(outerP.style.backgroundColor).toBe("rgb(255, 255, 255)");
+    expect(outerP?.style.backgroundColor).toBe("rgb(255, 255, 255)");
   });
 });

@@ -67,6 +67,11 @@ export function generateVariables(
     : `linear-gradient(to right, ${primaryColor20}, transparent)`;
   const underlineStyle = v.underlineStyle || "solid";
   const underlineColor = v.underlineColor || "currentColor";
+  const pageBackgroundColor = v.pageBackgroundColor?.trim();
+  const pageBackgroundDeclaration =
+    pageBackgroundColor && pageBackgroundColor.toLowerCase() !== "transparent"
+      ? `  background-color: ${pageBackgroundColor};\n`
+      : "";
   return `#wemd {
   /* CSS 变量 - 可在 CSS 编辑模式下覆盖 */
   /* 全局 */
@@ -154,7 +159,7 @@ export function generateVariables(
   --wemd-list-marker-color-l2: ${v.listMarkerColorL2};
 
   font-family: ${safeFontFamily};
-  padding: 0 var(--wemd-page-padding);
+${pageBackgroundDeclaration}  padding: 0 var(--wemd-page-padding);
   color: var(--wemd-text-color);
   overflow-wrap: break-word;
 }`;

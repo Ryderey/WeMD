@@ -4,6 +4,31 @@ import { defaultVariables } from "../../components/Theme/ThemeDesigner/defaults"
 import { GlobalSection } from "../../components/Theme/ThemeDesigner/sections/GlobalSection";
 
 describe("GlobalSection", () => {
+  it("offers the four article background presets", () => {
+    const updateVariable = vi.fn();
+    render(
+      <GlobalSection
+        variables={defaultVariables}
+        updateVariable={updateVariable}
+        handlePrimaryColorChange={vi.fn()}
+      />,
+    );
+
+    for (const name of ["透明", "浅绿", "暖白", "淡蓝"]) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+
+    expect(screen.getByRole("button", { name: "透明" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "浅绿" }));
+    expect(updateVariable).toHaveBeenCalledWith(
+      "pageBackgroundColor",
+      "#F2FAF5",
+    );
+  });
+
   it("updates solid and gradient theme colors independently", () => {
     const updateVariable = vi.fn();
     const handlePrimaryColorChange = vi.fn();

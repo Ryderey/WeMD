@@ -304,6 +304,12 @@ try {
 | Max 300 lines per component             | Maintainability             |
 | Run lint + typecheck before commit      | Catch issues early          |
 
+## WeChat Paste Compatibility
+
+- Do not rely on the outermost copied element to retain background or padding; the WeChat editor may sanitize those styles.
+- A plain inner `div` may be unwrapped during paste. Use an inner `section` when a continuous article background must span block margins.
+- Keep a browser-level paste check for structural compatibility. DOM-only tests cannot model WeChat's paste sanitizer.
+
 ---
 
 **Language**: All documentation must be written in **English**.

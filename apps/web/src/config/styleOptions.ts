@@ -44,6 +44,13 @@ export const primaryColorOptions: StyleOption[] = [
   { label: "酱紫", value: "#722ED1", desc: "高贵典雅" },
 ];
 
+export const pageBackgroundColorOptions: StyleOption[] = [
+  { label: "透明", value: "transparent" },
+  { label: "浅绿", value: "#F2FAF5" },
+  { label: "暖白", value: "#FFFBF3" },
+  { label: "淡蓝", value: "#F2F7FC" },
+];
+
 export const primaryGradientOptions: StyleOption[] = [
   { label: "无渐变", value: "", displayColor: "transparent" },
   {

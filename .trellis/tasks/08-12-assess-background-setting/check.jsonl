@@ -1,0 +1,5 @@
+{"file":".trellis/spec/web/frontend/index.md","reason":"核对 apps/web 前端总规范和质量检查要求"}
+{"file":".trellis/spec/web/frontend/components.md","reason":"核对快捷色块语义元素和键盘可访问性"}
+{"file":".trellis/spec/web/frontend/type-safety.md","reason":"核对设计变量类型与旧数据兼容"}
+{"file":".trellis/spec/web/frontend/quality.md","reason":"核对测试、lint、类型安全和重复定义"}
+{"file":".trellis/tasks/08-12-assess-background-setting/research/implementation-difficulty.md","reason":"按已确认的最小范围和风险边界复核实现"}

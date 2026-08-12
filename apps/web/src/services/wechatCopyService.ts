@@ -60,14 +60,24 @@ const convertCheckboxesToEmoji = (html: string): string => {
 // ── 剪贴板写入策略 ─────────────────────────────────
 
 const copyViaNativeExecCommand = (container: HTMLElement): boolean => {
+  const html = container.innerHTML;
+  const text = getRenderedPlainText(container);
+  const handleCopy = (event: ClipboardEvent) => {
+    if (!event.clipboardData) return;
+    event.preventDefault();
+    event.clipboardData.setData("text/html", html);
+    event.clipboardData.setData("text/plain", text);
+  };
   const selection = window.getSelection();
   const range = document.createRange();
   range.selectNodeContents(container);
   selection?.removeAllRanges();
   selection?.addRange(range);
+  document.addEventListener("copy", handleCopy, { once: true });
   try {
     return document.execCommand("copy");
   } finally {
+    document.removeEventListener("copy", handleCopy);
     selection?.removeAllRanges();
   }
 };

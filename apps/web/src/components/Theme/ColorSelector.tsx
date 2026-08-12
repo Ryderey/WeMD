@@ -187,6 +187,7 @@ export function ColorSelector({
         return (
           <button
             key={`${item.value}-${idx}`}
+            type="button"
             className={`color-btn ${isActive ? "active" : ""}`}
             style={{
               backgroundColor: isGradient ? undefined : itemResolved,
@@ -195,12 +196,15 @@ export function ColorSelector({
             }}
             onClick={() => onChange(item.value)}
             title={item.label || item.value}
+            aria-label={item.label || item.value}
+            aria-pressed={isActive}
           />
         );
       })}
 
       {allowCustomColor && customColor && (
         <button
+          type="button"
           className="color-btn active"
           style={{
             backgroundColor: currentValueResolved.startsWith("#")
@@ -212,6 +216,8 @@ export function ColorSelector({
           }}
           onClick={() => onChange(customColor)}
           title="自定义颜色"
+          aria-label="自定义颜色"
+          aria-pressed="true"
         />
       )}
 
@@ -219,6 +225,7 @@ export function ColorSelector({
         <div className="custom-color-wrapper" style={{ position: "relative" }}>
           <button
             ref={triggerRef}
+            type="button"
             className="color-btn custom-color-picker"
             title="选择新颜色"
             onClick={() => setShowColorPicker(!showColorPicker)}

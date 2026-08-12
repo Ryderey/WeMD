@@ -117,6 +117,19 @@ class MockClipboardItem {
 }
 
 describe("wechatCopyService clipboard strategy", () => {
+  const mockNativeCopy = () => {
+    const setData = vi.fn();
+    const execSpy = vi.spyOn(document, "execCommand").mockImplementation(() => {
+      const event = new Event("copy", { cancelable: true });
+      Object.defineProperty(event, "clipboardData", {
+        value: { setData },
+      });
+      document.dispatchEvent(event);
+      return true;
+    });
+    return { execSpy, setData };
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocked.createMarkdownParserMock.mockImplementation(() => ({
@@ -158,7 +171,7 @@ describe("wechatCopyService clipboard strategy", () => {
   });
 
   it("prefers native execCommand copy", async () => {
-    const execSpy = vi.spyOn(document, "execCommand").mockReturnValue(true);
+    const { execSpy } = mockNativeCopy();
 
     await copyToWechat("test", "#wemd p { margin: 18px 0; }");
 
@@ -166,6 +179,19 @@ describe("wechatCopyService clipboard strategy", () => {
     expect(mocked.clipboardWrite).not.toHaveBeenCalled();
     expect(mocked.toastSuccess).toHaveBeenCalled();
     expect(mocked.toastError).not.toHaveBeenCalled();
+  });
+
+  it("writes normalized HTML explicitly during native copy", async () => {
+    mocked.processHtmlMock.mockReturnValue(
+      '<section id="wemd" style="background-color:#f2f7fc;"><p>段落A</p><p>段落B</p></section>',
+    );
+    const { setData } = mockNativeCopy();
+
+    await copyToWechat("test", "#wemd { background-color: #f2f7fc; }");
+
+    const htmlWrite = setData.mock.calls.find(([type]) => type === "text/html");
+    expect(htmlWrite?.[1]).toContain("<section");
+    expect(htmlWrite?.[1]).toContain("background-color");
   });
 
   it("prefers electron clipboard bridge in electron runtime", async () => {

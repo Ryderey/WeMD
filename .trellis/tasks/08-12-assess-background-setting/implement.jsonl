@@ -1,0 +1,5 @@
+{"file":".trellis/spec/web/frontend/index.md","reason":"主题设计器属于 apps/web 前端，遵循该层入口规范"}
+{"file":".trellis/spec/web/frontend/components.md","reason":"新增可访问的快捷色块按钮并复用现有组件模式"}
+{"file":".trellis/spec/web/frontend/type-safety.md","reason":"扩展 DesignerVariables 并保持旧主题类型兼容"}
+{"file":".trellis/spec/web/frontend/quality.md","reason":"约束最小实现、测试、lint 与类型检查"}
+{"file":".trellis/tasks/08-12-assess-background-setting/research/implementation-difficulty.md","reason":"包含背景变量、CSS 生成、迁移和微信复制链路的调研依据"}

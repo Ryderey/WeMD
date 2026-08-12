@@ -24,6 +24,7 @@ export interface DesignerVariables {
   fontSize: string;
   primaryColor: string;
   primaryGradient?: string;
+  pageBackgroundColor?: string;
   lineHeight: string;
   pagePadding: number;
   baseLetterSpacing: number;

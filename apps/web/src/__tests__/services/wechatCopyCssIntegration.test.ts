@@ -269,6 +269,25 @@ describe("wechat copy css integration", () => {
     expect(newRoot.style.backgroundColor).toBeFalsy();
   });
 
+  it("keeps article background continuous across paragraph margins", () => {
+    const html =
+      '<p style="margin: 16px 0;">第一段</p><p style="margin: 16px 0;">第二段</p>';
+    const css = "#wemd { background-color: #fffbf3; }";
+    const resolved = resolveInlineStyleVariablesForCopy(
+      processHtml(html, css, true, true),
+    );
+    const container = document.createElement("div");
+    container.innerHTML = resolved;
+
+    normalizeCopyContainer(container);
+
+    const root = container.firstElementChild as HTMLElement;
+    const backgroundLayer = root.firstElementChild as HTMLElement;
+    expect(root.style.backgroundColor).toBeFalsy();
+    expect(backgroundLayer.style.backgroundColor).toBe("rgb(255, 251, 243)");
+    expect(backgroundLayer.querySelectorAll("p")).toHaveLength(2);
+  });
+
   it("materializes inherited text color to avoid ui theme leakage", () => {
     const container = document.createElement("div");
     container.innerHTML = `
