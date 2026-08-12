@@ -148,7 +148,6 @@ export function GlobalSection({
           value={variables.pageBackgroundColor || "transparent"}
           presets={pageBackgroundColorOptions}
           onChange={(color) => updateVariable("pageBackgroundColor", color)}
-          allowCustomColor={false}
         />
       </div>
 

@@ -27,6 +27,10 @@ describe("GlobalSection", () => {
       "pageBackgroundColor",
       "#F2FAF5",
     );
+    const articleBackgroundField = screen.getByText("文章底色").parentElement;
+    expect(
+      articleBackgroundField?.querySelector('[title="选择新颜色"]'),
+    ).toBeInTheDocument();
   });
 
   it("updates solid and gradient theme colors independently", () => {
