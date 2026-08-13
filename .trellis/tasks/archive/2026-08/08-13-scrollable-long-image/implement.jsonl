@@ -1,0 +1,7 @@
+{"file":".trellis/spec/core/frontend/index.md","reason":"Core parser package guidance"}
+{"file":".trellis/spec/web/frontend/index.md","reason":"Web component entry guidance"}
+{"file":".trellis/spec/web/frontend/react-pitfalls.md","reason":"React state and effect safety"}
+{"file":".trellis/spec/web/frontend/components.md","reason":"Scrollable container and accessibility patterns"}
+{"file":".trellis/spec/web/frontend/quality.md","reason":"TypeScript and validation requirements"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Markdown to copy-pipeline boundary"}
+{"file":".trellis/tasks/08-13-scrollable-long-image/research/wechat-validation.md","reason":"Observed WeChat sanitizer and mobile preview behavior"}

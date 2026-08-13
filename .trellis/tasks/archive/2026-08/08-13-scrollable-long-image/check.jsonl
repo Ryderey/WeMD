@@ -1,0 +1,6 @@
+{"file":".trellis/spec/core/frontend/quality-guidelines.md","reason":"Core review guidance"}
+{"file":".trellis/spec/web/frontend/quality.md","reason":"Web quality and test review"}
+{"file":".trellis/spec/web/frontend/type-safety.md","reason":"Type safety review"}
+{"file":".trellis/spec/web/shared/git-conventions.md","reason":"Branch and commit checks"}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"End-to-end copy compatibility review"}
+{"file":".trellis/tasks/08-13-scrollable-long-image/research/wechat-validation.md","reason":"Real WeChat validation evidence and cleanup record"}
