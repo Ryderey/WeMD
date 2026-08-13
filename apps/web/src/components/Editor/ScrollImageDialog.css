@@ -1,0 +1,179 @@
+.modal-panel.scroll-image-dialog {
+  width: min(560px, 92vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.scroll-image-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.scroll-image-dialog-description,
+.scroll-image-dialog-hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.scroll-image-dialog-preview {
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  scrollbar-gutter: stable;
+  touch-action: pan-y;
+}
+
+.scroll-image-dialog-preview:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.scroll-image-dialog-preview img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+}
+
+.scroll-image-dialog-hint {
+  margin-top: -8px;
+  text-align: center;
+}
+
+.scroll-image-height-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.scroll-image-height-fieldset legend {
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.scroll-image-height-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.scroll-image-presets {
+  display: flex;
+  gap: 8px;
+}
+
+.scroll-image-presets button,
+.scroll-image-dialog-secondary,
+.scroll-image-dialog-primary {
+  min-height: 36px;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  cursor: pointer;
+}
+
+.scroll-image-presets button {
+  padding: 6px 12px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+}
+
+.scroll-image-presets button:hover,
+.scroll-image-presets button.active {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+}
+
+.scroll-image-custom-height {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.scroll-image-custom-height input {
+  width: 76px;
+  padding: 7px 8px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.scroll-image-custom-height input:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}
+
+#scroll-image-height-help {
+  display: block;
+  min-height: 18px;
+  margin-top: 6px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+#scroll-image-height-help.scroll-image-height-error {
+  color: #dc2626;
+}
+
+.scroll-image-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.scroll-image-dialog-secondary,
+.scroll-image-dialog-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.scroll-image-dialog-secondary {
+  border: 1px solid var(--border-light);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+}
+
+.scroll-image-dialog-primary {
+  background: var(--accent-gradient);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.scroll-image-dialog-secondary:disabled,
+.scroll-image-dialog-primary:disabled,
+.scroll-image-presets button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 560px) {
+  .scroll-image-height-controls {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -23,6 +23,8 @@ import markdownItLinkfoot from "./plugins/markdown-it-linkfoot";
 
 import markdownItImageFlow from "./plugins/markdown-it-imageflow";
 
+import markdownItScrollImage from "./plugins/markdown-it-scroll-image";
+
 import markdownItMultiquote from "./plugins/markdown-it-multiquote";
 
 import markdownItLiReplacer from "./plugins/markdown-it-li";
@@ -96,6 +98,7 @@ export const createMarkdownParser = (options: MarkdownParserOptions = {}) => {
     })
     .use(markdownItRuby)
     .use(markdownItImplicitFigures, { figcaption: true })
+    .use(markdownItScrollImage)
     .use(markdownItDeflist)
     .use(markdownItLiReplacer)
     .use(markdownItImageFlow)

@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ListEnd,
   Smile,
+  GalleryVerticalEnd,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -28,6 +29,7 @@ import {
 import { setLinkToFootnoteEnabled } from "./ToolbarState";
 import { EmojiPicker } from "./EmojiPicker";
 import { SyntaxHelpPopover } from "./SyntaxHelpPopover";
+import { ScrollImageDialog } from "./ScrollImageDialog";
 import "./Toolbar.css";
 
 interface ToolbarProps {
@@ -37,7 +39,12 @@ interface ToolbarProps {
 
 export function Toolbar({ onInsert, onInsertText }: ToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollImageInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [scrollImageFile, setScrollImageFile] = useState<File | null>(null);
+  const [scrollImagePreviewUrl, setScrollImagePreviewUrl] = useState<
+    string | null
+  >(null);
   const [showMermaidMenu, setShowMermaidMenu] = useState(false);
   const [showMermaidMore, setShowMermaidMore] = useState(false);
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
@@ -169,6 +176,32 @@ export function Toolbar({ onInsert, onInsertText }: ToolbarProps) {
 
   const handleImageClick = () => {
     fileInputRef.current?.click();
+  };
+
+  useEffect(() => {
+    if (!scrollImagePreviewUrl) return;
+    return () => URL.revokeObjectURL(scrollImagePreviewUrl);
+  }, [scrollImagePreviewUrl]);
+
+  const resetScrollImage = () => {
+    setScrollImageFile(null);
+    setScrollImagePreviewUrl(null);
+    if (scrollImageInputRef.current) scrollImageInputRef.current.value = "";
+  };
+
+  const handleScrollImageChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("请选择图片文件");
+      event.target.value = "";
+      return;
+    }
+
+    setScrollImageFile(file);
+    setScrollImagePreviewUrl(URL.createObjectURL(file));
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -383,6 +416,16 @@ export function Toolbar({ onInsert, onInsertText }: ToolbarProps) {
         )}
       </div>
 
+      {/* 由用户显式启用的滚动长图 */}
+      <button
+        className="md-toolbar-btn"
+        onClick={() => scrollImageInputRef.current?.click()}
+        data-tooltip="滚动长图"
+        aria-label="滚动长图"
+      >
+        <GalleryVerticalEnd size={16} />
+      </button>
+
       {/* 图片上传按钮 */}
       <button
         className="md-toolbar-btn"
@@ -437,6 +480,26 @@ export function Toolbar({ onInsert, onInsertText }: ToolbarProps) {
         onChange={handleFileChange}
         style={{ display: "none" }}
       />
+      <input
+        ref={scrollImageInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleScrollImageChange}
+        aria-label="选择滚动长图文件"
+        style={{ display: "none" }}
+      />
+
+      {scrollImageFile && scrollImagePreviewUrl && (
+        <ScrollImageDialog
+          file={scrollImageFile}
+          previewUrl={scrollImagePreviewUrl}
+          onCancel={resetScrollImage}
+          onInsert={(markdown) => {
+            onInsertText(markdown);
+            resetScrollImage();
+          }}
+        />
+      )}
     </div>
   );
 }

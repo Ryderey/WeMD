@@ -408,4 +408,46 @@ describe("wechat copy css integration", () => {
     expect(code!.style.background).toBe("transparent");
     expect(code!.style.borderRadius).toBe("0");
   });
+
+  it("preserves scroll image layout through the complete copy pipeline", () => {
+    const parser = createMarkdownParser();
+    const html = parser.render(
+      "::: scroll-image 320\n![测试长图](https://example.com/long.png)\n:::",
+    );
+    const css = generateCSS({
+      ...defaultVariables,
+      pagePadding: 32,
+    });
+    const resolved = resolveInlineStyleVariablesForCopy(
+      processHtml(html, css, true, true),
+    );
+    const container = document.createElement("div");
+    container.innerHTML = resolved;
+
+    normalizeCopyContainer(container);
+
+    const component = container.querySelector<HTMLElement>(".scroll-image");
+    const viewport = container.querySelector<HTMLElement>(
+      ".scroll-image-viewport",
+    );
+    const image =
+      container.querySelector<HTMLImageElement>(".scroll-image-img");
+    const hint = container.querySelector<HTMLElement>(".scroll-image-caption");
+
+    expect(component).not.toBeNull();
+    expect(viewport).not.toBeNull();
+    expect(image).not.toBeNull();
+    expect(hint).not.toBeNull();
+    expect(viewport?.style.height).toBe("320px");
+    expect(viewport?.style.overflowY).toBe("auto");
+    expect(viewport?.style.overflowX).toBe("hidden");
+    expect(viewport?.getAttribute("tabindex")).toBe("0");
+    expect(viewport?.getAttribute("role")).toBe("region");
+    expect(viewport?.getAttribute("aria-label")).toBe("可上下滚动查看完整图片");
+    expect(image?.style.width).toBe("100%");
+    expect(image?.style.maxWidth).toBe("100%");
+    expect(image?.style.height).toBe("auto");
+    expect(image?.style.margin).toBe("0px");
+    expect(hint?.textContent).toBe("↕ 上下滑动查看完整图片");
+  });
 });

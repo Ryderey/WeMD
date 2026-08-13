@@ -43,3 +43,69 @@ describe("MarkdownParser code block", () => {
     expect(html).not.toContain("<svg");
   });
 });
+
+describe("MarkdownParser scroll image", () => {
+  const render = (markdown: string) => createMarkdownParser().render(markdown);
+
+  it("使用默认高度输出可聚焦的纵向滚动容器和固定提示", () => {
+    const html = render(
+      "::: scroll-image\n![长图](https://example.com/long.png)\n:::",
+    );
+
+    expect(html).toContain('class="scroll-image-viewport"');
+    expect(html).toContain("height:320px");
+    expect(html).toContain("overflow-y:auto");
+    expect(html).toContain("overflow-x:hidden");
+    expect(html).toContain('tabindex="0"');
+    expect(html).toContain('role="region"');
+    expect(html).toContain('aria-label="可上下滚动查看完整图片"');
+    expect(html).toContain("↕ 上下滑动查看完整图片");
+  });
+
+  it.each([
+    ["240", 240],
+    ["80", 160],
+    ["999", 800],
+  ])("解析并限制高度 %s", (input, expected) => {
+    const html = render(
+      `::: scroll-image ${input}\n![长图](https://example.com/long.png)\n:::`,
+    );
+
+    expect(html).toContain(`height:${expected}px`);
+  });
+
+  it("由 MarkdownIt 解析复杂地址、转义文本和标题", () => {
+    const html = render(
+      '::: scroll-image 420\n![A & B](<https://example.com/a_(1).png?x=1&y=2> "标题 & 说明")\n:::',
+    );
+
+    expect(html).toContain('src="https://example.com/a_(1).png?x=1&amp;y=2"');
+    expect(html).toContain('alt="A &amp; B"');
+    expect(html).toContain('title="标题 &amp; 说明"');
+    expect(html).toContain(
+      'style="display:block;width:100%;max-width:100%;height:auto;margin:0;border:0;"',
+    );
+  });
+
+  it.each([
+    "::: scroll-image tall\n![长图](https://example.com/a.png)\n:::",
+    "::: scroll-image 320 extra\n![长图](https://example.com/a.png)\n:::",
+    "::: scroll-image 320\n普通文本\n:::",
+    "::: scroll-image 320\n![A](https://example.com/a.png) ![B](https://example.com/b.png)\n:::",
+  ])("非法或非单图内容不转换", (markdown) => {
+    const html = render(markdown);
+
+    expect(html).not.toContain('class="scroll-image-viewport"');
+    expect(html).not.toContain("↕ 上下滑动查看完整图片");
+  });
+
+  it("不影响现有横向图片流", () => {
+    const html = render(
+      "<![A](https://example.com/a.png),![B](https://example.com/b.png)>",
+    );
+
+    expect(html).toContain('class="imageflow-layer1"');
+    expect(html).toContain("<<< 左右滑动见更多 >>>");
+    expect(html).not.toContain('class="scroll-image-viewport"');
+  });
+});
