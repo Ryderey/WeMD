@@ -8,6 +8,7 @@ import {
   QiniuPanel,
   S3Panel,
   TencentPanel,
+  WechatPanel,
 } from "./ImageHostSettingsPanels";
 import "./ImageHostSettings.css";
 
@@ -15,6 +16,7 @@ interface AllConfigs {
   currentType: ImageHostConfig["type"];
   configs: {
     official?: any;
+    wechat?: any;
     qiniu?: any;
     aliyun?: any;
     tencent?: any;
@@ -86,8 +88,10 @@ export function ImageHostSettings() {
       return;
     }
 
-    const originalText = document.activeElement?.textContent;
-    const btn = document.activeElement as HTMLButtonElement;
+    const activeElement = document.activeElement;
+    const btn =
+      activeElement instanceof HTMLButtonElement ? activeElement : null;
+    const originalText = btn?.textContent;
     if (btn) {
       btn.disabled = true;
       btn.textContent = "验证中...";
@@ -125,7 +129,9 @@ export function ImageHostSettings() {
                 ? "腾讯云 COS"
                 : type === "s3"
                   ? "S3 图床"
-                  : "七牛云图床"
+                  : type === "wechat"
+                    ? "公众号图床"
+                    : "七牛云图床"
           }`;
       }
     }
@@ -149,6 +155,17 @@ export function ImageHostSettings() {
 
         {viewingConfig.type === "qiniu" && (
           <QiniuPanel
+            activeType={activeType}
+            viewingConfig={viewingConfig}
+            testResult={testResult}
+            onConfigChange={handleConfigChange}
+            onTestConnection={testConnection}
+            onActivate={handleActivate}
+          />
+        )}
+
+        {viewingConfig.type === "wechat" && (
+          <WechatPanel
             activeType={activeType}
             viewingConfig={viewingConfig}
             testResult={testResult}

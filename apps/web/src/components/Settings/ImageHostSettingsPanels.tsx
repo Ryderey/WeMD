@@ -24,6 +24,15 @@ export const HostTabs = ({
         )}
       </button>
       <button
+        className={`host-tab ${viewingType === "wechat" ? "active" : ""}`}
+        onClick={() => onTabChange("wechat")}
+      >
+        公众号
+        {activeType === "wechat" && (
+          <span className="tab-active-badge">使用中</span>
+        )}
+      </button>
+      <button
         className={`host-tab ${viewingType === "qiniu" ? "active" : ""}`}
         onClick={() => onTabChange("qiniu")}
       >
@@ -134,6 +143,81 @@ interface HostConfigPanelProps {
   onTestConnection: () => void;
   onActivate: (type: ImageHostConfig["type"]) => void;
 }
+
+export const WechatPanel = ({
+  activeType,
+  viewingConfig,
+  testResult,
+  onConfigChange,
+  onTestConnection,
+  onActivate,
+}: HostConfigPanelProps) => {
+  const uploadKey = viewingConfig.config?.uploadKey || "";
+
+  const generateUploadKey = () => {
+    onConfigChange("uploadKey", crypto.randomUUID().replace(/-/g, ""));
+  };
+
+  const copyUploadKey = async () => {
+    if (uploadKey) await navigator.clipboard.writeText(uploadKey);
+  };
+
+  return (
+    <div className="host-config">
+      {activeType === "wechat" && (
+        <div className="active-status">
+          <span className="pulsing-dot"></span>
+          <span>当前使用中</span>
+        </div>
+      )}
+      <div className="config-field">
+        <label>服务端 API 地址</label>
+        <input
+          type="url"
+          placeholder="https://example.com/api"
+          value={viewingConfig.config?.apiBaseUrl || ""}
+          onChange={(e) => onConfigChange("apiBaseUrl", e.target.value)}
+        />
+        <small>本地开发可填写 http://localhost:4000/api</small>
+      </div>
+      <div className="config-field">
+        <label>上传密钥</label>
+        <input
+          type="password"
+          placeholder="服务端 WECHAT_UPLOAD_KEY"
+          value={uploadKey}
+          onChange={(e) => onConfigChange("uploadKey", e.target.value)}
+        />
+        <small>
+          生成后复制到服务端 WECHAT_UPLOAD_KEY；这不是微信公众号 AppSecret。
+        </small>
+      </div>
+      <div className="config-footer">
+        <button type="button" onClick={generateUploadKey}>
+          生成 32 位密钥
+        </button>
+        <button type="button" onClick={copyUploadKey} disabled={!uploadKey}>
+          复制密钥
+        </button>
+      </div>
+      <div className="config-field">
+        <small>
+          仅接受严格小于 1 MiB 的 JPG/PNG 原图，不会压缩、转换或修复。微信返回的
+          URL 没有删除、寿命及通用外链保证。
+        </small>
+      </div>
+      <div className="config-footer">
+        {testResult && <div className="test-result">{testResult}</div>}
+        <button onClick={onTestConnection}>测试连接</button>
+      </div>
+      {activeType !== "wechat" && (
+        <button className="btn-activate" onClick={() => onActivate("wechat")}>
+          启用公众号图床
+        </button>
+      )}
+    </div>
+  );
+};
 
 export const QiniuPanel = ({
   activeType,

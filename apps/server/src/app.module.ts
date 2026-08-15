@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UploadModule } from './upload/upload.module';
+import { WechatImageModule } from './wechat-image/wechat-image.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { UploadModule } from './upload/upload.module';
       isGlobal: true,
     }),
     UploadModule,
+    WechatImageModule,
   ],
   controllers: [AppController],
   providers: [AppService],

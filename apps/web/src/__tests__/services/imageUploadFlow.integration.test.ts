@@ -22,6 +22,7 @@ describe("uploadEditorImage integration", () => {
     const file = createImageFile(300 * 1024, "image/jpeg", "small.jpg");
     const uploadedFiles: File[] = [];
     const config: ImageHostConfig = { type: "official" };
+    const cacheWechatPreview = vi.fn();
 
     const result = await uploadEditorImage(file, {
       getImageHostConfig: () => config,
@@ -31,6 +32,7 @@ describe("uploadEditorImage integration", () => {
           return "https://example.com/small.jpg";
         },
       }),
+      cacheWechatPreview,
     });
 
     expect(result.compressed).toBe(false);
@@ -38,6 +40,7 @@ describe("uploadEditorImage integration", () => {
     expect(uploadedFiles).toHaveLength(1);
     expect(uploadedFiles[0]).toBe(file);
     expect(result.url).toBe("https://example.com/small.jpg");
+    expect(cacheWechatPreview).not.toHaveBeenCalled();
   });
 
   it("超限图片先压缩，再上传压缩结果", async () => {
@@ -78,5 +81,58 @@ describe("uploadEditorImage integration", () => {
     expect(uploadedFiles).toHaveLength(1);
     expect(uploadedFiles[0].size).toBeLessThanOrEqual(2 * MB);
     expect(result.url).toBe("https://example.com/big.jpg");
+  });
+
+  it("公众号图床绕过压缩并上传原始文件", async () => {
+    const file = createImageFile(Math.round(3.2 * MB), "image/jpeg", "raw.jpg");
+    const uploadedFiles: File[] = [];
+    const compressionDependencies: ImageCompressionDependencies = {
+      loadImage: vi.fn(),
+      renderToBlob: vi.fn(),
+    };
+    const cacheWechatPreview = vi.fn().mockResolvedValue(undefined);
+
+    const result = await uploadEditorImage(file, {
+      compressionDependencies,
+      getImageHostConfig: () => ({ type: "wechat" }),
+      createManager: () => ({
+        upload: async (uploadFile: File) => {
+          uploadedFiles.push(uploadFile);
+          return "http://mmbiz.qpic.cn/demo";
+        },
+      }),
+      cacheWechatPreview,
+    });
+
+    expect(compressionDependencies.loadImage).not.toHaveBeenCalled();
+    expect(compressionDependencies.renderToBlob).not.toHaveBeenCalled();
+    expect(result.compressed).toBe(false);
+    expect(result.uploadedFile).toBe(file);
+    expect(uploadedFiles).toEqual([file]);
+    expect(result.url).toBe("http://mmbiz.qpic.cn/demo");
+    expect(cacheWechatPreview).toHaveBeenCalledWith(
+      "http://mmbiz.qpic.cn/demo",
+      file,
+    );
+  });
+
+  it("公众号预览缓存失败不影响上传结果", async () => {
+    const file = createImageFile(300 * 1024, "image/jpeg", "demo.jpg");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    const result = await uploadEditorImage(file, {
+      getImageHostConfig: () => ({ type: "wechat" }),
+      createManager: () => ({
+        upload: async () => "http://mmbiz.qpic.cn/demo",
+      }),
+      cacheWechatPreview: vi.fn().mockRejectedValue(new Error("quota")),
+    });
+
+    expect(result.url).toBe("http://mmbiz.qpic.cn/demo");
+    expect(warn).toHaveBeenCalledWith(
+      "[WechatPreviewCache] save failed",
+      expect.any(Error),
+    );
+    warn.mockRestore();
   });
 });

@@ -16,6 +16,7 @@ import {
 } from "../../utils/mermaidConfig";
 import { renderTableBlocksForPreview } from "../../services/wechatTableRenderer";
 import { shouldRenderMacCodeBarNode } from "../../services/macCodeBar";
+import { applyWechatPreviewCache } from "../../services/image/wechatPreviewCache";
 import "./MarkdownPreview.css";
 
 const SYNC_SCROLL_EVENT = "wemd-sync-scroll";
@@ -81,6 +82,10 @@ export function MarkdownPreview() {
     if (!previewRef.current || !html) {
       return;
     }
+
+    void applyWechatPreviewCache(previewRef.current).catch((error) => {
+      console.warn("[WechatPreviewCache] preview lookup failed", error);
+    });
 
     // 检测是否包含数学公式
     if (!hasMathFormula(markdown)) {

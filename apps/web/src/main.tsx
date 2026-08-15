@@ -3,11 +3,14 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 import { StorageProvider } from "./storage/StorageContext";
+import { initializeWechatPreviewCache } from "./services/image/wechatPreviewCache";
 import { ErrorBoundary } from "./components/ErrorBoundary/ErrorBoundary";
 import {
   getSafeSessionStorage,
   installPreloadErrorHandler,
 } from "./bootstrap/installPreloadErrorHandler";
+
+void initializeWechatPreviewCache();
 
 installPreloadErrorHandler({
   target: window,

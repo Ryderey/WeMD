@@ -194,6 +194,20 @@ describe("wechatCopyService clipboard strategy", () => {
     expect(htmlWrite?.[1]).toContain("background-color");
   });
 
+  it("copies the original WeChat image URL instead of a local preview URL", async () => {
+    const wechatUrl = "http://mmbiz.qpic.cn/demo?from=appmsg";
+    mocked.processHtmlMock.mockReturnValue(
+      `<section id="wemd"><img src="${wechatUrl}"></section>`,
+    );
+    const { setData } = mockNativeCopy();
+
+    await copyToWechat(`![](${wechatUrl})`, "#wemd img { width: 100%; }");
+
+    const htmlWrite = setData.mock.calls.find(([type]) => type === "text/html");
+    expect(htmlWrite?.[1]).toContain(wechatUrl);
+    expect(htmlWrite?.[1]).not.toContain("blob:");
+  });
+
   it("prefers electron clipboard bridge in electron runtime", async () => {
     Object.defineProperty(window, "electron", {
       configurable: true,
