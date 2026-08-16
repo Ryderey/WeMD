@@ -231,6 +231,17 @@ export class WechatImageService {
   ): BadGatewayException {
     const errcode = this.numberValue(response.errcode);
     const code = errcode === null ? '' : ` (${errcode})`;
-    return new BadGatewayException(`${prefix}${code}`);
+    const ip =
+      errcode === 40164 ? this.ipv4Address(response.errmsg) : undefined;
+    const whitelistFailure = ip ? `：服务器出口 IP ${ip} 未加入白名单` : '';
+    return new BadGatewayException(`${prefix}${code}${whitelistFailure}`);
+  }
+
+  private ipv4Address(value: unknown): string | undefined {
+    if (typeof value !== 'string') return undefined;
+
+    return value.match(
+      /\b(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}\b/,
+    )?.[0];
   }
 }

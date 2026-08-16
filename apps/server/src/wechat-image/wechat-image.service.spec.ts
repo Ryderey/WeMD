@@ -207,6 +207,40 @@ describe('WechatImageService', () => {
     expect(message).not.toContain('private-access-token');
   });
 
+  it('shows only the egress IP for WeChat whitelist failures', async () => {
+    fetchMock.mockResolvedValue(
+      response({
+        errcode: 40164,
+        errmsg: 'invalid ip 203.0.113.10 not in whitelist; secret data',
+      }),
+    );
+
+    let message = '';
+    try {
+      await service.checkConnection();
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+
+    expect(message).toBe(
+      '获取微信 access token 失败 (40164)：服务器出口 IP 203.0.113.10 未加入白名单',
+    );
+    expect(message).not.toContain('secret data');
+  });
+
+  it('keeps non-whitelist upstream errors unchanged', async () => {
+    fetchMock.mockResolvedValue(
+      response({
+        errcode: 45009,
+        errmsg: 'invalid ip 203.0.113.10; secret data',
+      }),
+    );
+
+    await expect(service.checkConnection()).rejects.toMatchObject({
+      message: '获取微信 access token 失败 (45009)',
+    });
+  });
+
   it('maps upstream network errors to a credential-free gateway error', async () => {
     fetchMock.mockRejectedValue(
       new Error('request contained test-appsecret private-access-token'),
