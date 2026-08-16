@@ -34,6 +34,32 @@ Questions to answer:
 
 (To be filled by the team)
 
+### Runtime dependency ownership
+
+Every package imported directly by production server code must be listed in
+`apps/server/package.json` under `dependencies`, even when a framework also
+installs it transitively. pnpm does not expose transitive packages as direct
+imports.
+
+```ts
+// apps/server/src/upload/upload.controller.ts
+import { memoryStorage } from "multer";
+```
+
+```json
+{
+  "dependencies": {
+    "multer": "2.0.2"
+  }
+}
+```
+
+Verify new direct runtime imports with:
+
+```bash
+pnpm --filter @wemd/server exec node -e "require('multer')"
+```
+
 ---
 
 ## Testing Requirements
