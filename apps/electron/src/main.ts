@@ -2,6 +2,7 @@ import { app, BrowserWindow, Menu, dialog, ipcMain, nativeImage, IpcMainInvokeEv
 import * as path from 'path';
 import * as fs from 'fs';
 import { extractFrontmatterMeta } from './utils/frontmatter';
+import { startBundledServer, stopBundledServer } from './server-launcher';
 
 // 判断是否为开发模式 - 使用 app.isPackaged 是最可靠的方式
 // 注意：app.isPackaged 只能在 app ready 之后使用，这里用延迟判断
@@ -791,11 +792,18 @@ app.whenReady().then(() => {
     createWindow();
     createMenu();
 
+    // 自动拉起内嵌图床服务（端口已被占用时自动复用现有服务）
+    void startBundledServer();
+
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
             createWindow();
         }
     });
+});
+
+app.on('before-quit', () => {
+    stopBundledServer();
 });
 
 app.on('window-all-closed', () => {

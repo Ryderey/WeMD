@@ -24,6 +24,11 @@ pnpm dev:desktop
 
 开发模式下，Electron 会加载 `http://localhost:5173`。
 
+桌面端启动时会自动拉起本地图床 Nest 服务（监听 14000 端口），无需手动执行
+`pnpm --filter @wemd/server dev`；若 14000 端口已被占用，则直接复用现有服务。
+退出应用时服务会随之关闭。单独调试服务端时仍可手动启动，此时默认监听 4000
+端口。
+
 ## 生产构建
 
 先构建 Web：
@@ -53,7 +58,10 @@ pnpm run build:windows -- --zip
 pnpm run build:windows -- --no-bump
 ```
 
-一键打包脚本会同时更新 `apps/electron/package.json` 和 `apps/web/package.json` 的 patch 版本号，确保安装包文件名与 UI 展示版本一致。
+一键打包脚本会完成 web、core、Electron 主进程与 Nest 图床服务的完整构建，并把
+Nest 服务及其生产依赖部署进安装包的资源目录，应用启动时自动拉起该服务。脚本会
+同时更新 `apps/electron/package.json`、`apps/web/package.json` 与
+`apps/server/package.json` 的 patch 版本号，确保安装包文件名与 UI 展示版本一致。
 
 打包产物输出到 `apps/electron/release/`。
 
@@ -73,6 +81,19 @@ $env:ELECTRON_BUILDER_BINARIES_MIRROR='https://npmmirror.com/mirrors/electron-bu
 pnpm --filter wemd-electron build:win
 ```
 
+## 内嵌图床服务
+
+桌面端（开发模式与打包版）启动时会自动拉起内嵌的 Nest 图床服务，固定监听
+14000 端口；若端口已被占用则直接复用现有服务，退出应用时自动关闭。请在 WeMD
+“图床设置”中把服务端地址配置为 `http://localhost:14000/api`。
+
+打包版的微信图床凭据（AppID/AppSecret/上传密钥等）放在用户数据目录的
+`server.env` 文件中，即 `%APPDATA%\WeMD\server.env`，格式为每行 `KEY=VALUE`，
+字段与 `apps/server/.env.example` 一致；文件缺失时应用照常启动，仅微信图床相关
+接口不可用。开发模式的凭据仍由 `apps/server/.env` 提供。
+
+服务端接口与鉴权说明详见 `apps/server/README.md`。
+
 ## 目录结构
 
 ```text
@@ -80,6 +101,7 @@ apps/electron/
 ├── assets/                # 平台图标
 ├── src/                   # Electron 主进程、preload、更新逻辑
 ├── dist/                  # TypeScript 编译产物
+├── resources/             # 打包时生成的内嵌 Nest 服务产物（不入 Git）
 ├── release/               # Electron Builder 打包产物
 ├── package.json           # 桌面端脚本和依赖
 └── electron-builder.json  # 打包配置

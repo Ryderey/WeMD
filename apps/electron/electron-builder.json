@@ -10,6 +10,11 @@
       "from": "../web/dist",
       "to": "web-dist",
       "filter": ["**/*", "!**/.DS_Store"]
+    },
+    {
+      "from": "resources/server",
+      "to": "server",
+      "filter": ["**/*"]
     }
   ],
   "mac": {
