@@ -24,6 +24,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 const electronDir = path.join(rootDir, 'apps', 'electron');
 const webDir = path.join(rootDir, 'apps', 'web');
+const serverDir = path.join(rootDir, 'apps', 'server');
+const serverDeployDir = path.join(electronDir, 'resources', 'server');
 
 const args = process.argv.slice(2);
 const includeZip = args.includes('--zip') || args.includes('-z') || args.includes('--include-zip');
@@ -95,16 +97,38 @@ async function main() {
     const results = [
       bumpPackageJson(path.join(electronDir, 'package.json')),
       bumpPackageJson(path.join(webDir, 'package.json')),
+      bumpPackageJson(path.join(serverDir, 'package.json')),
     ];
     for (const { name, oldVersion, newVersion } of results) {
       console.log(`   ${name}: ${oldVersion} → ${newVersion}`);
     }
   }
 
-  console.log('\n🔨 步骤 1/2：构建前端、核心库与 Electron 主进程...');
+  console.log('\n🔨 步骤 1/3：构建前端、核心库、Electron 主进程与 Nest 服务...');
   await run('构建项目', 'pnpm', ['run', 'build'], { cwd: rootDir });
 
-  console.log('\n📦 步骤 2/2：使用 electron-builder 打包 Windows 应用...');
+  console.log('\n🚚 步骤 2/3：部署 Nest 服务到 Electron 资源目录...');
+  fs.rmSync(serverDeployDir, { recursive: true, force: true });
+  await run(
+    '部署服务端',
+    'pnpm',
+    ['--filter', '@wemd/server', 'deploy', '--prod', serverDeployDir],
+    { cwd: rootDir }
+  );
+  // pnpm deploy 不一定会带上构建产物，缺失时从 apps/server/dist 补齐
+  if (!fs.existsSync(path.join(serverDeployDir, 'dist', 'main.js'))) {
+    fs.cpSync(path.join(serverDir, 'dist'), path.join(serverDeployDir, 'dist'), { recursive: true });
+  }
+  const deployEntry = path.join(serverDeployDir, 'dist', 'main.js');
+  const deployNestCore = path.join(serverDeployDir, 'node_modules', '@nestjs', 'core');
+  if (!fs.existsSync(deployEntry)) {
+    throw new Error(`服务端部署产物缺失: ${deployEntry}`);
+  }
+  if (!fs.existsSync(deployNestCore)) {
+    throw new Error(`服务端依赖部署缺失: ${deployNestCore}`);
+  }
+
+  console.log('\n📦 步骤 3/3：使用 electron-builder 打包 Windows 应用...');
   const targets = includeZip ? ['nsis', 'zip'] : ['nsis'];
   await run(
     '打包 Windows',
@@ -122,6 +146,8 @@ async function main() {
   } else {
     console.log('   未生成 zip 便携包，如需生成请加上 --zip 参数');
   }
+  console.log('   提示:     打包版使用微信图床需在 %APPDATA%\\WeMD\\server.env 配置凭据，');
+  console.log('             字段格式同 apps/server/.env.example，详见 apps/server/README.md');
 }
 
 main().catch((err) => {
