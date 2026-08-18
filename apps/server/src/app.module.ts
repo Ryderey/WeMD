@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UploadModule } from './upload/upload.module';
 import { WechatImageModule } from './wechat-image/wechat-image.module';
+import { ProxyModule } from './proxy/proxy.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { WechatImageModule } from './wechat-image/wechat-image.module';
     }),
     UploadModule,
     WechatImageModule,
+    ProxyModule,
   ],
   controllers: [AppController],
   providers: [AppService],

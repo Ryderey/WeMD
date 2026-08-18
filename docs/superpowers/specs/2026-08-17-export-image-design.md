@@ -87,20 +87,21 @@
 ## 7. 边缘情况与错误处理
 
 - 空内容：导出按钮禁用，预览空态。
-- 远程图片 CORS：截图前复用 `wechatPreviewCache.ts` 的 blob→objectURL 模式将 `<img>` 转同源；个别转换失败不阻断，导出后 toast 警告「N 张图片因跨域限制可能未显示」。
+- 远程图片 CORS：截图前复用 `wechatPreviewCache.ts` 的 blob→objectURL 模式将 `<img>` 转同源；直连 fetch 失败（图床无 CORS 头）时回退 Nest 服务 `GET /api/proxy/image?url=` 服务端抓取（服务端不受 CORS 限制，undici ProxyAgent 支持代理环境变量出网），候选地址 `127.0.0.1:14000`（桌面内嵌）/ `localhost:4000`（开发默认），探测结果缓存；个别转换失败不阻断，预览阶段 toast 警告「N 张图片跨域获取失败，导出图中将留白」。
 - Mermaid/公式异步渲染：导出前 await 现有渲染管线完成。
 - 暗色模式：强制亮色容器（见 §2）。
 - 截图库失败：toast 报错「导出失败: {msg}」，不残留 loading。
 
 ## 8. 依赖与代码改动清单
 
-- 新增依赖：`modern-screenshot`（截图，现代 CSS 兼容优于 html2canvas）、`jszip`（Web 打包）。
+- 新增依赖：`modern-screenshot`（截图，现代 CSS 兼容优于 html2canvas）、`jszip`（Web 打包）、`undici`（server 代理出网，ProxyAgent）。
 - 新增文件（建议）：
   - `apps/web/src/services/export/renderContainer.ts`（共享容器构建，wechatCopyService 重构调用它）
   - `apps/web/src/services/export/paginator.ts`（切分纯函数）
   - `apps/web/src/services/export/footerRenderer.ts`
   - `apps/web/src/services/export/exportService.ts`（截图/ZIP/IPC 编排）
   - `apps/web/src/components/Export/ExportDialog.tsx`
+  - `apps/server/src/proxy/proxy.controller.ts` + `proxy.module.ts`（图片代理端点）
 - 修改：`Header.tsx`、`MobileToolbar.tsx`、`wechatCopyService.ts`（抽取重构）、`apps/electron/src/main.ts` + `preload.ts`（新 IPC）、`.gitignore`（增加 `.superpowers/`，brainstorm companion 会话数据不入库）。
 
 ## 9. 测试计划

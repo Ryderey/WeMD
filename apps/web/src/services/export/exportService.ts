@@ -49,6 +49,8 @@ export interface BuiltExport {
   oversizedCount: number;
   /** 含超长块的页信息（仅切图模式） */
   oversizedPages: OversizedPageInfo[];
+  /** 跨域/网络失败未能本地化的图片数（导出后该图留白） */
+  failedImageCount: number;
   totalPages: number;
   background: string;
   /** 释放离屏 DOM */
@@ -70,9 +72,76 @@ const IMAGE_WAIT_TIMEOUT_MS = 10000;
 const isLocalUrl = (url: string) =>
   url.startsWith("data:") || url.startsWith("blob:");
 
+/** 内嵌 Nest 服务候选地址（桌面版固定 14000，开发默认 4000） */
+const PROXY_CANDIDATES = [
+  "http://127.0.0.1:14000/api",
+  "http://localhost:4000/api",
+];
+
+let proxyBaseCache: { value: string | null; expiresAt: number } | null = null;
+
+/** 测试用：重置代理探测缓存 */
+export const resetImageProxyCache = (): void => {
+  proxyBaseCache = null;
+};
+
+/**
+ * 探测可用的 Nest 图片代理
+ * 探针请求一个必然抓取失败的内网地址：端点存在返回 4xx（非 404），端点缺失返回 404
+ */
+export async function detectImageProxyBase(
+  candidates: readonly string[] = PROXY_CANDIDATES,
+): Promise<string | null> {
+  if (proxyBaseCache && Date.now() < proxyBaseCache.expiresAt) {
+    return proxyBaseCache.value;
+  }
+  let value: string | null = null;
+  for (const base of candidates) {
+    try {
+      const probe = await fetch(
+        `${base}/proxy/image?url=${encodeURIComponent("http://127.0.0.1:9/probe.png")}`,
+        { signal: AbortSignal.timeout(2000) },
+      );
+      if (probe.status !== 404) {
+        value = base;
+        break;
+      }
+    } catch {
+      // 该候选不可达，尝试下一个
+    }
+  }
+  proxyBaseCache = {
+    value,
+    expiresAt: Date.now() + (value ? 10 * 60_000 : 30_000),
+  };
+  return value;
+}
+
+/** 直连 fetch 失败（CORS/网络）时回退 Nest 代理取图 */
+const fetchImageBlob = async (src: string): Promise<Blob | null> => {
+  try {
+    const response = await fetch(src);
+    if (response.ok) return await response.blob();
+  } catch {
+    // 跨域或网络失败，落入代理回退
+  }
+  const proxyBase = await detectImageProxyBase();
+  if (!proxyBase) return null;
+  try {
+    const response = await fetch(
+      `${proxyBase}/proxy/image?url=${encodeURIComponent(src)}`,
+    );
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return blob.type.startsWith("image/") ? blob : null;
+  } catch {
+    return null;
+  }
+};
+
 /**
  * 将远程图片转为同源可绘制的 objectURL，避免 canvas 污染
- * 先走微信图床缓存，再尝试 fetch；返回失败数量
+ * 先走微信图床缓存，再直连 fetch，失败回退 Nest 代理；返回失败数量
  */
 export async function localizeImages(root: HTMLElement): Promise<number> {
   await applyWechatPreviewCache(root);
@@ -83,14 +152,12 @@ export async function localizeImages(root: HTMLElement): Promise<number> {
     images.map(async (image) => {
       const src = image.getAttribute("src");
       if (!src || isLocalUrl(src)) return;
-      try {
-        const response = await fetch(src);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const blob = await response.blob();
-        image.src = URL.createObjectURL(blob);
-      } catch {
+      const blob = await fetchImageBlob(src);
+      if (!blob) {
         failed += 1;
+        return;
       }
+      image.src = URL.createObjectURL(blob);
     }),
   );
   return failed;
@@ -266,7 +333,7 @@ export async function buildExport(
   };
 
   try {
-    await localizeImages(source);
+    const failedImageCount = await localizeImages(source);
     await waitForImages(source);
     if (document.fonts?.ready) {
       await document.fonts.ready;
@@ -292,6 +359,7 @@ export async function buildExport(
       layout,
       oversizedCount: pages.oversizedCount,
       oversizedPages: pages.oversizedPages,
+      failedImageCount,
       totalPages: pages.pages.length,
       background,
       dispose,

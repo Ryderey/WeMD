@@ -1,9 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
   resolveExportTitle,
   buildExportBaseName,
   buildFileNames,
   measureBlocks,
+  localizeImages,
+  resetImageProxyCache,
 } from "../../../services/export/exportService";
 
 describe("resolveExportTitle", () => {
@@ -69,5 +71,100 @@ describe("measureBlocks", () => {
     const measures = measureBlocks(root);
     expect(measures[0].height).toBe(420);
     expect(measures[1].height).toBe(100);
+  });
+});
+
+describe("localizeImages 代理回退", () => {
+  beforeEach(() => {
+    resetImageProxyCache();
+    vi.unstubAllGlobals();
+  });
+
+  const buildRoot = (src: string): HTMLElement => {
+    const root = document.createElement("div");
+    const img = document.createElement("img");
+    img.setAttribute("src", src);
+    root.appendChild(img);
+    return root;
+  };
+
+  const imageBlob = () =>
+    new Blob([new Uint8Array([1])], { type: "image/png" });
+
+  it("直连成功时直接本地化，不走代理", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      blob: async () => imageBlob(),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const root = buildRoot("https://remote.example/a.png");
+
+    const failed = await localizeImages(root);
+
+    expect(failed).toBe(0);
+    expect(root.querySelector("img")?.src).toMatch(/^blob:/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("直连跨域失败时回退 Nest 代理取图", async () => {
+    const calls: string[] = [];
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      calls.push(url);
+      if (url.startsWith("https://remote.example/")) {
+        throw new TypeError("CORS blocked");
+      }
+      if (url.includes("/proxy/image")) {
+        if (url.includes("127.0.0.1%3A9")) return { ok: false, status: 400 };
+        return { ok: true, status: 200, blob: async () => imageBlob() };
+      }
+      return { ok: false, status: 404 };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const root = buildRoot("https://remote.example/a.png");
+
+    const failed = await localizeImages(root);
+
+    expect(failed).toBe(0);
+    expect(root.querySelector("img")?.src).toMatch(/^blob:/);
+    expect(calls.some((u) => u.includes("/proxy/image?url="))).toBe(true);
+  });
+
+  it("代理不可用时计为失败且保留原 src", async () => {
+    const fetchMock = vi.fn(async () => {
+      throw new TypeError("CORS blocked");
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const root = buildRoot("https://remote.example/a.png");
+
+    const failed = await localizeImages(root);
+
+    expect(failed).toBe(1);
+    expect(root.querySelector("img")?.getAttribute("src")).toBe(
+      "https://remote.example/a.png",
+    );
+  });
+
+  it("代理返回非图片类型时计为失败", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith("https://remote.example/")) {
+        throw new TypeError("CORS blocked");
+      }
+      if (url.includes("127.0.0.1%3A9")) return { ok: false, status: 400 };
+      return {
+        ok: true,
+        status: 200,
+        blob: async () =>
+          new Blob([new Uint8Array([60])], { type: "text/html" }),
+      };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const root = buildRoot("https://remote.example/a.png");
+
+    const failed = await localizeImages(root);
+
+    expect(failed).toBe(1);
   });
 });

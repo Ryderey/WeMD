@@ -71,6 +71,7 @@ interface PreviewState {
   totalPages: number;
   pageSize: { width: number; height: number };
   oversizedPages: OversizedPageInfo[];
+  failedImageCount: number;
   tooTall: boolean;
 }
 
@@ -167,8 +168,15 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
               ? { width: ratio.width, height: ratio.height }
               : { width: 1080, height: 0 },
           oversizedPages: built.oversizedPages,
+          failedImageCount: built.failedImageCount,
           tooTall: false,
         });
+        if (built.failedImageCount > 0) {
+          toast.error(
+            `${built.failedImageCount} 张图片跨域获取失败，导出图中将留白`,
+            { id: "export-cors-images" },
+          );
+        }
       } catch (error) {
         built?.dispose();
         if (runId !== runIdRef.current) return;
@@ -180,6 +188,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
             totalPages: 0,
             pageSize,
             oversizedPages: [],
+            failedImageCount: 0,
             tooTall: true,
           });
         } else {
