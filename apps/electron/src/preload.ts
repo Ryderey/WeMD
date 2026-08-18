@@ -73,4 +73,8 @@ contextBridge.exposeInMainWorld('electron', {
             ipcRenderer.invoke('clipboard:writeHTML', payload),
         writeText: (text: string) => ipcRenderer.invoke('clipboard:writeText', text),
     },
+    export: {
+        saveImages: (payload: { files: { filename: string; base64: string }[]; defaultName?: string }) =>
+            ipcRenderer.invoke('export:saveImages', payload),
+    },
 });

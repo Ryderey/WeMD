@@ -92,7 +92,10 @@ pnpm --filter wemd-electron build:win
 字段与 `apps/server/.env.example` 一致；文件缺失时应用照常启动，仅微信图床相关
 接口不可用。开发模式的凭据仍由 `apps/server/.env` 提供。
 
-服务端接口与鉴权说明详见 `apps/server/README.md`。
+服务端接口与鉴权说明详见 `apps/server/README.md`。其中“导出图片”功能遇到
+跨域图床（如 `img.wemd.app` 不返回 CORS 头）时，会自动回退到 Nest 的
+`GET /api/proxy/image` 公开代理接口取图，无需额外配置；服务不可达时导出图
+中对应图片留白并弹出提示。
 
 ## 目录结构
 

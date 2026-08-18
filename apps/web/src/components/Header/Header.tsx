@@ -15,12 +15,18 @@ const ImageHostSettings = lazy(() =>
     default: m.ImageHostSettings,
   })),
 );
+const ExportDialog = lazy(() =>
+  import("../Export/ExportDialog").then((m) => ({
+    default: m.ExportDialog,
+  })),
+);
 import {
   Layers,
   Palette,
   Send,
   Code,
   ImageIcon,
+  Download,
   Sun,
   Moon,
   ChevronsUp,
@@ -115,6 +121,7 @@ export function Header() {
   const [showThemePanel, setShowThemePanel] = useState(false);
   const [showStorageModal, setShowStorageModal] = useState(false);
   const [showImageHostModal, setShowImageHostModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const uiTheme = useUITheme((state) => state.theme);
   const setTheme = useUITheme((state) => state.setTheme);
   const isStructuralismUI = uiTheme === "dark";
@@ -195,6 +202,11 @@ export function Header() {
             onClick={() => setShowThemePanel(true)}
           />
           <FloatingToolbarButton
+            icon={<Download size={18} strokeWidth={2} />}
+            label="导出图片"
+            onClick={() => setShowExportModal(true)}
+          />
+          <FloatingToolbarButton
             icon={<Code size={18} strokeWidth={2} />}
             label="复制 HTML"
             onClick={copyAsHtml}
@@ -266,6 +278,14 @@ export function Header() {
               <span>主题管理</span>
             </button>
 
+            <button
+              className="btn-secondary"
+              onClick={() => setShowExportModal(true)}
+            >
+              <Download size={18} strokeWidth={2} />
+              <span>导出图片</span>
+            </button>
+
             <button className="btn-secondary" onClick={copyAsHtml}>
               <Code size={18} strokeWidth={2} />
               <span>复制 HTML</span>
@@ -330,6 +350,13 @@ export function Header() {
           <ImageHostSettings />
         </Suspense>
       </Modal>
+
+      <Suspense fallback={null}>
+        <ExportDialog
+          open={showExportModal}
+          onClose={() => setShowExportModal(false)}
+        />
+      </Suspense>
     </>
   );
 }

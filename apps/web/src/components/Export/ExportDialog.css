@@ -1,0 +1,299 @@
+/* 导出图片对话框 */
+
+.modal-panel.modal-export {
+  width: min(1160px, 95vw);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-panel.modal-export .modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.export-dialog {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  min-height: 480px;
+}
+
+/* ── 左侧设置区 ── */
+
+.export-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.export-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.export-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.export-segmented {
+  display: flex;
+  border: var(--border-width) solid var(--border-light);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.export-segmented button {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.export-segmented button + button {
+  border-left: var(--border-width) solid var(--border-light);
+}
+
+.export-segmented button.active {
+  background: var(--accent, #07c160);
+  color: #ffffff;
+}
+
+.export-ratio-chips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.export-ratio-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border: var(--border-width) solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.export-ratio-chip small {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.export-ratio-chip.active {
+  border-color: var(--accent, #07c160);
+  background: color-mix(in srgb, var(--accent, #07c160) 10%, transparent);
+}
+
+.export-watermark-input {
+  padding: 8px 12px;
+  border: var(--border-width) solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary, transparent);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+}
+
+.export-watermark-input:focus {
+  border-color: var(--accent, #07c160);
+}
+
+.export-submit {
+  margin-top: auto;
+  padding: 10px 16px;
+}
+
+.export-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── 右侧预览区 ── */
+
+.export-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: var(--border-width) solid var(--border-light);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary, rgba(0, 0, 0, 0.02));
+  overflow-y: auto;
+}
+
+.export-preview-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.export-preview-warn {
+  color: #b45309;
+  font-size: 12px;
+}
+
+.export-preview-warn-block {
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.export-preview-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  align-items: start;
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+.export-preview-thumb {
+  position: relative;
+  padding: 0;
+  border: var(--border-width) solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  cursor: zoom-in;
+  overflow: hidden;
+}
+
+.export-preview-thumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 含超长块的页：红框 + 角标 */
+.export-preview-thumb.is-oversized {
+  border: 2px solid #dc2626;
+}
+
+.export-preview-page-no {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.export-preview-oversized-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.export-preview-empty,
+.export-preview-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 240px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: center;
+}
+
+.export-preview-error {
+  color: #b91c1c;
+}
+
+/* ── lightbox ── */
+
+.export-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+  cursor: zoom-out;
+  padding: 32px;
+}
+
+.export-lightbox img {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+}
+
+.export-lightbox-counter {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.export-lightbox-loading {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  font-size: 13px;
+}
+
+/* ── 移动端：上下结构，预览横滑 ── */
+
+@media (max-width: 720px) {
+  .export-dialog {
+    grid-template-columns: 1fr;
+    min-height: unset;
+  }
+
+  .export-preview-list {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-height: none;
+  }
+
+  .export-preview-thumb {
+    flex: 0 0 140px;
+  }
+
+  .export-preview-thumb img {
+    width: 140px;
+  }
+}

@@ -81,6 +81,17 @@ interface ElectronAPI {
     }) => Promise<{ success: boolean; error?: string }>;
     writeText: (text: string) => Promise<{ success: boolean; error?: string }>;
   };
+  export?: {
+    saveImages: (payload: {
+      files: { filename: string; base64: string }[];
+      defaultName?: string;
+    }) => Promise<{
+      success: boolean;
+      path?: string;
+      canceled?: boolean;
+      error?: string;
+    }>;
+  };
 }
 
 declare global {

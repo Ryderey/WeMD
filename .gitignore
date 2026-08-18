@@ -23,6 +23,7 @@ apps/electron/resources/
 .agentdocs/
 .gemini/
 .claude/
+.superpowers/
 custom.css
 .codegraph
 .history
