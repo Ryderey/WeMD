@@ -153,14 +153,12 @@ const appendBlockToPage = (
   page.appendChild(wrapper);
 };
 
-/** 按相邻块 offsetTop 差测量块高（含块间留白） */
-const measureBlocks = (contentRoot: HTMLElement): BlockMeasure[] => {
+/** 按相邻块 offsetTop 差测量块高（含块间留白）；末块取自身高度 */
+export const measureBlocks = (contentRoot: HTMLElement): BlockMeasure[] => {
   const blocks = Array.from(contentRoot.children) as HTMLElement[];
   return blocks.map((block, index) => {
     const next = blocks[index + 1];
-    const height = next
-      ? next.offsetTop - block.offsetTop
-      : block.offsetTop + block.offsetHeight;
+    const height = next ? next.offsetTop - block.offsetTop : block.offsetHeight;
     return { index, height: Math.ceil(height) };
   });
 };

@@ -3,6 +3,7 @@ import {
   resolveExportTitle,
   buildExportBaseName,
   buildFileNames,
+  measureBlocks,
 } from "../../../services/export/exportService";
 
 describe("resolveExportTitle", () => {
@@ -44,5 +45,29 @@ describe("buildFileNames", () => {
       "02.jpg",
       "03.jpg",
     ]);
+  });
+});
+
+describe("measureBlocks", () => {
+  const stubLayout = (
+    el: HTMLElement,
+    offsetTop: number,
+    offsetHeight: number,
+  ) => {
+    Object.defineProperty(el, "offsetTop", { value: offsetTop });
+    Object.defineProperty(el, "offsetHeight", { value: offsetHeight });
+  };
+
+  it("末块取自身高度而非累计偏移（回归：末块误判超长）", () => {
+    const root = document.createElement("div");
+    const first = document.createElement("p");
+    const last = document.createElement("p");
+    root.append(first, last);
+    stubLayout(first, 0, 400);
+    stubLayout(last, 420, 100);
+
+    const measures = measureBlocks(root);
+    expect(measures[0].height).toBe(420);
+    expect(measures[1].height).toBe(100);
   });
 });
