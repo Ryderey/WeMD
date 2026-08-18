@@ -100,10 +100,16 @@ Nest 提供：
 
 - `GET /api/wechat-images/status`：验证服务端配置及微信 access token 获取能力。
 - `POST /api/wechat-images`：通过 `multipart/form-data` 的 `file` 字段上传图片。
+- `GET /api/proxy/image?url=<图片URL>`：导出图片专用的公开图片代理，无需鉴权。
 
-两个接口都要求请求头 `Authorization: Bearer <WECHAT_UPLOAD_KEY>`。上传接口只接受
+前两个接口都要求请求头 `Authorization: Bearer <WECHAT_UPLOAD_KEY>`。上传接口只接受
 MIME 和文件内容均为 JPEG/PNG、且严格小于 1 MiB 的原始文件；服务不会压缩、转换或
 修复图片。
+
+图片代理接口用于“导出图片”功能：外部图床（如 `img.wemd.app`）不返回
+CORS 头，前端无法直接 fetch 内联图片，改由服务端代为抓取后回传字节。该接口
+仅接受 http/https 协议与 `image/*` 响应，单图限 10 MB，超时 15 秒；服务端
+出网会遵循 `http_proxy`/`https_proxy` 环境变量。
 
 ### 稳定版 access token
 
