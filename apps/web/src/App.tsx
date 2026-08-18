@@ -31,6 +31,11 @@ const HistoryManager = lazy(() =>
 const Welcome = lazy(() =>
   import("./components/Welcome/Welcome").then((m) => ({ default: m.Welcome })),
 );
+const ExportDialog = lazy(() =>
+  import("./components/Export/ExportDialog").then((m) => ({
+    default: m.ExportDialog,
+  })),
+);
 import { MobileThemeSelector } from "./components/Theme/MobileThemeSelector";
 
 function App() {
@@ -47,6 +52,7 @@ function App() {
   const copyToWechat = useEditorStore((state) => state.copyToWechat);
   const copyAsHtml = useEditorStore((state) => state.copyAsHtml);
   const [showThemePanel, setShowThemePanel] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   // 全局保存快捷键（统一监听器）
   useEffect(() => {
@@ -234,6 +240,7 @@ function App() {
               onCopyToWechat={copyToWechat}
               onCopyAsHtml={copyAsHtml}
               onOpenTheme={() => setShowThemePanel(true)}
+              onOpenExport={() => setShowExportModal(true)}
             />
           )}
         </main>
@@ -246,6 +253,14 @@ function App() {
           onClose={() => setShowThemePanel(false)}
         />
       )}
+
+      {/* 移动端导出图片对话框 */}
+      <Suspense fallback={null}>
+        <ExportDialog
+          open={showExportModal}
+          onClose={() => setShowExportModal(false)}
+        />
+      </Suspense>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import {
   MoreHorizontal,
   Palette,
   Code,
+  Download,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -17,6 +18,7 @@ interface MobileToolbarProps {
   onCopyToWechat: () => void;
   onCopyAsHtml: () => void;
   onOpenTheme: () => void;
+  onOpenExport: () => void;
 }
 
 /**
@@ -28,6 +30,7 @@ export function MobileToolbar({
   onCopyToWechat,
   onCopyAsHtml,
   onOpenTheme,
+  onOpenExport,
 }: MobileToolbarProps) {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -69,6 +72,16 @@ export function MobileToolbar({
               >
                 <Palette size={20} />
                 <span>主题管理</span>
+              </button>
+              <button
+                className="mobile-menu-item"
+                onClick={() => {
+                  onOpenExport();
+                  setShowMenu(false);
+                }}
+              >
+                <Download size={20} />
+                <span>导出图片</span>
               </button>
             </div>
           </div>

@@ -695,6 +695,60 @@ ipcMain.handle('clipboard:writeText', async (_event: IpcMainInvokeEvent, text: s
     }
 });
 
+// 导出图片保存：单张另存为，多张选目录逐张写盘
+ipcMain.handle(
+    'export:saveImages',
+    async (
+        _event: IpcMainInvokeEvent,
+        payload: {
+            files?: { filename: string; base64: string }[];
+            defaultName?: string;
+        }
+    ) => {
+        if (!mainWindow) return { success: false, error: 'Window not initialized' };
+        const files = payload?.files ?? [];
+        if (files.length === 0) {
+            return { success: false, error: '没有可保存的图片' };
+        }
+
+        try {
+            if (files.length === 1) {
+                const safeName = path.basename(files[0].filename);
+                const result = await dialog.showSaveDialog(mainWindow, {
+                    defaultPath: safeName,
+                    filters: [
+                        { name: '图片', extensions: ['png', 'jpg', 'jpeg'] },
+                    ],
+                });
+                if (result.canceled || !result.filePath) {
+                    return { success: false, canceled: true };
+                }
+                fs.writeFileSync(result.filePath, Buffer.from(files[0].base64, 'base64'));
+                return { success: true, path: result.filePath };
+            }
+
+            const dirResult = await dialog.showOpenDialog(mainWindow, {
+                title: '选择保存图片的目录',
+                properties: ['openDirectory', 'createDirectory'],
+            });
+            if (dirResult.canceled || dirResult.filePaths.length === 0) {
+                return { success: false, canceled: true };
+            }
+            const targetDir = dirResult.filePaths[0];
+            for (const file of files) {
+                const safeName = path.basename(file.filename);
+                fs.writeFileSync(
+                    path.join(targetDir, safeName),
+                    Buffer.from(file.base64, 'base64')
+                );
+            }
+            return { success: true, path: targetDir };
+        } catch (error: any) {
+            return { success: false, error: error?.message ?? '保存失败' };
+        }
+    }
+);
+
 // 创建应用菜单
 function createMenu() {
     const template: Electron.MenuItemConstructorOptions[] = [

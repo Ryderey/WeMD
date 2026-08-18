@@ -4,28 +4,11 @@
  */
 
 import toast from "react-hot-toast";
-import { processHtml, createMarkdownParser } from "@wemd/core";
-import katexCss from "katex/dist/katex.min.css?raw";
-import { loadMathJax } from "../utils/mathJaxLoader";
-import { hasMathFormula } from "../utils/katexRenderer";
-import { convertLinksToFootnotes } from "../utils/linkFootnote";
-import { getLinkToFootnoteEnabled } from "../components/Editor/ToolbarState";
-import {
-  applyLightRootVars,
-  resolveInlineStyleVariablesForCopy,
-} from "./inlineStyleVarResolver";
-import {
-  materializeCounterPseudoContent,
-  stripCounterPseudoRules,
-} from "./wechatCounterCompat";
-import { expandCSSVariables } from "./cssVariableExpander";
 import {
   normalizeCopyContainer,
   stripCopyMetadata,
 } from "./wechatCopyNormalizer";
-import { renderMermaidBlocks } from "./wechatMermaidRenderer";
-import { renderTableBlocks } from "./wechatTableRenderer";
-import { shouldRenderMacCodeBarNode } from "./macCodeBar";
+import { renderOffscreenContent } from "./export/renderContainer";
 
 // re-export 保持外部引用兼容
 export { normalizeCopyContainer, stripCopyMetadata };
@@ -33,29 +16,6 @@ export { normalizeCopyContainer, stripCopyMetadata };
 interface CopyToWechatOptions {
   showMacBar?: boolean;
 }
-
-const buildCopyCss = (themeCss: string) => {
-  if (!themeCss) return katexCss;
-  // 复制前展开 CSS 变量为具体值，消除微信清洗 var() 导致的样式丢失
-  const expandedCss = expandCSSVariables(themeCss);
-  return `${expandedCss}\n${katexCss}`;
-};
-
-/**
- * 将 HTML 中的 checkbox 转换为 emoji
- * 微信公众号会过滤 <input> 标签，需要转为 emoji 替代
- */
-const convertCheckboxesToEmoji = (html: string): string => {
-  // 使用 &nbsp; 确保空格不被微信吞掉
-  // 先替换选中的 checkbox（包含 checked 属性）
-  let result = html.replace(/<input[^>]*checked[^>]*>/gi, "✅&nbsp;");
-  // 再替换未选中的 checkbox
-  result = result.replace(
-    /<input[^>]*type=["']checkbox["'][^>]*>/gi,
-    "⬜&nbsp;",
-  );
-  return result;
-};
 
 // ── 剪贴板写入策略 ─────────────────────────────────
 
@@ -129,48 +89,15 @@ export async function copyToWechat(
   css: string,
   options: CopyToWechatOptions = {},
 ): Promise<void> {
-  const container = document.createElement("div");
-  container.style.position = "fixed";
-  container.style.top = "0";
-  container.style.left = "0";
-  container.style.width = "760px";
-  container.style.opacity = "0";
-  container.style.pointerEvents = "none";
-  container.style.zIndex = "-1";
-  container.style.contain = "layout style paint";
-  // 强制亮色模式，防止暗色 UI 下 execCommand("copy") 序列化出亮色文字
-  container.style.colorScheme = "light";
-  container.style.color = "#000000";
-  applyLightRootVars(container);
-  document.body.appendChild(container);
+  let container: HTMLElement | null = null;
 
   try {
-    const shouldLoadMath = hasMathFormula(markdown);
-    if (shouldLoadMath) {
-      await loadMathJax();
-    }
-    const themedCss = buildCopyCss(css);
-    const parser = createMarkdownParser({
-      showMacBar: shouldRenderMacCodeBarNode(themedCss, options.showMacBar),
+    const rendered = await renderOffscreenContent(markdown, css, {
+      widthPx: 760,
+      forWechat: true,
+      showMacBar: options.showMacBar,
     });
-    const rawHtml = parser.render(markdown);
-    const sanitizedCss = stripCounterPseudoRules(themedCss);
-    const sourceHtml = getLinkToFootnoteEnabled()
-      ? convertLinksToFootnotes(rawHtml)
-      : rawHtml;
-    const materializedHtml = materializeCounterPseudoContent(
-      sourceHtml,
-      themedCss,
-    );
-    const styledHtml = processHtml(materializedHtml, sanitizedCss, true, true);
-    const resolvedHtml = resolveInlineStyleVariablesForCopy(styledHtml);
-    // 转换 checkbox 为 emoji，微信不支持 input 标签
-    const finalHtml = convertCheckboxesToEmoji(resolvedHtml);
-
-    container.innerHTML = finalHtml;
-    await renderMermaidBlocks(container);
-    await renderTableBlocks(container);
-    normalizeCopyContainer(container);
+    container = rendered.container;
 
     let copied = false;
 
@@ -237,6 +164,6 @@ export async function copyToWechat(
     toast.error(`复制失败: ${errorMsg}`);
     throw error;
   } finally {
-    document.body.removeChild(container);
+    container?.remove();
   }
 }
