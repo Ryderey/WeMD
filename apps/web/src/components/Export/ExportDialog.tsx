@@ -11,6 +11,7 @@ import {
 import {
   buildExport,
   capturePages,
+  capturePage,
   resolveExportTitle,
   buildExportBaseName,
   buildFileNames,
@@ -22,6 +23,7 @@ import {
   type ExportMode,
   type ExportFormat,
   type BuiltExport,
+  type OversizedPageInfo,
 } from "../../services/export/exportService";
 import "./ExportDialog.css";
 
@@ -34,7 +36,6 @@ const STORAGE_KEYS = {
 
 const PREVIEW_DEBOUNCE_MS = 300;
 const PREVIEW_SCALE = 0.25;
-const PREVIEW_MAX_THUMBS = 3;
 const SINGLE_FILE_WARN_BYTES = 32 * 1024 * 1024;
 
 const readSetting = (key: string, fallback: string): string => {
@@ -69,8 +70,13 @@ interface PreviewState {
   thumbs: string[];
   totalPages: number;
   pageSize: { width: number; height: number };
-  oversizedCount: number;
+  oversizedPages: OversizedPageInfo[];
   tooTall: boolean;
+}
+
+interface LightboxState {
+  index: number;
+  hiRes: string | null;
 }
 
 export function ExportDialog({ open, onClose }: ExportDialogProps) {
@@ -78,13 +84,17 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [lightbox, setLightbox] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<LightboxState | null>(null);
+  const [lightboxLoading, setLightboxLoading] = useState(false);
 
   const markdown = useEditorStore((state) => state.markdown);
   const currentFilePath = useEditorStore((state) => state.currentFilePath);
 
   const runIdRef = useRef(0);
   const objectUrlsRef = useRef<string[]>([]);
+  /** 预览期间保留离屏页面，供 lightbox 按需高清截图 */
+  const builtRef = useRef<BuiltExport | null>(null);
+  const hiResRef = useRef<Map<number, string>>(new Map());
 
   const ratio = useMemo(
     () =>
@@ -108,6 +118,11 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
 
   const revokeUrls = (urls: string[]) => {
     urls.forEach((url) => URL.revokeObjectURL(url));
+  };
+
+  const clearHiRes = () => {
+    hiResRef.current.forEach((url) => URL.revokeObjectURL(url));
+    hiResRef.current.clear();
   };
 
   // 实时预览：设置或内容变更后 debounce 重建
@@ -141,6 +156,9 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
         const thumbs = blobs.map((blob) => URL.createObjectURL(blob));
         revokeUrls(objectUrlsRef.current);
         objectUrlsRef.current = thumbs;
+        builtRef.current?.dispose();
+        builtRef.current = built;
+        clearHiRes();
         setPreview({
           thumbs,
           totalPages: built.totalPages,
@@ -148,10 +166,9 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
             settings.mode === "paged"
               ? { width: ratio.width, height: ratio.height }
               : { width: 1080, height: 0 },
-          oversizedCount: built.oversizedCount,
+          oversizedPages: built.oversizedPages,
           tooTall: false,
         });
-        built.dispose();
       } catch (error) {
         built?.dispose();
         if (runId !== runIdRef.current) return;
@@ -162,7 +179,7 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
             thumbs: [],
             totalPages: 0,
             pageSize,
-            oversizedCount: 0,
+            oversizedPages: [],
             tooTall: true,
           });
         } else {
@@ -180,16 +197,43 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
     if (open) return;
     revokeUrls(objectUrlsRef.current);
     objectUrlsRef.current = [];
+    builtRef.current?.dispose();
+    builtRef.current = null;
+    clearHiRes();
     setPreview(null);
     setLightbox(null);
   }, [open]);
 
+  // 点击缩略图：优先用缓存高清，否则按需 scale=1 截图
+  const openLightbox = async (index: number) => {
+    setLightbox({ index, hiRes: hiResRef.current.get(index) ?? null });
+    if (hiResRef.current.has(index)) return;
+    const built = builtRef.current;
+    if (!built) return;
+    setLightboxLoading(true);
+    try {
+      const blob = await capturePage(built, index, { scale: 1 });
+      const url = URL.createObjectURL(blob);
+      hiResRef.current.set(index, url);
+      setLightbox((current) =>
+        current && current.index === index ? { index, hiRes: url } : current,
+      );
+    } catch (error) {
+      console.error("[ExportDialog] 高清预览生成失败", error);
+    } finally {
+      setLightboxLoading(false);
+    }
+  };
+
   const handleExport = async () => {
     if (isEmpty || exporting) return;
 
-    if (preview && preview.oversizedCount > 0) {
+    if (preview && preview.oversizedPages.length > 0) {
+      const pageList = preview.oversizedPages
+        .map((item) => item.page)
+        .join("、");
       const confirmed = window.confirm(
-        `${preview.oversizedCount} 个块超出一页高度，将等比缩小适配到单页，是否继续？`,
+        `第 ${pageList} 页含超长块，将等比缩小适配到单页，是否继续？`,
       );
       if (!confirmed) return;
     }
@@ -392,38 +436,62 @@ export function ExportDialog({ open, onClose }: ExportDialogProps) {
                     </span>
                   )}
               </div>
-              {preview && preview.oversizedCount > 0 && (
+              {preview && preview.oversizedPages.length > 0 && (
                 <div className="export-preview-warn export-preview-warn-block">
-                  {preview.oversizedCount} 个块超出一页高度，导出时将等比缩小
+                  第{" "}
+                  {preview.oversizedPages.map((item) => item.page).join("、")}{" "}
+                  页含超长块，导出时将等比缩小
                 </div>
               )}
               <div className="export-preview-list">
-                {preview?.thumbs
-                  .slice(0, PREVIEW_MAX_THUMBS)
-                  .map((thumb, index) => (
+                {preview?.thumbs.map((thumb, index) => {
+                  const oversizedInfo = preview.oversizedPages.find(
+                    (item) => item.page === index + 1,
+                  );
+                  return (
                     <button
                       key={thumb}
                       type="button"
-                      className="export-preview-thumb"
-                      onClick={() => setLightbox(thumb)}
+                      className={`export-preview-thumb${
+                        oversizedInfo ? " is-oversized" : ""
+                      }`}
+                      title={
+                        oversizedInfo
+                          ? `超长块：${oversizedInfo.excerpt}`
+                          : undefined
+                      }
+                      onClick={() => openLightbox(index)}
                     >
                       <img src={thumb} alt={`第 ${index + 1} 页预览`} />
+                      <span className="export-preview-page-no">
+                        {index + 1}
+                      </span>
+                      {oversizedInfo && (
+                        <span className="export-preview-oversized-badge">
+                          超长块
+                        </span>
+                      )}
                     </button>
-                  ))}
-                {preview && preview.totalPages > PREVIEW_MAX_THUMBS && (
-                  <div className="export-preview-more">
-                    +{preview.totalPages - PREVIEW_MAX_THUMBS}
-                  </div>
-                )}
+                  );
+                })}
               </div>
             </>
           )}
         </div>
       </div>
 
-      {lightbox && (
+      {lightbox && preview && (
         <div className="export-lightbox" onClick={() => setLightbox(null)}>
-          <img src={lightbox} alt="预览大图" />
+          {lightboxLoading && !lightbox.hiRes && (
+            <span className="export-lightbox-loading">高清预览生成中…</span>
+          )}
+          <img
+            src={lightbox.hiRes ?? preview.thumbs[lightbox.index]}
+            alt={`第 ${lightbox.index + 1} 页预览大图`}
+          />
+          <span className="export-lightbox-counter">
+            {lightbox.index + 1} / {preview.totalPages}
+          </span>
         </div>
       )}
     </Modal>

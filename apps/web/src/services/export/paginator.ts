@@ -72,6 +72,8 @@ export interface PagePlan {
   pages: number[][];
   /** 超出页可用高度的块序号 */
   oversized: number[];
+  /** 含超长块的页序号（0-based，与 pages 对应） */
+  oversizedPages: number[];
 }
 
 /**
@@ -85,6 +87,7 @@ export function planPages(
   const availableHeight = getAvailableHeight(layout);
   const pages: number[][] = [];
   const oversized: number[] = [];
+  const oversizedPages: number[] = [];
   let currentPage: number[] = [];
   let usedHeight = 0;
 
@@ -101,6 +104,7 @@ export function planPages(
       oversized.push(block.index);
       flush();
       pages.push([block.index]);
+      oversizedPages.push(pages.length - 1);
       continue;
     }
     if (currentPage.length > 0 && usedHeight + block.height > availableHeight) {
@@ -111,7 +115,7 @@ export function planPages(
   }
   flush();
 
-  return { pages, oversized };
+  return { pages, oversized, oversizedPages };
 }
 
 /**

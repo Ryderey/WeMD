@@ -38,7 +38,11 @@ describe("planPages", () => {
   const available = getAvailableHeight(layout);
 
   it("空内容返回空分页", () => {
-    expect(planPages([], layout)).toEqual({ pages: [], oversized: [] });
+    expect(planPages([], layout)).toEqual({
+      pages: [],
+      oversized: [],
+      oversizedPages: [],
+    });
   });
 
   it("单页放得下时合并为一页", () => {
@@ -72,6 +76,18 @@ describe("planPages", () => {
     const plan = planPages(blocks, layout);
     expect(plan.pages).toEqual([[0], [1], [2]]);
     expect(plan.oversized).toEqual([1]);
+  });
+
+  it("oversizedPages 与 pages 页号对应", () => {
+    const blocks = [
+      { index: 0, height: available + 10 },
+      { index: 1, height: 300 },
+      { index: 2, height: 300 },
+      { index: 3, height: available + 20 },
+    ];
+    const plan = planPages(blocks, layout);
+    expect(plan.pages).toEqual([[0], [1, 2], [3]]);
+    expect(plan.oversizedPages).toEqual([0, 2]);
   });
 });
 

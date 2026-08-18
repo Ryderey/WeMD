@@ -34,12 +34,21 @@ export interface ExportSettings {
   format: ExportFormat;
 }
 
+export interface OversizedPageInfo {
+  /** 页号（1-based） */
+  page: number;
+  /** 超长块文本摘要，供提示展示 */
+  excerpt: string;
+}
+
 export interface BuiltExport {
   /** 页容器列表（长图模式仅 1 个） */
   pages: HTMLElement[];
   layout: PageLayout;
   /** 超长块数量（仅切图模式） */
   oversizedCount: number;
+  /** 含超长块的页信息（仅切图模式） */
+  oversizedPages: OversizedPageInfo[];
   totalPages: number;
   background: string;
   /** 释放离屏 DOM */
@@ -156,16 +165,28 @@ const measureBlocks = (contentRoot: HTMLElement): BlockMeasure[] => {
   });
 };
 
+/** 压缩空白并截断的块文本摘要 */
+const blockExcerpt = (block: HTMLElement): string =>
+  (block.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 24);
+
 const buildPagedPages = (
   contentRoot: HTMLElement,
   layout: PageLayout,
   background: string,
   watermark: string,
-): { pages: HTMLElement[]; oversizedCount: number } => {
+): {
+  pages: HTMLElement[];
+  oversizedCount: number;
+  oversizedPages: OversizedPageInfo[];
+} => {
   const blocks = Array.from(contentRoot.children) as HTMLElement[];
   const measures = measureBlocks(contentRoot);
   const plan = planPages(measures, layout);
   const totalPages = plan.pages.length;
+  const oversizedPages = plan.oversizedPages.map((pageIndex) => ({
+    page: pageIndex + 1,
+    excerpt: blockExcerpt(blocks[plan.pages[pageIndex][0]]),
+  }));
 
   const pages = plan.pages.map((blockIndexes, pageIndex) => {
     const page = createPageElement(layout, background);
@@ -188,7 +209,11 @@ const buildPagedPages = (
     return page;
   });
 
-  return { pages, oversizedCount: plan.oversized.length };
+  return {
+    pages,
+    oversizedCount: plan.oversized.length,
+    oversizedPages,
+  };
 };
 
 const buildLongPage = (
@@ -259,6 +284,7 @@ export async function buildExport(
         : {
             pages: buildLongPage(contentRoot, layout, background),
             oversizedCount: 0,
+            oversizedPages: [] as OversizedPageInfo[],
           };
 
     pages.pages.forEach((page) => host.appendChild(page));
@@ -267,6 +293,7 @@ export async function buildExport(
       pages: pages.pages,
       layout,
       oversizedCount: pages.oversizedCount,
+      oversizedPages: pages.oversizedPages,
       totalPages: pages.pages.length,
       background,
       dispose,
@@ -283,6 +310,21 @@ export interface CaptureOptions {
   /** 截图缩放，预览用低值 */
   scale?: number;
   format?: ExportFormat;
+}
+
+/** 单页截图（lightbox 高清预览用） */
+export async function capturePage(
+  built: BuiltExport,
+  pageIndex: number,
+  options: CaptureOptions = {},
+): Promise<Blob> {
+  const { scale = 1, format = "png" } = options;
+  return domToBlob(built.pages[pageIndex], {
+    scale,
+    backgroundColor: built.background,
+    type: format === "jpeg" ? "image/jpeg" : "image/png",
+    quality: 0.92,
+  });
 }
 
 /** 逐页截图为 Blob，顺序执行避免大 canvas 峰值内存叠加 */

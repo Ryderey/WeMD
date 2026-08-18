@@ -10,7 +10,7 @@
 .modal-panel.modal-export .modal-body {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .export-dialog {
@@ -161,13 +161,16 @@
 }
 
 .export-preview-list {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 12px;
-  align-items: flex-start;
+  align-items: start;
+  max-height: 560px;
+  overflow-y: auto;
 }
 
 .export-preview-thumb {
+  position: relative;
   padding: 0;
   border: var(--border-width) solid var(--border-light);
   border-radius: var(--radius-md);
@@ -178,20 +181,37 @@
 
 .export-preview-thumb img {
   display: block;
-  width: 180px;
+  width: 100%;
   height: auto;
 }
 
-.export-preview-more {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 180px;
-  height: 120px;
-  border: var(--border-width) dashed var(--border-light);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-size: 14px;
+/* 含超长块的页：红框 + 角标 */
+.export-preview-thumb.is-oversized {
+  border: 2px solid #dc2626;
+}
+
+.export-preview-page-no {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.export-preview-oversized-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .export-preview-empty,
@@ -225,10 +245,32 @@
 }
 
 .export-lightbox img {
-  max-width: 100%;
-  max-height: 100%;
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-xl);
+}
+
+.export-lightbox-counter {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.export-lightbox-loading {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+  font-size: 13px;
 }
 
 /* ── 移动端：上下结构，预览横滑 ── */
@@ -240,8 +282,15 @@
   }
 
   .export-preview-list {
+    display: flex;
     flex-wrap: nowrap;
     overflow-x: auto;
+    overflow-y: hidden;
+    max-height: none;
+  }
+
+  .export-preview-thumb {
+    flex: 0 0 140px;
   }
 
   .export-preview-thumb img {
