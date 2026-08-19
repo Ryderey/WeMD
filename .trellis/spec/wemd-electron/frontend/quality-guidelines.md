@@ -32,7 +32,13 @@ Questions to answer:
 
 <!-- Patterns that must always be used -->
 
-(To be filled by the team)
+### Embedded server packaging
+
+Desktop release builds that promise an embedded Nest service must use the
+repository build entry point that builds and deploys
+`apps/electron/resources/server`. Calling an Electron-only `build:*` script
+does not prepare that ignored resource directory. Verify the packaged output
+contains `resources/server/dist/main.js` and its production dependencies.
 
 ---
 

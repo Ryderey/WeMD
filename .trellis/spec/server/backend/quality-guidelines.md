@@ -60,6 +60,14 @@ Verify new direct runtime imports with:
 pnpm --filter @wemd/server exec node -e "require('multer')"
 ```
 
+### Embedded runtime compatibility
+
+The production server is launched by Electron's `utilityProcess`, so every
+runtime dependency must support the Node.js version bundled with the pinned
+Electron release. Do not select dependency versions from the developer's host
+Node version alone. Check the dependency's `engines.node` field against the
+Electron runtime before updating the lockfile.
+
 ---
 
 ## Testing Requirements

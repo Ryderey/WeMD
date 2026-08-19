@@ -1,0 +1,4 @@
+{"file":".trellis/spec/server/backend/index.md","reason":"Check server package compliance."}
+{"file":".trellis/spec/server/backend/quality-guidelines.md","reason":"Verify direct runtime dependency ownership and resolution."}
+{"file":".trellis/spec/wemd-electron/frontend/index.md","reason":"Check Electron package compliance."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Verify the full development and packaging startup path."}

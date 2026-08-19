@@ -6,6 +6,8 @@ import * as http from 'http';
 
 // 内嵌图床服务固定监听端口（避开常用端口冲突）
 const EMBEDDED_SERVER_PORT = 14000;
+const SERVER_START_TIMEOUT_MS = 15_000;
+const SERVER_POLL_INTERVAL_MS = 500;
 
 let devServerChild: ChildProcess | null = null;
 let prodServerProcess: UtilityProcess | null = null;
@@ -27,6 +29,22 @@ export function isServerRunning(port: number): Promise<boolean> {
         });
         req.on('error', () => resolve(false));
     });
+}
+
+export async function waitForServer(
+    port: number,
+    timeoutMs = SERVER_START_TIMEOUT_MS,
+    probe: (port: number) => Promise<boolean> = isServerRunning,
+    pollIntervalMs = SERVER_POLL_INTERVAL_MS,
+): Promise<boolean> {
+    const deadline = Date.now() + timeoutMs;
+    if (await probe(port)) return true;
+    while (Date.now() < deadline) {
+        const remainingMs = deadline - Date.now();
+        await new Promise((resolve) => setTimeout(resolve, Math.min(pollIntervalMs, remainingMs)));
+        if (await probe(port)) return true;
+    }
+    return false;
 }
 
 // 解析 KEY=VALUE 格式的环境变量文件（忽略注释与空行）
@@ -79,8 +97,7 @@ function startProdServer() {
     const serverDir = path.join(process.resourcesPath, 'server');
     const entry = path.join(serverDir, 'dist', 'main.js');
     if (!fs.existsSync(entry)) {
-        console.warn(`[server-launcher] 未找到内嵌服务产物，跳过启动: ${entry}`);
-        return;
+        throw new Error(`未找到内嵌服务产物: ${entry}`);
     }
 
     // 微信图床凭据等环境变量来自用户数据目录的 server.env
@@ -120,6 +137,11 @@ export async function startBundledServer(): Promise<void> {
     } else {
         startDevServer();
     }
+    if (!await waitForServer(EMBEDDED_SERVER_PORT)) {
+        const mode = app.isPackaged ? '打包' : '开发';
+        throw new Error(`${mode}模式下 Nest 服务未能在 ${SERVER_START_TIMEOUT_MS / 1000} 秒内监听 ${EMBEDDED_SERVER_PORT} 端口`);
+    }
+    console.log(`[server-launcher] Nest 服务已就绪（PORT=${EMBEDDED_SERVER_PORT}）`);
 }
 
 // 应用退出时终止由本进程拉起的服务

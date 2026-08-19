@@ -1,0 +1,4 @@
+{"file":".trellis/spec/server/backend/index.md","reason":"Server package conventions and quality requirements."}
+{"file":".trellis/spec/server/backend/quality-guidelines.md","reason":"Direct runtime dependency ownership rule."}
+{"file":".trellis/spec/wemd-electron/frontend/index.md","reason":"Electron package guidelines."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Startup path crosses Electron, Nest, and release packaging."}

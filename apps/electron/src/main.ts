@@ -847,7 +847,14 @@ app.whenReady().then(() => {
     createMenu();
 
     // 自动拉起内嵌图床服务（端口已被占用时自动复用现有服务）
-    void startBundledServer();
+    void startBundledServer().catch((error) => {
+        console.error('[server-launcher] 内嵌 Nest 服务启动失败，图床及图片代理功能将不可用:', error);
+        const message = error instanceof Error ? error.message : String(error);
+        dialog.showErrorBox(
+            '内嵌服务启动失败',
+            `图床及图片代理功能暂不可用，编辑功能不受影响。\n\n${message}`,
+        );
+    });
 
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
