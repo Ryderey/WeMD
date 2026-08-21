@@ -10,4 +10,7 @@ export interface HistorySnapshot {
   savedAt: string;
 }
 
-export type HistorySnapshotInput = Omit<HistorySnapshot, 'id' | 'savedAt' | 'createdAt'>;
+export type HistorySnapshotInput = Omit<
+  HistorySnapshot,
+  "id" | "savedAt" | "createdAt"
+>;
