@@ -55,7 +55,7 @@ export default defineConfig({
       },
       workbox: {
         // 本地打包的字体（woff2）与 MathJax 一起预缓存，保证离线写作与公式链路
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,webmanifest}"],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,webp,woff2,webmanifest}"],
         // tex-svg.js 为 2.11 MB，超过默认 2 MiB 上限；公式图片化是复制链路核心，必须离线可用
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallback: "index.html",

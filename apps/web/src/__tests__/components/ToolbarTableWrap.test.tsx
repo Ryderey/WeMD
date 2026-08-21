@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Toolbar } from "../../components/Editor/Toolbar";
+import { StorageProvider } from "../../storage/StorageContext";
 
 describe("Toolbar 表格自动换行开关", () => {
   beforeEach(() => {
@@ -18,7 +19,11 @@ describe("Toolbar 表格自动换行开关", () => {
   });
 
   it("在外链转脚注旁切换并立即更新按钮状态", () => {
-    render(<Toolbar onInsert={vi.fn()} />);
+    render(
+      <StorageProvider>
+        <Toolbar onInsert={vi.fn()} />
+      </StorageProvider>,
+    );
 
     const footnoteButton = screen.getByRole("button", {
       name: "外链转脚注：关闭",

@@ -15,6 +15,11 @@ const ImageHostSettings = lazy(() =>
     default: m.ImageHostSettings,
   })),
 );
+const AiSettings = lazy(() =>
+  import("../Settings/AiSettings").then((m) => ({
+    default: m.AiSettings,
+  })),
+);
 import {
   Layers,
   Palette,
@@ -30,12 +35,20 @@ import { useUITheme } from "../../hooks/useUITheme";
 import { useWindowControls } from "../../hooks/useWindowControls";
 import { resolveAppAssetPath } from "../../utils/assetPath";
 import { Modal, FloatingToolbarButton, WindowControls } from "../common";
+import { AI_SETTINGS_OPEN_EVENT } from "../../services/ai/aiConfig";
 
 export function Header() {
   const { copyToWechat, copyAsHtml } = useEditorStore();
   const [showThemePanel, setShowThemePanel] = useState(false);
   const [showStorageModal, setShowStorageModal] = useState(false);
   const [showImageHostModal, setShowImageHostModal] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+  useEffect(() => {
+    const open = () => setShowAiModal(true);
+    window.addEventListener(AI_SETTINGS_OPEN_EVENT, open);
+    return () => window.removeEventListener(AI_SETTINGS_OPEN_EVENT, open);
+  }, []);
+
   const uiTheme = useUITheme((state) => state.theme);
   const setTheme = useUITheme((state) => state.setTheme);
   const { isElectron, isWindows, platform } = useWindowControls();
@@ -166,6 +179,12 @@ export function Header() {
             >
               文章主题
             </button>
+            <button
+              className="header-nav-button"
+              onClick={() => setShowAiModal(true)}
+            >
+              AI 优化
+            </button>
           </nav>
         </div>
 
@@ -241,6 +260,23 @@ export function Header() {
           }
         >
           <StorageModeSelector />
+        </Suspense>
+      </Modal>
+
+      <Modal
+        open={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        title="AI 优化"
+        description="配置模型后，在编辑器中选中文字即可润色、精简或改写"
+      >
+        <Suspense
+          fallback={
+            <div style={{ padding: "20px", textAlign: "center" }}>
+              loading...
+            </div>
+          }
+        >
+          <AiSettings onClose={() => setShowAiModal(false)} />
         </Suspense>
       </Modal>
 

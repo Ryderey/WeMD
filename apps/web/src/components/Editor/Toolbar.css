@@ -10,6 +10,67 @@
   flex-wrap: nowrap;
 }
 
+.toolbar-full-only {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.toolbar-full-only > * {
+  flex: none;
+}
+
+.toolbar-compact-menu,
+.toolbar-compact-help,
+.toolbar-compact-ai {
+  display: none;
+}
+
+.md-toolbar.is-compact .toolbar-full-only {
+  display: none;
+}
+
+.md-toolbar.is-compact .toolbar-compact-menu {
+  display: inline-block;
+}
+
+.toolbar-compact-dropdown {
+  right: 0;
+  left: auto;
+  width: min(280px, calc(100vw - 28px));
+  max-height: min(70vh, 460px);
+  overflow-y: auto;
+}
+
+.toolbar-compact-dropdown .toolbar-compact-divider {
+  height: 1px;
+  margin: 3px 4px;
+  background: var(--border-light);
+}
+
+.toolbar-compact-dropdown .toolbar-compact-ai,
+.toolbar-compact-dropdown .toolbar-compact-help {
+  display: block;
+}
+
+.toolbar-compact-dropdown .toolbar-compact-ai .ai-optimize-group {
+  justify-content: flex-start;
+  width: 100%;
+  padding: 2px 4px;
+}
+
+.toolbar-compact-dropdown .toolbar-compact-help .md-toolbar-dropdown-container {
+  display: block;
+}
+
+.toolbar-compact-dropdown .toolbar-compact-help .md-toolbar-btn {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+}
+
 .md-toolbar-btn {
   display: flex;
   align-items: center;
