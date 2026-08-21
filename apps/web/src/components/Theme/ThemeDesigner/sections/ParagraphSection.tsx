@@ -2,6 +2,7 @@ import type { SectionProps } from "../types";
 
 import { ColorSelector } from "../../ColorSelector";
 import { SliderInput } from "../SliderInput";
+import { Switch } from "../../../common";
 
 export function ParagraphSection({ variables, updateVariable }: SectionProps) {
   return (
@@ -19,26 +20,20 @@ export function ParagraphSection({ variables, updateVariable }: SectionProps) {
 
       <div className="designer-field-row">
         <span>段落首行缩进</span>
-        <label className="designer-switch">
-          <input
-            type="checkbox"
-            checked={variables.textIndent}
-            onChange={(e) => updateVariable("textIndent", e.target.checked)}
-          />
-          <span className="switch-slider"></span>
-        </label>
+        <Switch
+          label="段落首行缩进"
+          checked={variables.textIndent}
+          onChange={(value) => updateVariable("textIndent", value)}
+        />
       </div>
 
       <div className="designer-field-row">
         <span>两端对齐</span>
-        <label className="designer-switch">
-          <input
-            type="checkbox"
-            checked={variables.textJustify}
-            onChange={(e) => updateVariable("textJustify", e.target.checked)}
-          />
-          <span className="switch-slider"></span>
-        </label>
+        <Switch
+          label="两端对齐"
+          checked={variables.textJustify}
+          onChange={(value) => updateVariable("textJustify", value)}
+        />
       </div>
 
       <div className="designer-group-label mt-4">分割线</div>

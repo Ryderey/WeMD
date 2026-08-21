@@ -5,6 +5,7 @@ import {
   inlineCodeStyleOptions,
   codeBlockThemeOptions,
 } from "../../../../config/styleOptions";
+import { Switch } from "../../../common";
 
 interface CodeSectionProps extends SectionProps {
   setVariables: React.Dispatch<React.SetStateAction<DesignerVariables>>;
@@ -80,14 +81,11 @@ export function CodeSection({
 
       <div className="designer-field-row">
         <span>Mac 风格控制栏</span>
-        <label className="designer-switch">
-          <input
-            type="checkbox"
-            checked={variables.showMacBar}
-            onChange={(e) => updateVariable("showMacBar", e.target.checked)}
-          />
-          <span className="switch-slider"></span>
-        </label>
+        <Switch
+          label="Mac 风格控制栏"
+          checked={variables.showMacBar}
+          onChange={(value) => updateVariable("showMacBar", value)}
+        />
       </div>
 
       <div className="designer-field">

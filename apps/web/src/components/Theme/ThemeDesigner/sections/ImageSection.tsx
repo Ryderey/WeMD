@@ -1,6 +1,7 @@
 import type { SectionProps } from "../types";
 import { ColorSelector } from "../../ColorSelector";
 import { SliderInput } from "../SliderInput";
+import { Switch } from "../../../common";
 
 export function ImageSection({ variables, updateVariable }: SectionProps) {
   return (
@@ -28,14 +29,11 @@ export function ImageSection({ variables, updateVariable }: SectionProps) {
 
       <div className="designer-field-row">
         <span>阴影</span>
-        <label className="designer-switch">
-          <input
-            type="checkbox"
-            checked={variables.imageShadow}
-            onChange={(e) => updateVariable("imageShadow", e.target.checked)}
-          />
-          <span className="switch-slider" />
-        </label>
+        <Switch
+          label="阴影"
+          checked={variables.imageShadow}
+          onChange={(value) => updateVariable("imageShadow", value)}
+        />
       </div>
 
       <div className="designer-group-label mt-4">图片说明</div>

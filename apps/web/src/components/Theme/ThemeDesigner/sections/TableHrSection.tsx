@@ -1,5 +1,6 @@
 import type { SectionProps } from "../types";
 import { ColorSelector } from "../../ColorSelector";
+import { Switch } from "../../../common";
 
 export function TableHrSection({ variables, updateVariable }: SectionProps) {
   return (
@@ -43,14 +44,11 @@ export function TableHrSection({ variables, updateVariable }: SectionProps) {
       </div>
       <div className="designer-field-row">
         <span>斑马纹</span>
-        <label className="designer-switch">
-          <input
-            type="checkbox"
-            checked={variables.tableZebra}
-            onChange={(e) => updateVariable("tableZebra", e.target.checked)}
-          />
-          <span className="switch-slider"></span>
-        </label>
+        <Switch
+          label="斑马纹"
+          checked={variables.tableZebra}
+          onChange={(value) => updateVariable("tableZebra", value)}
+        />
       </div>
     </div>
   );

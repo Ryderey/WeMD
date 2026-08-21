@@ -1,5 +1,6 @@
 import type { SectionProps } from "../types";
 import { ColorSelector } from "../../ColorSelector";
+import { Switch } from "../../../common";
 
 export function OtherSection({ variables, updateVariable }: SectionProps) {
   return (
@@ -16,14 +17,11 @@ export function OtherSection({ variables, updateVariable }: SectionProps) {
       </div>
       <div className="designer-field-row">
         <span>显示下划线</span>
-        <label className="designer-switch">
-          <input
-            type="checkbox"
-            checked={variables.linkUnderline}
-            onChange={(e) => updateVariable("linkUnderline", e.target.checked)}
-          />
-          <span className="switch-slider"></span>
-        </label>
+        <Switch
+          label="显示下划线"
+          checked={variables.linkUnderline}
+          onChange={(value) => updateVariable("linkUnderline", value)}
+        />
       </div>
 
       {/* 文本样式 */}

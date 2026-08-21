@@ -1,8 +1,8 @@
 import type { SectionProps } from "../types";
 import { ColorSelector } from "../../ColorSelector";
 import { SliderInput } from "../SliderInput";
-import { Switch } from "../Switch";
 import { quoteStylePresets } from "../../../../config/styleOptions";
+import { Switch } from "../../../common";
 
 export function QuoteSection({ variables, updateVariable }: SectionProps) {
   return (
@@ -135,6 +135,7 @@ export function QuoteSection({ variables, updateVariable }: SectionProps) {
       <div className="designer-field-row">
         <span>内容居中</span>
         <Switch
+          label="引用文字内容居中"
           checked={variables.quoteTextCentered}
           onChange={(val) => updateVariable("quoteTextCentered", val)}
         />

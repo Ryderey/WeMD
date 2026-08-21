@@ -6,6 +6,7 @@ import {
   marginPresets,
   headingStylePresets,
 } from "../../../../config/styleOptions";
+import { Switch } from "../../../common";
 
 const headingTabs: { id: HeadingLevel; label: string }[] = [
   { id: "h1", label: "H1" },
@@ -39,16 +40,13 @@ export function HeadingSection({
           <label>样式预设</label>
           <div className="compact-switch">
             <span>居中</span>
-            <label className="designer-switch">
-              <input
-                type="checkbox"
-                checked={variables[activeHeading].centered}
-                onChange={(e) =>
-                  updateHeading(activeHeading, { centered: e.target.checked })
-                }
-              />
-              <span className="switch-slider"></span>
-            </label>
+            <Switch
+              label="标题内容居中"
+              checked={variables[activeHeading].centered ?? false}
+              onChange={(value) =>
+                updateHeading(activeHeading, { centered: value })
+              }
+            />
           </div>
         </div>
         <div className="designer-options">
