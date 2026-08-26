@@ -308,6 +308,7 @@ try {
 
 - Do not rely on the outermost copied element to retain background or padding; the WeChat editor may sanitize those styles.
 - A plain inner `div` may be unwrapped during paste. Use an inner `section` when a continuous article background must span block margins.
+- When serializing that continuous article-background layer to the clipboard, emit the styled `section` directly. A neutral outer block around the background `section` can become a leading empty paragraph in the WeChat editor.
 - Do not rely on CSS classes for compatibility-critical layout. WeChat may remove classes when a draft is saved and reopened while preserving semantic `section` elements and inline declarations. Fixed dimensions, overflow behavior, and intrinsic image sizing that must survive the copy pipeline belong inline.
 - Keep a browser-level paste check for structural compatibility. DOM-only tests cannot model WeChat's paste sanitizer.
 

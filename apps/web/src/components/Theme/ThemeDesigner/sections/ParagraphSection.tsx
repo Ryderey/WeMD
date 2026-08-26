@@ -51,11 +51,14 @@ export function ParagraphSection({ variables, updateVariable }: SectionProps) {
             { id: "dotted", label: "点线" },
             { id: "double", label: "双线" },
             { id: "pill", label: "短线" },
+            { id: "gradient", label: "渐变" },
           ].map((style) => (
             <button
               key={style.id}
               className={`option-btn ${variables.hrStyle === style.id ? "active" : ""}`}
-              onClick={() => updateVariable("hrStyle", style.id as any)}
+              onClick={() =>
+                updateVariable("hrStyle", style.id as typeof variables.hrStyle)
+              }
             >
               {style.label}
             </button>

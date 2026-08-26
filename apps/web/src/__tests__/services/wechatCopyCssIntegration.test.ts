@@ -237,6 +237,33 @@ describe("wechat copy css integration", () => {
     expect(hr!.style.paddingRight).not.toBe("48px");
   });
 
+  it("materializes the gradient divider color, height, and margin", () => {
+    const resolved = resolveInlineStyleVariablesForCopy(
+      processHtml(
+        "<hr />",
+        generateCSS({
+          ...defaultVariables,
+          hrStyle: "gradient",
+          hrColor: "#f2b233",
+          hrHeight: 2,
+          hrMargin: 25,
+        }),
+        true,
+        true,
+      ),
+    );
+    const container = document.createElement("div");
+    container.innerHTML = resolved;
+
+    const hr = container.querySelector("hr") as HTMLElement | null;
+    expect(hr?.style.height).toBe("2px");
+    expect(hr?.style.marginTop).toBe("25px");
+    expect(hr?.style.marginBottom).toBe("25px");
+    expect(hr?.style.backgroundImage).toContain("linear-gradient");
+    expect(hr?.style.backgroundImage).toContain("rgb(242, 178, 51)");
+    expect(hr?.style.borderTopWidth).toBe("0px");
+  });
+
   it("propagates #wemd background-color to child blocks after normalization (#52)", () => {
     const html = "<p>段落</p><blockquote><p>引用</p></blockquote>";
     const css = `

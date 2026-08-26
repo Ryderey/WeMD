@@ -194,6 +194,25 @@ describe("wechatCopyService clipboard strategy", () => {
     expect(htmlWrite?.[1]).toContain("background-color");
   });
 
+  it("copies page-background content without a neutral outer block", async () => {
+    mocked.processHtmlMock.mockReturnValue(
+      '<section id="wemd" style="background-color:#f2f7fc;"><p style="margin-top:18px;margin-bottom:18px;">段落A</p><p style="margin-top:18px;margin-bottom:18px;">段落B</p></section>',
+    );
+    const { setData } = mockNativeCopy();
+
+    await copyToWechat("test", "#wemd { background-color: #f2f7fc; }");
+
+    const htmlWrite = setData.mock.calls.find(([type]) => type === "text/html");
+    const snapshot = document.createElement("div");
+    snapshot.innerHTML = String(htmlWrite?.[1] ?? "");
+    const firstBlock = snapshot.firstElementChild as HTMLElement | null;
+
+    expect(firstBlock?.tagName).toBe("SECTION");
+    expect(firstBlock?.style.backgroundColor).toBe("rgb(242, 247, 252)");
+    expect(firstBlock?.querySelectorAll("p")).toHaveLength(2);
+    expect(firstBlock?.querySelector("p")?.style.marginTop).toBe("18px");
+  });
+
   it("copies the original WeChat image URL instead of a local preview URL", async () => {
     const wechatUrl = "http://mmbiz.qpic.cn/demo?from=appmsg";
     mocked.processHtmlMock.mockReturnValue(

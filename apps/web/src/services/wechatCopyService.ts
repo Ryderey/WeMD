@@ -6,6 +6,7 @@
 import toast from "react-hot-toast";
 import {
   normalizeCopyContainer,
+  serializeWechatCopyHtml,
   stripCopyMetadata,
 } from "./wechatCopyNormalizer";
 import { renderOffscreenContent } from "./export/renderContainer";
@@ -19,8 +20,10 @@ interface CopyToWechatOptions {
 
 // ── 剪贴板写入策略 ─────────────────────────────────
 
-const copyViaNativeExecCommand = (container: HTMLElement): boolean => {
-  const html = container.innerHTML;
+const copyViaNativeExecCommand = (
+  container: HTMLElement,
+  html: string,
+): boolean => {
   const text = getRenderedPlainText(container);
   const handleCopy = (event: ClipboardEvent) => {
     if (!event.clipboardData) return;
@@ -61,12 +64,13 @@ const getRenderedPlainText = (container: HTMLElement): string => {
 
 const copyViaElectronClipboard = async (
   container: HTMLElement,
+  html: string,
 ): Promise<{ success: boolean; error?: string } | null> => {
   const writeHTML = window.electron?.clipboard?.writeHTML;
   if (!writeHTML) return null;
 
   return writeHTML({
-    html: container.innerHTML,
+    html,
     text: getRenderedPlainText(container),
   });
 };
@@ -98,18 +102,19 @@ export async function copyToWechat(
       showMacBar: options.showMacBar,
     });
     container = rendered.container;
+    const html = serializeWechatCopyHtml(container);
 
     let copied = false;
 
     const preferElectronClipboard = shouldPreferElectronClipboard();
 
     if (!preferElectronClipboard) {
-      copied = copyViaNativeExecCommand(container);
+      copied = copyViaNativeExecCommand(container, html);
     }
 
     if (!copied && window.electron?.isElectron) {
       try {
-        const electronResult = await copyViaElectronClipboard(container);
+        const electronResult = await copyViaElectronClipboard(container, html);
         if (electronResult) {
           copied = electronResult.success;
           if (!electronResult.success) {
@@ -125,7 +130,7 @@ export async function copyToWechat(
     }
 
     if (!copied && preferElectronClipboard) {
-      copied = copyViaNativeExecCommand(container);
+      copied = copyViaNativeExecCommand(container, html);
     }
 
     // 最后回退到 Clipboard API
@@ -134,7 +139,7 @@ export async function copyToWechat(
         "[WeMD] native execCommand copy unavailable, fallback to Clipboard API",
       );
       try {
-        const blob = new Blob([container.innerHTML], { type: "text/html" });
+        const blob = new Blob([html], { type: "text/html" });
         const textBlob = new Blob([getRenderedPlainText(container)], {
           type: "text/plain",
         });

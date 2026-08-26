@@ -510,3 +510,38 @@ export const normalizeCopyContainer = (container: HTMLElement): void => {
   wrapRootContentWithBackground(container, rootBgColor);
   materializeTextColorForWechat(container);
 };
+
+/**
+ * 带文章底色时移除复制载荷中的中性外层，避免公众号将双层块结构粘贴为空行。
+ * 同时把外层继承样式补到实际承载底色的 section 上。
+ */
+export const serializeWechatCopyHtml = (container: HTMLElement): string => {
+  const root = container.firstElementChild;
+  if (!(root instanceof HTMLElement) || root.childNodes.length !== 1) {
+    return container.innerHTML;
+  }
+
+  const backgroundLayer = root.firstElementChild;
+  if (
+    !(backgroundLayer instanceof HTMLElement) ||
+    backgroundLayer.tagName !== "SECTION" ||
+    !backgroundLayer.style.getPropertyValue("background-color").trim() ||
+    backgroundLayer.style.getPropertyPriority("background-color") !==
+      "important"
+  ) {
+    return container.innerHTML;
+  }
+
+  const copyLayer = backgroundLayer.cloneNode(true) as HTMLElement;
+  for (let index = 0; index < root.style.length; index += 1) {
+    const property = root.style.item(index);
+    if (property && !copyLayer.style.getPropertyValue(property)) {
+      copyLayer.style.setProperty(
+        property,
+        root.style.getPropertyValue(property),
+        root.style.getPropertyPriority(property),
+      );
+    }
+  }
+  return copyLayer.outerHTML;
+};

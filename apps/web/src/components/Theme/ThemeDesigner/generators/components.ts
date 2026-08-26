@@ -145,6 +145,13 @@ ${getCodeThemeCSS(v.codeTheme)}
       `;
     }
 
+    if (style === "gradient") {
+      return `
+    height: ${height};
+    background: linear-gradient(to right, transparent, ${color}, transparent);
+      `;
+    }
+
     return `
     border-top: ${height} ${style} ${color};
     `;

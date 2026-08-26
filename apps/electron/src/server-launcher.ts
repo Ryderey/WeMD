@@ -6,7 +6,7 @@ import * as http from 'http';
 
 // 内嵌图床服务固定监听端口（避开常用端口冲突）
 const EMBEDDED_SERVER_PORT = 14000;
-const SERVER_START_TIMEOUT_MS = 15_000;
+const SERVER_START_TIMEOUT_MS = 30_000;
 const SERVER_POLL_INTERVAL_MS = 500;
 
 let devServerChild: ChildProcess | null = null;

@@ -94,7 +94,7 @@ export interface DesignerVariables {
   hrColor: string;
   hrHeight: number;
   hrMargin: number;
-  hrStyle: "solid" | "dashed" | "dotted" | "double" | "pill";
+  hrStyle: "solid" | "dashed" | "dotted" | "double" | "pill" | "gradient";
 
   // 列表
   ulStyle: string;
