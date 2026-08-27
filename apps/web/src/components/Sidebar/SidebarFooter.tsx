@@ -1,7 +1,20 @@
 import { Globe, BookOpen } from "lucide-react";
+import type { MouseEvent } from "react";
 import { useUITheme } from "../../hooks/useUITheme";
 import { resolveAppAssetPath } from "../../utils/assetPath";
 import "./SidebarFooter.css";
+
+function openExternalLink(event: MouseEvent<HTMLAnchorElement>): void {
+  const openExternal = window.electron?.shell?.openExternal;
+  const href = event.currentTarget.getAttribute("href");
+
+  if (!openExternal || !href) {
+    return;
+  }
+
+  event.preventDefault();
+  void openExternal(href);
+}
 
 const GithubIcon = ({ size = 24 }: { size?: number | string }) => (
   <svg
@@ -39,11 +52,12 @@ export function SidebarFooter() {
       </div>
       <div className="footer-links">
         <a
-          href="https://github.com/tenngoxars/WeMD"
+          href="https://github.com/Ryderey/WeMD"
           target="_blank"
           rel="noopener noreferrer"
           data-tooltip="GitHub 仓库"
           aria-label="GitHub 仓库"
+          onClick={openExternalLink}
         >
           <GithubIcon size={16} />
         </a>
@@ -53,6 +67,7 @@ export function SidebarFooter() {
           rel="noopener noreferrer"
           data-tooltip="官方网站"
           aria-label="官方网站"
+          onClick={openExternalLink}
         >
           <Globe size={16} />
         </a>
@@ -62,6 +77,7 @@ export function SidebarFooter() {
           rel="noopener noreferrer"
           data-tooltip="帮助文档"
           aria-label="帮助文档"
+          onClick={openExternalLink}
         >
           <BookOpen size={16} />
         </a>
