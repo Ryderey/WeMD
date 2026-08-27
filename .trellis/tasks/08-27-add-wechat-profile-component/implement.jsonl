@@ -1,0 +1,9 @@
+{"file":".trellis/spec/web/frontend/index.md","reason":"Web frontend package entry point and pre-development checklist."}
+{"file":".trellis/spec/web/frontend/components.md","reason":"Accessibility, semantic dialog/card interactions, and focus behavior."}
+{"file":".trellis/spec/web/frontend/state-management.md","reason":"Local UI state and resilient localStorage persistence conventions."}
+{"file":".trellis/spec/web/frontend/type-safety.md","reason":"Typed shared contracts and exported function requirements."}
+{"file":".trellis/spec/web/frontend/quality.md","reason":"Testing, lint, size, and WeChat paste compatibility requirements."}
+{"file":".trellis/spec/core/frontend/index.md","reason":"Core package frontend guidance entry point."}
+{"file":".trellis/spec/guides/code-reuse-thinking-guide.md","reason":"Reuse the shared parser and existing editor insertion/modal patterns."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Trace Markdown from dialog through editor, renderer, preview, and copy consumers."}
+{"file":".trellis/tasks/08-27-add-wechat-profile-component/research/reference-behavior.md","reason":"Authoritative mapping of the reference implementation to the requested narrow scope."}

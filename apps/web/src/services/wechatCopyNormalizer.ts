@@ -511,37 +511,79 @@ export const normalizeCopyContainer = (container: HTMLElement): void => {
   materializeTextColorForWechat(container);
 };
 
+const INHERITED_ROOT_STYLE_PROPERTIES = new Set([
+  "color",
+  "direction",
+  "font",
+  "font-family",
+  "font-feature-settings",
+  "font-kerning",
+  "font-size",
+  "font-stretch",
+  "font-style",
+  "font-variant",
+  "font-weight",
+  "letter-spacing",
+  "line-height",
+  "list-style",
+  "list-style-position",
+  "list-style-type",
+  "overflow-wrap",
+  "quotes",
+  "tab-size",
+  "text-align",
+  "text-indent",
+  "text-shadow",
+  "text-transform",
+  "visibility",
+  "white-space",
+  "word-break",
+  "word-spacing",
+]);
+
+const WECHAT_COPY_BOUNDARY_HTML =
+  '<p style="font-size: 0px; line-height: 0; margin: 0px;">&nbsp;</p>';
+
+const copyInheritedRootStyles = (
+  root: HTMLElement,
+  target: HTMLElement,
+): void => {
+  for (let index = 0; index < root.style.length; index += 1) {
+    const property = root.style.item(index);
+    if (
+      !property ||
+      (!INHERITED_ROOT_STYLE_PROPERTIES.has(property) &&
+        !property.startsWith("--")) ||
+      target.style.getPropertyValue(property)
+    ) {
+      continue;
+    }
+
+    target.style.setProperty(
+      property,
+      root.style.getPropertyValue(property),
+      root.style.getPropertyPriority(property),
+    );
+  }
+};
+
 /**
- * 带文章底色时移除复制载荷中的中性外层，避免公众号将双层块结构粘贴为空行。
- * 同时把外层继承样式补到实际承载底色的 section 上。
+ * 复制时只输出根容器的直接内容，避免公众号把中性外层解包为组件两侧的可见空段。
+ * 根级继承样式下沉到一级块，首尾增加零高度边界，兼容微信的粘贴选区处理。
  */
 export const serializeWechatCopyHtml = (container: HTMLElement): string => {
   const root = container.firstElementChild;
-  if (!(root instanceof HTMLElement) || root.childNodes.length !== 1) {
-    return container.innerHTML;
+  let content = container.innerHTML;
+
+  if (root instanceof HTMLElement && container.childElementCount === 1) {
+    const copyRoot = root.cloneNode(true) as HTMLElement;
+    Array.from(copyRoot.children).forEach((child) => {
+      if (child instanceof HTMLElement) {
+        copyInheritedRootStyles(copyRoot, child);
+      }
+    });
+    content = copyRoot.innerHTML;
   }
 
-  const backgroundLayer = root.firstElementChild;
-  if (
-    !(backgroundLayer instanceof HTMLElement) ||
-    backgroundLayer.tagName !== "SECTION" ||
-    !backgroundLayer.style.getPropertyValue("background-color").trim() ||
-    backgroundLayer.style.getPropertyPriority("background-color") !==
-      "important"
-  ) {
-    return container.innerHTML;
-  }
-
-  const copyLayer = backgroundLayer.cloneNode(true) as HTMLElement;
-  for (let index = 0; index < root.style.length; index += 1) {
-    const property = root.style.item(index);
-    if (property && !copyLayer.style.getPropertyValue(property)) {
-      copyLayer.style.setProperty(
-        property,
-        root.style.getPropertyValue(property),
-        root.style.getPropertyPriority(property),
-      );
-    }
-  }
-  return copyLayer.outerHTML;
+  return `${WECHAT_COPY_BOUNDARY_HTML}${content}${WECHAT_COPY_BOUNDARY_HTML}`;
 };

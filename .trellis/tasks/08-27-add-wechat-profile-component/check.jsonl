@@ -1,0 +1,7 @@
+{"file":".trellis/spec/web/frontend/index.md","reason":"Run the Web frontend Quality Check after implementation."}
+{"file":".trellis/spec/web/frontend/components.md","reason":"Check keyboard, modal, button, and nested interaction accessibility."}
+{"file":".trellis/spec/web/frontend/type-safety.md","reason":"Check exported contracts and avoid unsafe assertions."}
+{"file":".trellis/spec/web/frontend/quality.md","reason":"Check lint, tests, build, file size, and WeChat copy compatibility."}
+{"file":".trellis/spec/core/frontend/index.md","reason":"Run the Core package Quality Check for renderer changes."}
+{"file":".trellis/spec/guides/cross-layer-thinking-guide.md","reason":"Verify preview and both copy paths consume the same parser behavior."}
+{"file":".trellis/tasks/08-27-add-wechat-profile-component/research/reference-behavior.md","reason":"Compare the shipped behavior with the explicitly ported reference interactions."}

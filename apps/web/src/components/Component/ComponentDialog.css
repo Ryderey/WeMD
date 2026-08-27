@@ -1,0 +1,255 @@
+.component-dialog-modal {
+  width: min(860px, 94vw);
+}
+.component-dialog-intro {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.component-dialog-intro code,
+.component-card-info code,
+.component-card-detail pre {
+  font-family: var(--font-mono);
+}
+.component-dialog-intro code {
+  background: var(--bg-hover);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+.component-card {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.component-card.is-expanded {
+  border-color: color-mix(
+    in srgb,
+    var(--accent-primary) 45%,
+    var(--border-light)
+  );
+}
+.component-card-summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+}
+.component-card-summary:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
+}
+.component-card-icon {
+  align-items: center;
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  border-radius: var(--radius-md);
+  color: var(--accent-primary);
+  display: flex;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+}
+.component-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.component-card-info > div {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+.component-card-info code {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+.component-card-info small {
+  background: var(--bg-hover);
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  font-size: 11px;
+  padding: 1px 7px;
+}
+.component-card-info p {
+  color: var(--text-secondary);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.component-card-actions,
+.saved-accounts-header,
+.saved-account-form > div:last-child,
+.saved-accounts-list li {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+}
+.component-insert-button {
+  align-items: center;
+  background: #191919;
+  border: 0;
+  color: #fff;
+  display: inline-flex;
+  font-size: 12px;
+  gap: 5px;
+  padding: 7px 11px;
+}
+.component-insert-button:hover {
+  background: var(--accent-primary);
+}
+.component-expand-button,
+.saved-accounts-list li > button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary);
+  display: inline-flex;
+  justify-content: center;
+  padding: 6px;
+}
+.component-expand-button[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+.component-card-detail {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-light);
+  padding: 16px;
+}
+.mp-profile-fields {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.mp-profile-fields label {
+  display: grid;
+  gap: 4px;
+}
+.mp-profile-fields span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.mp-profile-fields em {
+  color: var(--error);
+  font-style: normal;
+}
+.mp-profile-fields input,
+.mp-profile-fields select {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  min-width: 0;
+  padding: 7px 9px;
+}
+.mp-profile-preview {
+  align-items: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  display: flex;
+  gap: 10px;
+  margin: 14px 0 10px;
+  padding: 10px;
+}
+.mp-profile-preview img,
+.saved-accounts-list img {
+  border-radius: 50%;
+  height: 32px;
+  object-fit: cover;
+  width: 32px;
+}
+.mp-profile-preview > svg {
+  background: var(--bg-hover);
+  border-radius: 50%;
+  color: var(--text-secondary);
+  height: 32px;
+  padding: 5px;
+  width: 32px;
+}
+.mp-profile-preview div,
+.saved-accounts-list span {
+  display: grid;
+  min-width: 0;
+}
+.mp-profile-preview span,
+.saved-accounts-list small {
+  color: var(--text-secondary);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.component-card-detail pre {
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  margin-bottom: 10px;
+  overflow-x: auto;
+  padding: 9px;
+  white-space: pre-wrap;
+}
+.saved-accounts-header {
+  justify-content: space-between;
+  margin-top: 18px;
+}
+.saved-accounts-header span,
+.saved-accounts-header button {
+  align-items: center;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 5px;
+}
+.saved-accounts-header button,
+.saved-account-form > div:last-child > button:first-child {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  padding: 5px 8px;
+}
+.saved-account-form {
+  border-top: 1px solid var(--border-light);
+  margin-top: 10px;
+  padding-top: 12px;
+}
+.saved-account-form > div:last-child {
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.saved-accounts-empty {
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 14px 0 2px;
+}
+.saved-accounts-list {
+  display: grid;
+  gap: 7px;
+  list-style: none;
+  margin-top: 10px;
+}
+.saved-accounts-list li {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 7px;
+}
+.saved-accounts-list li > span {
+  flex: 1;
+}
+.saved-accounts-list li > button:hover {
+  color: var(--accent-primary);
+}
+.saved-accounts-list li > button:last-child:hover {
+  color: var(--error);
+}
+@media (max-width: 640px) {
+  .mp-profile-fields {
+    grid-template-columns: 1fr;
+  }
+  .component-card-summary {
+    align-items: flex-start;
+  }
+  .component-card-actions {
+    flex-direction: column;
+  }
+}

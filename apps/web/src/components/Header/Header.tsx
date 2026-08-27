@@ -20,6 +20,11 @@ const ExportDialog = lazy(() =>
     default: m.ExportDialog,
   })),
 );
+const ComponentDialog = lazy(() =>
+  import("../Component/ComponentDialog").then((m) => ({
+    default: m.ComponentDialog,
+  })),
+);
 import {
   Layers,
   Palette,
@@ -27,6 +32,7 @@ import {
   Code,
   ImageIcon,
   Download,
+  Blocks,
   Sun,
   Moon,
   ChevronsUp,
@@ -122,6 +128,7 @@ export function Header() {
   const [showStorageModal, setShowStorageModal] = useState(false);
   const [showImageHostModal, setShowImageHostModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showComponentDialog, setShowComponentDialog] = useState(false);
   const uiTheme = useUITheme((state) => state.theme);
   const setTheme = useUITheme((state) => state.setTheme);
   const isStructuralismUI = uiTheme === "dark";
@@ -286,6 +293,14 @@ export function Header() {
               <span>导出图片</span>
             </button>
 
+            <button
+              className="btn-secondary"
+              onClick={() => setShowComponentDialog(true)}
+            >
+              <Blocks size={18} strokeWidth={2} />
+              <span>组件</span>
+            </button>
+
             <button className="btn-secondary" onClick={copyAsHtml}>
               <Code size={18} strokeWidth={2} />
               <span>复制 HTML</span>
@@ -355,6 +370,13 @@ export function Header() {
         <ExportDialog
           open={showExportModal}
           onClose={() => setShowExportModal(false)}
+        />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <ComponentDialog
+          open={showComponentDialog}
+          onClose={() => setShowComponentDialog(false)}
         />
       </Suspense>
     </>

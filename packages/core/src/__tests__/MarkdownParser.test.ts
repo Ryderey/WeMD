@@ -109,3 +109,43 @@ describe("MarkdownParser scroll image", () => {
     expect(html).not.toContain('class="scroll-image-viewport"');
   });
 });
+
+describe("MarkdownParser MpProfile", () => {
+  const render = (markdown: string) => createMarkdownParser().render(markdown);
+
+  it("renders a standalone profile with reference-compatible markup", () => {
+    const html = render(
+      '<MpProfile mpId="MzIx" nickname="Doocs" headimg="https://example.com/logo.png" signature="GitHub &amp; 开源" serviceType="2" verifyStatus="1" />',
+    );
+
+    expect(html).toContain(
+      'class="mp_profile_iframe_wrp custom_select_card_wrp"',
+    );
+    expect(html).toContain('data-pluginname="mpprofile"');
+    expect(html).toContain('data-id="MzIx"');
+    expect(html).toContain('data-nickname="Doocs"');
+    expect(html).toContain('data-headimg="https://example.com/logo.png"');
+    expect(html).toContain('data-signature="GitHub &amp; 开源"');
+    expect(html).toContain('data-service_type="2"');
+    expect(html).toContain('data-verify_status="1"');
+  });
+
+  it("defaults optional account classifications", () => {
+    const html = render('<MpProfile mpId="id" nickname="name" />');
+
+    expect(html).toContain('data-service_type="1"');
+    expect(html).toContain('data-verify_status="0"');
+  });
+
+  it.each([
+    '<MpProfile nickname="name" />',
+    'prefix <MpProfile mpId="id" nickname="name" />',
+    '<OtherProfile mpId="id" nickname="name" />',
+    '```html\n<MpProfile mpId="id" nickname="name" />\n```',
+    '<MpProfile mpId="id" nickname="name" unexpected="value" />',
+  ])("does not render invalid component-like text", (markdown) => {
+    const html = render(markdown);
+
+    expect(html).not.toContain("mp-common-profile");
+  });
+});

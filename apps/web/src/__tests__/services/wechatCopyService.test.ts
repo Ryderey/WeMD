@@ -205,12 +205,18 @@ describe("wechatCopyService clipboard strategy", () => {
     const htmlWrite = setData.mock.calls.find(([type]) => type === "text/html");
     const snapshot = document.createElement("div");
     snapshot.innerHTML = String(htmlWrite?.[1] ?? "");
-    const firstBlock = snapshot.firstElementChild as HTMLElement | null;
+    const boundaryBlocks = snapshot.querySelectorAll<HTMLElement>(":scope > p");
+    const backgroundBlock = snapshot.querySelector(
+      ":scope > section",
+    ) as HTMLElement | null;
 
-    expect(firstBlock?.tagName).toBe("SECTION");
-    expect(firstBlock?.style.backgroundColor).toBe("rgb(242, 247, 252)");
-    expect(firstBlock?.querySelectorAll("p")).toHaveLength(2);
-    expect(firstBlock?.querySelector("p")?.style.marginTop).toBe("18px");
+    expect(boundaryBlocks).toHaveLength(2);
+    expect(
+      Array.from(boundaryBlocks).every((node) => node.style.fontSize === "0px"),
+    ).toBe(true);
+    expect(backgroundBlock?.style.backgroundColor).toBe("rgb(242, 247, 252)");
+    expect(backgroundBlock?.querySelectorAll("p")).toHaveLength(2);
+    expect(backgroundBlock?.querySelector("p")?.style.marginTop).toBe("18px");
   });
 
   it("copies the original WeChat image URL instead of a local preview URL", async () => {

@@ -17,7 +17,11 @@ import { SaveIndicator } from "./SaveIndicator";
 import toast from "react-hot-toast";
 import "./MarkdownEditor.css";
 import { customKeymap } from "./editorShortcuts";
-import { insertTextAtSelection } from "./editorInsert";
+import {
+  EDITOR_INSERT_EVENT,
+  getEditorInsertText,
+  insertTextAtSelection,
+} from "./editorInsert";
 import { paragraphSelectionStyle } from "./mouseSelectionStyle";
 import {
   WECHAT_IMAGE_MAX_SIZE_BYTES,
@@ -234,6 +238,18 @@ export function MarkdownEditor() {
       changes: { from: 0, to: view.state.doc.length, insert: content },
     });
   }, [content]);
+
+  useEffect(() => {
+    const handleInsert = (event: Event) => {
+      const text = getEditorInsertText(event);
+      const view = viewRef.current;
+      if (text === null || !view) return;
+      insertTextAtSelection(view, text);
+    };
+
+    window.addEventListener(EDITOR_INSERT_EVENT, handleInsert);
+    return () => window.removeEventListener(EDITOR_INSERT_EVENT, handleInsert);
+  }, []);
 
   const wordCount = countWords(content);
   const lineCount = countLines(content);

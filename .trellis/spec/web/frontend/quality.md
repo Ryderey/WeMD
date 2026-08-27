@@ -308,9 +308,20 @@ try {
 
 - Do not rely on the outermost copied element to retain background or padding; the WeChat editor may sanitize those styles.
 - A plain inner `div` may be unwrapped during paste. Use an inner `section` when a continuous article background must span block margins.
-- When serializing that continuous article-background layer to the clipboard, emit the styled `section` directly. A neutral outer block around the background `section` can become a leading empty paragraph in the WeChat editor.
+- Serialize the root container's children directly for every WeChat copy. A neutral outer `div` around paragraphs or atomic `section` blocks can make the WeChat editor inject visible empty paragraphs while unwrapping it.
+- Before removing the root container, copy its missing inherited inline styles onto each direct element child. Add zero-font-size, zero-line-height, zero-margin `&nbsp;` paragraphs at the two clipboard boundaries so WeChat has editable selection anchors without visible blank lines.
 - Do not rely on CSS classes for compatibility-critical layout. WeChat may remove classes when a draft is saved and reopened while preserving semantic `section` elements and inline declarations. Fixed dimensions, overflow behavior, and intrinsic image sizing that must survive the copy pipeline belong inline.
 - Keep a browser-level paste check for structural compatibility. DOM-only tests cannot model WeChat's paste sanitizer.
+
+## Block Component Insertion
+
+- JSX-style Markdown components that render as block-level WeChat nodes must
+  be inserted on their own lines. Insert a leading and trailing newline around
+  the component snippet so adjacent Markdown cannot make the tag fail its
+  block parser rule.
+- Keep parsing at the shared `createMarkdownParser` boundary. Live preview,
+  HTML copy, and WeChat copy must consume the same component renderer rather
+  than implementing separate conversions.
 
 ---
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   normalizeCopyContainer,
+  serializeWechatCopyHtml,
   stripCopyMetadata,
 } from "../../services/wechatCopyNormalizer";
 
@@ -257,5 +258,46 @@ describe("wechatCopyNormalizer", () => {
 
     expect(innerP.style.backgroundColor).toBe("");
     expect(outerP?.style.backgroundColor).toBe("rgb(255, 255, 255)");
+  });
+
+  it("serializes root children directly with zero-height clipboard boundaries", () => {
+    const container = document.createElement("div");
+    container.innerHTML =
+      '<div style="font-family: serif; line-height: 1.8;"><p>上方正文。</p><section class="mp_profile_iframe_wrp"><mp-common-profile></mp-common-profile><br class="ProseMirror-trailingBreak"></section><p>下方正文。</p></div>';
+
+    const snapshot = document.createElement("div");
+    snapshot.innerHTML = serializeWechatCopyHtml(container);
+
+    expect(snapshot.children).toHaveLength(5);
+    expect(snapshot.children[0].tagName).toBe("P");
+    expect(snapshot.children[0].textContent).toBe("\u00a0");
+    expect((snapshot.children[0] as HTMLElement).style.fontSize).toBe("0px");
+    expect((snapshot.children[0] as HTMLElement).style.lineHeight).toBe("0");
+    expect((snapshot.children[0] as HTMLElement).style.margin).toBe("0px");
+    expect(snapshot.children[1].textContent).toBe("上方正文。");
+    expect(snapshot.children[2].tagName).toBe("SECTION");
+    expect(snapshot.children[3].textContent).toBe("下方正文。");
+    expect(snapshot.children[4].textContent).toBe("\u00a0");
+    expect(snapshot.querySelector(":scope > div")).toBeNull();
+  });
+
+  it("moves inherited root styles onto direct blocks before unwrapping", () => {
+    const container = document.createElement("div");
+    container.innerHTML =
+      '<div style="font-family: serif; line-height: 1.8; color: rgb(9, 9, 9); padding: 16px;"><p style="line-height: 2;">正文</p><section>组件</section></div>';
+
+    const snapshot = document.createElement("div");
+    snapshot.innerHTML = serializeWechatCopyHtml(container);
+    const paragraph = snapshot.children[1] as HTMLElement;
+    const section = snapshot.children[2] as HTMLElement;
+
+    expect(paragraph.style.fontFamily).toBe("serif");
+    expect(paragraph.style.lineHeight).toBe("2");
+    expect(paragraph.style.color).toBe("rgb(9, 9, 9)");
+    expect(section.style.fontFamily).toBe("serif");
+    expect(section.style.lineHeight).toBe("1.8");
+    expect(section.style.color).toBe("rgb(9, 9, 9)");
+    expect(paragraph.style.padding).toBe("");
+    expect(section.style.padding).toBe("");
   });
 });
