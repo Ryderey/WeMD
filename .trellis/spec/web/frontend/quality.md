@@ -310,6 +310,7 @@ try {
 - A plain inner `div` may be unwrapped during paste. Use an inner `section` when a continuous article background must span block margins.
 - Serialize the root container's children directly for every WeChat copy. A neutral outer `div` around paragraphs or atomic `section` blocks can make the WeChat editor inject visible empty paragraphs while unwrapping it.
 - Before removing the root container, copy its missing inherited inline styles onto each direct element child. Add zero-font-size, zero-line-height, zero-margin `&nbsp;` paragraphs at the two clipboard boundaries so WeChat has editable selection anchors without visible blank lines.
+- Atomic built-in components may keep intentional outer spacing in live preview, but the cloned WeChat clipboard DOM must clear their top/bottom margin and padding at the shared serializer boundary. Mark component roots explicitly, remove the marker before serialization, and cover every built-in together with a non-transparent article background so background wrappers cannot reintroduce gaps or white seams.
 - Do not rely on CSS classes for compatibility-critical layout. WeChat may remove classes when a draft is saved and reopened while preserving semantic `section` elements and inline declarations. Fixed dimensions, overflow behavior, and intrinsic image sizing that must survive the copy pipeline belong inline.
 - Keep a browser-level paste check for structural compatibility. DOM-only tests cannot model WeChat's paste sanitizer.
 

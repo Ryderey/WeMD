@@ -16,6 +16,10 @@
   border-radius: 4px;
   padding: 2px 5px;
 }
+.component-list {
+  display: grid;
+  gap: 8px;
+}
 .component-card {
   border: 1px solid var(--border-light);
   border-radius: var(--radius-lg);
@@ -116,31 +120,87 @@
   border-top: 1px solid var(--border-light);
   padding: 16px;
 }
-.mp-profile-fields {
+.component-fields {
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-.mp-profile-fields label {
+.component-fields label {
   display: grid;
   gap: 4px;
 }
-.mp-profile-fields span {
+.component-fields span {
   color: var(--text-secondary);
   font-size: 12px;
 }
-.mp-profile-fields em {
+.component-fields em {
   color: var(--error);
   font-style: normal;
 }
-.mp-profile-fields input,
-.mp-profile-fields select {
+.component-fields input,
+.component-fields select {
   background: var(--bg-primary);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   min-width: 0;
   padding: 7px 9px;
+}
+.component-preview {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  margin: 14px 0 10px;
+  padding: 12px;
+}
+.qrcode-preview {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.qrcode-preview img {
+  border-radius: 4px;
+  display: block;
+}
+.qrcode-preview span,
+.author-preview span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.author-preview {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+.author-preview > img,
+.author-preview > svg {
+  border-radius: 50%;
+  height: 56px;
+  object-fit: cover;
+  width: 56px;
+}
+.author-preview > svg {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  padding: 12px;
+}
+.author-preview > div {
+  display: grid;
+  gap: 4px;
+}
+.badge-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.badge-preview span {
+  border: 1px solid;
+  border-radius: 12px;
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 3px 10px;
 }
 .mp-profile-preview {
   align-items: center;
@@ -193,6 +253,10 @@
   justify-content: space-between;
   margin-top: 18px;
 }
+.saved-accounts-section {
+  border-top: 1px solid var(--border-light);
+  margin-top: 16px;
+}
 .saved-accounts-header span,
 .saved-accounts-header button {
   align-items: center;
@@ -243,7 +307,7 @@
   color: var(--error);
 }
 @media (max-width: 640px) {
-  .mp-profile-fields {
+  .component-fields {
     grid-template-columns: 1fr;
   }
   .component-card-summary {

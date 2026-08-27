@@ -55,6 +55,30 @@ pnpm --filter @wemd/core build
 - [x] Add serializer/copy regression tests and verify the fixed DOM through a
       second real WeChat paste without using phone preview.
 
+## 6. Add the remaining requested built-ins
+
+- [x] Replace the focused `MpProfile` parser with one fixed built-in-component
+      parser for `MpProfile`, `QRCodeBlock`, `AuthorBlock`, and `BadgeGroup`.
+- [x] Add reference-compatible renderers, defaults, escaping, and safe JSON
+      handling for the three new components.
+- [x] Generalize the dialog card/form interaction while retaining the
+      specialized saved-account flow for `MpProfile`.
+- [x] Add core renderer and web interaction/helper regression tests.
+- [x] Run the complete Core/Web tests, lint, production builds, diff check, and
+      focused DOM/copy-pipeline integration checks for all four dialog entries.
+
+## 7. Remove built-in component copy gaps
+
+- [x] Reproduce the author-card gap at the complete WeChat copy-pipeline seam.
+- [x] Verify zero-height clipboard boundaries and horizontal-only page padding
+      are not introducing the visible space.
+- [x] Mark fixed built-in roots and clear only their vertical margin/padding on
+      the cloned clipboard DOM, leaving live preview and ordinary article
+      spacing unchanged.
+- [x] Cover all four built-ins together with a non-transparent article
+      background in one focused regression; verify the continuous background
+      layer and every component root have no vertical blank space.
+
 Commands:
 
 ```powershell

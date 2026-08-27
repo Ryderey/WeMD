@@ -1,5 +1,29 @@
 # Reference behavior findings
 
+## Additional requested built-ins
+
+The user-provided path with `sync\_remote\_projtcts` does not exist locally;
+the repository already used for the original comparison is
+`D:\Work\sync_remote_projtcts\md`.
+
+- `QRCodeBlock` has `url` (required), `text` (`扫码访问`), and `size` (`150`).
+  It renders a centered QR image from `api.qrserver.com` plus a tertiary-color
+  caption.
+- `AuthorBlock` has `name` (required), `avatar`, and `bio`. It renders a
+  table-layout author row with a 56 px circular avatar.
+- `BadgeGroup` has JSON-array `tags` (required) and `color` (`#07c160`). It
+  renders a wrapping flex row of pill badges and treats invalid JSON as an empty
+  list.
+- The reference dialog quick-inserts each example. Expanding a card initializes
+  values from that example/defaults, exposes editable properties, shows a live
+  preview and snippet, validates required fields, and inserts the filled
+  snippet at the cursor. Only one card is expanded at a time.
+- Chrome UI smoke testing was attempted after implementation, but the current
+  machine no longer has the ChatGPT Chrome extension or native-host connection.
+  The acceptance evidence therefore uses focused DOM interaction tests plus a
+  full WeChat copy-pipeline integration test. Restoring browser control requires
+  reinstalling the Browser plugin from the ChatGPT plugin UI.
+
 Source inspected read-only:
 `D:\Work\sync_remote_projtcts\md`.
 
@@ -57,3 +81,21 @@ the profile template. The shared serializer now unwraps the root, preserves
 missing inherited root styles on direct blocks, and adds the reference-style
 zero-height boundaries. The fixed structure was verified by a second real
 paste; phone preview was not used.
+
+## AuthorBlock vertical-gap follow-up
+
+A later WeChat screenshot showed a different kind of gap around `AuthorBlock`.
+The complete copy-pipeline regression measured `16px` top/bottom margin plus
+`16px` top/bottom padding on the component root. The reference template owns
+those values; the zero-height clipboard anchors remained zero and the default
+theme root contributed horizontal padding only.
+
+The fix therefore keeps the reference template in preview but trims vertical
+margin/padding from every marked fixed built-in root on the cloned clipboard
+DOM. The regression covers `MpProfile`, `QRCodeBlock`, `AuthorBlock`, and
+`BadgeGroup` together with a non-transparent article background. It verifies
+that the continuous background layer and every component root remain free of
+vertical blank space and share the same background color. A second live DOM
+inspection could not be run because the Chrome extension and native-host
+manifest are currently absent; Browser plugin reinstallation is required
+before Chrome can be controlled again.

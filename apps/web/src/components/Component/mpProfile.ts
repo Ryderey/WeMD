@@ -1,44 +1,20 @@
-export interface MpProfileValues {
-  mpId: string;
-  nickname: string;
-  headimg: string;
-  signature: string;
-  serviceType: "1" | "2";
-  verifyStatus: "0" | "1" | "2";
-}
+import {
+  buildComponentSnippet,
+  MP_PROFILE_DEFINITION,
+  type MpProfileValues,
+} from "./builtInComponents";
+
+export {
+  EMPTY_MP_PROFILE,
+  MP_PROFILE_EXAMPLE,
+  type MpProfileValues,
+} from "./builtInComponents";
 
 export interface MpAccount extends MpProfileValues {
   id: string;
 }
 
 export const MP_ACCOUNTS_STORAGE_KEY = "wemd-mp-accounts";
-
-export const MP_PROFILE_EXAMPLE: MpProfileValues = {
-  mpId: "MzIxNjA5ODQ0OQ==",
-  nickname: "Doocs",
-  headimg:
-    "https://cdn-doocs.oss-cn-shenzhen.aliyuncs.com/gh/doocs/md/images/mp-logo.png",
-  signature: "GitHub 开源组织",
-  serviceType: "1",
-  verifyStatus: "1",
-};
-
-export const EMPTY_MP_PROFILE: MpProfileValues = {
-  mpId: "",
-  nickname: "",
-  headimg: "",
-  signature: "",
-  serviceType: "1",
-  verifyStatus: "0",
-};
-
-function escapeSnippetValue(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/"/g, "&quot;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
 
 function isMpAccount(value: unknown): value is MpAccount {
   if (typeof value !== "object" || value === null) return false;
@@ -90,19 +66,7 @@ export function writeMpAccounts(accounts: MpAccount[]): void {
 }
 
 export function buildMpProfileSnippet(values: MpProfileValues): string {
-  const attrs = [
-    `mpId="${escapeSnippetValue(values.mpId.trim())}"`,
-    `nickname="${escapeSnippetValue(values.nickname.trim())}"`,
-  ];
-  if (values.headimg.trim()) {
-    attrs.push(`headimg="${escapeSnippetValue(values.headimg.trim())}"`);
-  }
-  if (values.signature.trim()) {
-    attrs.push(`signature="${escapeSnippetValue(values.signature.trim())}"`);
-  }
-  attrs.push(`serviceType="${values.serviceType}"`);
-  attrs.push(`verifyStatus="${values.verifyStatus}"`);
-  return `<MpProfile ${attrs.join(" ")} />`;
+  return buildComponentSnippet(MP_PROFILE_DEFINITION, values);
 }
 
 export function hasRequiredMpProfileValues(values: MpProfileValues): boolean {

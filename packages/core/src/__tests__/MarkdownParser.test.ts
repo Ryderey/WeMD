@@ -149,3 +149,87 @@ describe("MarkdownParser MpProfile", () => {
     expect(html).not.toContain("mp-common-profile");
   });
 });
+
+describe("MarkdownParser additional built-in components", () => {
+  const render = (markdown: string) => createMarkdownParser().render(markdown);
+
+  it("renders QRCodeBlock with reference defaults and escaped values", () => {
+    const html = render(
+      '<QRCodeBlock url="https://example.com/?a=1&amp;b=2" text="A &amp; B" />',
+    );
+
+    expect(html).toContain(
+      "https://api.qrserver.com/v1/create-qr-code/?size=150x150&amp;data=https://example.com/?a=1&amp;b=2",
+    );
+    expect(html).toContain("width: 150px; height: 150px");
+    expect(html).toContain(">A &amp; B</p>");
+  });
+
+  it("falls back to the QR size when an unsafe CSS value is supplied", () => {
+    const html = render(
+      '<QRCodeBlock url="https://example.com" size="1; color: red" />',
+    );
+
+    expect(html).toContain("size=150x150");
+    expect(html).not.toContain("color: red");
+  });
+
+  it("renders AuthorBlock with the reference table layout", () => {
+    const html = render(
+      '<AuthorBlock name="A &amp; B" avatar="https://example.com/a.png" bio="Creator &lt;Doocs&gt;" />',
+    );
+
+    expect(html).toContain("display: table-cell");
+    expect(html).toContain('src="https://example.com/a.png"');
+    expect(html).toContain('alt="A &amp; B"');
+    expect(html).toContain(">Creator &lt;Doocs&gt;</p>");
+  });
+
+  it("renders escaped BadgeGroup items with the requested color", () => {
+    const html = render(
+      `<BadgeGroup tags='["Vue 3","A &amp; B","&lt;script&gt;"]' color="#07c160" />`,
+    );
+
+    expect(html.match(/<span style=/g) ?? []).toHaveLength(3);
+    expect(html).toContain("background: #07c1601a");
+    expect(html).toContain(">A &amp; B</span>");
+    expect(html).toContain(">&lt;script&gt;</span>");
+  });
+
+  it("renders an empty badge group for invalid JSON and defaults unsafe color", () => {
+    const invalidJson = render('<BadgeGroup tags="not-json" />');
+    const invalidColor = render(
+      `<BadgeGroup tags='["safe"]' color="red; display: none" />`,
+    );
+
+    expect(invalidJson).toContain("display: flex");
+    expect(invalidJson).not.toContain("<span");
+    expect(invalidColor).toContain("background: #07c1601a");
+    expect(invalidColor).not.toContain("display: none");
+  });
+
+  it.each([
+    ["<QRCodeBlock />", "api.qrserver.com"],
+    ["<AuthorBlock />", "display: table-cell"],
+    ["<BadgeGroup />", "flex-wrap: wrap"],
+  ])(
+    "keeps reference renderer defaults when required UI props are omitted",
+    (markdown, expected) => {
+      expect(render(markdown)).toContain(expected);
+    },
+  );
+
+  it.each([
+    'prefix <QRCodeBlock url="https://example.com" />',
+    '```html\n<AuthorBlock name="A" />\n```',
+    "<BadgeGroup tags='[\"A\"]' tags='[\"B\"]' />",
+    '<QRCodeBlock url="https://example.com" unknown="value" />',
+    '<UnknownBlock value="x" />',
+  ])("does not render invalid component-like input", (markdown) => {
+    const html = render(markdown);
+
+    expect(html).not.toContain("api.qrserver.com");
+    expect(html).not.toContain("display: table-cell");
+    expect(html).not.toContain("flex-wrap: wrap");
+  });
+});

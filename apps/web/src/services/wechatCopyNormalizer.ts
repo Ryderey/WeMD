@@ -567,6 +567,18 @@ const copyInheritedRootStyles = (
   }
 };
 
+const trimBuiltInComponentVerticalSpacing = (root: HTMLElement): void => {
+  root
+    .querySelectorAll<HTMLElement>("[data-wemd-component]")
+    .forEach((component) => {
+      component.style.setProperty("margin-top", "0");
+      component.style.setProperty("margin-bottom", "0");
+      component.style.setProperty("padding-top", "0");
+      component.style.setProperty("padding-bottom", "0");
+      component.removeAttribute("data-wemd-component");
+    });
+};
+
 /**
  * 复制时只输出根容器的直接内容，避免公众号把中性外层解包为组件两侧的可见空段。
  * 根级继承样式下沉到一级块，首尾增加零高度边界，兼容微信的粘贴选区处理。
@@ -577,6 +589,7 @@ export const serializeWechatCopyHtml = (container: HTMLElement): string => {
 
   if (root instanceof HTMLElement && container.childElementCount === 1) {
     const copyRoot = root.cloneNode(true) as HTMLElement;
+    trimBuiltInComponentVerticalSpacing(copyRoot);
     Array.from(copyRoot.children).forEach((child) => {
       if (child instanceof HTMLElement) {
         copyInheritedRootStyles(copyRoot, child);

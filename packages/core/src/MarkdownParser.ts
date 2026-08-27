@@ -32,7 +32,7 @@ import markdownItLiReplacer from "./plugins/markdown-it-li";
 import markdownItGitHubAlert from "./plugins/markdown-it-github-alert";
 import markdownItTaskLists from "markdown-it-task-lists";
 import markdownItCheckboxEmoji from "./plugins/markdown-it-checkbox-emoji";
-import markdownItMpProfile from "./plugins/markdown-it-mp-profile";
+import markdownItComponents from "./plugins/markdown-it-components";
 
 import highlightjs from "./utils/langHighlight";
 
@@ -110,7 +110,7 @@ export const createMarkdownParser = (options: MarkdownParserOptions = {}) => {
     .use(markdownItSup)
     .use(markdownItEmoji)
     .use(markdownItGitHubAlert)
-    .use(markdownItMpProfile)
+    .use(markdownItComponents)
     .use(markdownItTaskLists, {
       enabled: true,
       label: true,

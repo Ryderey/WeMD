@@ -5,6 +5,7 @@ import {
   resolveInlineStyleVariablesForCopy,
 } from "../../services/inlineStyleVarResolver";
 import { normalizeCopyContainer } from "../../services/wechatCopyService";
+import { serializeWechatCopyHtml } from "../../services/wechatCopyNormalizer";
 import { defaultVariables } from "../../components/Theme/ThemeDesigner/defaults";
 import { generateCSS } from "../../components/Theme/ThemeDesigner/generateCSS";
 
@@ -476,5 +477,95 @@ describe("wechat copy css integration", () => {
     expect(image?.style.height).toBe("auto");
     expect(image?.style.margin).toBe("0px");
     expect(hint?.textContent).toBe("↕ 上下滑动查看完整图片");
+  });
+
+  it("preserves all added built-in components through the WeChat copy pipeline", () => {
+    const parser = createMarkdownParser();
+    const html = parser.render(
+      [
+        '<QRCodeBlock url="https://example.com" text="扫码" size="120" />',
+        '<AuthorBlock name="Doocs" avatar="https://example.com/a.png" bio="开源组织" />',
+        `<BadgeGroup tags='["Vue 3","TypeScript"]' color="#07c160" />`,
+      ].join("\n\n"),
+    );
+    const css = generateCSS(defaultVariables);
+    const resolved = resolveInlineStyleVariablesForCopy(
+      processHtml(html, css, true, true),
+    );
+    const container = document.createElement("div");
+    container.innerHTML = resolved;
+
+    normalizeCopyContainer(container);
+    const serialized = serializeWechatCopyHtml(container);
+
+    expect(serialized).toContain("api.qrserver.com");
+    expect(serialized).toContain('alt="Doocs"');
+    expect(serialized).toContain(">Vue 3</span>");
+    expect(serialized).toContain(">TypeScript</span>");
+    expect(serialized).not.toContain("<QRCodeBlock");
+    expect(serialized).not.toContain("<AuthorBlock");
+    expect(serialized).not.toContain("<BadgeGroup");
+  });
+
+  it("keeps article background continuous without gaps around every built-in component", () => {
+    const parser = createMarkdownParser();
+    const html = parser.render(
+      [
+        '<MpProfile mpId="MzIxNjA5ODQ0OQ==" nickname="Doocs" />',
+        '<QRCodeBlock url="https://example.com" text="扫码" size="120" />',
+        '<AuthorBlock name="Doocs" avatar="https://example.com/a.png" bio="开源组织" />',
+        `<BadgeGroup tags='["Vue 3","TypeScript"]' color="#07c160" />`,
+      ].join("\n\n"),
+    );
+    const resolved = resolveInlineStyleVariablesForCopy(
+      processHtml(
+        html,
+        generateCSS({
+          ...defaultVariables,
+          pageBackgroundColor: "#f5f3ef",
+        }),
+        true,
+        true,
+      ),
+    );
+    const container = document.createElement("div");
+    container.innerHTML = resolved;
+
+    normalizeCopyContainer(container);
+
+    const snapshot = document.createElement("div");
+    snapshot.innerHTML = serializeWechatCopyHtml(container);
+    const backgroundLayer = snapshot.children[1] as HTMLElement | undefined;
+    const profileBlock = backgroundLayer?.querySelector<HTMLElement>(
+      ".mp_profile_iframe_wrp",
+    );
+    const qrBlock =
+      backgroundLayer?.querySelector<HTMLImageElement>(
+        'img[alt="QR Code"]',
+      )?.parentElement;
+    const authorBlock =
+      backgroundLayer?.querySelector<HTMLImageElement>('img[alt="Doocs"]')
+        ?.parentElement?.parentElement;
+    const badgeBlock = Array.from(
+      backgroundLayer?.querySelectorAll("span") ?? [],
+    ).find((span) => span.textContent === "Vue 3")?.parentElement;
+
+    expect(snapshot.children).toHaveLength(3);
+    expect(backgroundLayer?.style.backgroundColor).toBe("rgb(245, 243, 239)");
+    expect(backgroundLayer?.style.marginTop || "0px").toBe("0px");
+    expect(backgroundLayer?.style.marginBottom || "0px").toBe("0px");
+    expect(backgroundLayer?.style.paddingTop || "0px").toBe("0px");
+    expect(backgroundLayer?.style.paddingBottom || "0px").toBe("0px");
+
+    for (const component of [profileBlock, qrBlock, authorBlock, badgeBlock]) {
+      expect(component).toBeTruthy();
+      expect(component?.style.marginTop || "0px").toBe("0px");
+      expect(component?.style.marginBottom || "0px").toBe("0px");
+      expect(component?.style.paddingTop || "0px").toBe("0px");
+      expect(component?.style.paddingBottom || "0px").toBe("0px");
+      expect(component?.style.backgroundColor).toBe("rgb(245, 243, 239)");
+      expect(component?.hasAttribute("data-wemd-component")).toBe(false);
+    }
+    expect(snapshot.querySelector("[data-wemd-component]")).toBeNull();
   });
 });

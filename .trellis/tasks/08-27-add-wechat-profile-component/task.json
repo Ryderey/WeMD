@@ -1,8 +1,8 @@
 {
   "id": "add-wechat-profile-component",
   "name": "add-wechat-profile-component",
-  "title": "Add WeChat profile component",
-  "description": "Add a top-menu Components entry and port only the WeChat public-account profile card component behavior from the reference md project.",
+  "title": "Add built-in Markdown components",
+  "description": "Add a top-menu Components entry and port MpProfile, QRCodeBlock, AuthorBlock, and BadgeGroup from the reference md project while keeping custom components out of scope.",
   "status": "in_progress",
   "dev_type": null,
   "scope": "apps/web,packages/core",
