@@ -65,6 +65,20 @@ export function normalizeChatCompletionsUrl(baseUrl: string): string {
   return parsed.toString();
 }
 
+export function assertApprovedRichPostEndpoint(
+  baseUrl: string,
+  approvedEndpoint: string | null,
+): string {
+  const requestedEndpoint = normalizeChatCompletionsUrl(baseUrl);
+  if (!approvedEndpoint) {
+    throw new Error("已保存的 API Key 尚未绑定 AI 端点，请清除后重新保存");
+  }
+  if (requestedEndpoint !== approvedEndpoint) {
+    throw new Error("AI 端点已变更，请重新输入并安全保存 API Key");
+  }
+  return requestedEndpoint;
+}
+
 export function composeRichPostMessages(
   input: Pick<RichPostRewriteInput, "prompt" | "title" | "markdown">,
 ): { role: "system" | "user"; content: string }[] {

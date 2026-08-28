@@ -5,7 +5,9 @@ import { extractFrontmatterMeta } from './utils/frontmatter';
 import { startBundledServer, stopBundledServer } from './server-launcher';
 import { createAiSecretStore } from './ai-secret-store';
 import {
+    assertApprovedRichPostEndpoint,
     getRichPostAiErrorMessage,
+    normalizeChatCompletionsUrl,
     requestRichPostRewrite,
     type RichPostElectronRewriteInput,
 } from './shared/richPostAi';
@@ -266,9 +268,10 @@ ipcMain.handle('window:isMaximized', () => mainWindow?.isMaximized());
 
 ipcMain.handle('ai:getStatus', () => aiSecretStore.getStatus());
 
-ipcMain.handle('ai:saveApiKey', (_event: IpcMainInvokeEvent, payload: { apiKey?: string }) => {
+ipcMain.handle('ai:saveApiKey', (_event: IpcMainInvokeEvent, payload: { apiKey?: string; baseUrl?: string }) => {
     try {
-        aiSecretStore.saveApiKey(payload?.apiKey ?? '');
+        const approvedEndpoint = normalizeChatCompletionsUrl(payload?.baseUrl ?? '');
+        aiSecretStore.saveApiKey(payload?.apiKey ?? '', approvedEndpoint);
         return { success: true, hasKey: true };
     } catch (error) {
         return { success: false, hasKey: false, error: getRichPostAiErrorMessage(error) };
@@ -286,9 +289,13 @@ ipcMain.handle('ai:clearApiKey', () => {
 
 ipcMain.handle('ai:rewrite', async (_event: IpcMainInvokeEvent, input: RichPostElectronRewriteInput) => {
     try {
-        const apiKey = aiSecretStore.readApiKey();
-        if (!apiKey) return { success: false, error: '请先保存 API Key' };
-        const data = await requestRichPostRewrite({ ...input, apiKey }, { environment: 'electron' });
+        const credential = aiSecretStore.readCredential();
+        if (!credential) return { success: false, error: '请先保存 API Key' };
+        const baseUrl = assertApprovedRichPostEndpoint(input?.baseUrl ?? '', credential.approvedEndpoint);
+        const data = await requestRichPostRewrite(
+            { ...input, baseUrl, apiKey: credential.apiKey },
+            { environment: 'electron' },
+        );
         return { success: true, data };
     } catch (error) {
         return { success: false, error: getRichPostAiErrorMessage(error) };

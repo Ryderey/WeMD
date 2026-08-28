@@ -582,7 +582,7 @@ useEffect(() => {
 
 ```ts
 electron.ai.getStatus(): Promise<{ hasKey: boolean; canPersist: boolean; error?: string }>
-electron.ai.saveApiKey({ apiKey }): Promise<MutationResponse>
+electron.ai.saveApiKey({ apiKey, baseUrl }): Promise<MutationResponse>
 electron.ai.clearApiKey(): Promise<MutationResponse>
 electron.ai.rewrite({ baseUrl, model, prompt, title, markdown }): Promise<RewriteResponse>
 ```
@@ -591,8 +591,9 @@ There is deliberately no `getApiKey` signature.
 
 ### 3. Contracts
 
-- The renderer sends non-secret model settings and content to `rewrite`.
-- The main process decrypts the key, attaches the authorization header, and returns only validated content or a sanitized error.
+- Save the normalized Chat Completions endpoint in the same encrypted payload as the key.
+- The renderer sends non-secret model settings and content to `rewrite`; the main process must reject a requested endpoint that differs from the endpoint bound to the key.
+- Only after the endpoint matches may the main process attach the authorization header and return validated content or a sanitized error.
 - Persist ciphertext under `app.getPath("userData")`; write a temporary sibling and replace the previous file with rollback protection.
 - Reject persistence when `safeStorage.isEncryptionAvailable()` is false or Linux reports the `basic_text` backend.
 
@@ -604,12 +605,14 @@ There is deliberately no `getApiKey` signature.
 | Encryption unavailable       | `canPersist: false`; do not write                           |
 | Linux `basic_text`           | `canPersist: false`; do not write                           |
 | Missing saved key on rewrite | Return `请先保存 API Key`                                   |
+| Missing endpoint binding     | Require clearing and re-saving the legacy key               |
+| Endpoint differs from saved  | Reject before attaching or sending the key                  |
 | Invalid model response       | Return a retryable, sanitized error                         |
 | Timeout / network failure    | Return a sanitized operational error; never include the key |
 
 ### 5. Good / Base / Bad Cases
 
-- Good: renderer saves a key, queries only `hasKey`, and requests a rewrite without receiving plaintext.
+- Good: renderer saves a key bound to the normalized endpoint, queries only `hasKey`, and requests a rewrite without receiving plaintext.
 - Base: renderer clears the key and the ciphertext file is removed.
 - Bad: exposing `readApiKey`, returning request headers, or logging the IPC payload.
 
@@ -619,6 +622,7 @@ There is deliberately no `getApiKey` signature.
 - Re-save atomically, clear, unavailable encryption, and Linux `basic_text` refusal.
 - Preload/renderer declarations must expose only status, save, clear, and rewrite.
 - Rewrite tests must assert authorization, timeout, sanitized errors, and response validation.
+- Endpoint-binding tests must prove that a mismatched renderer endpoint is rejected before any request can carry the key.
 
 ### 7. Wrong vs Correct
 

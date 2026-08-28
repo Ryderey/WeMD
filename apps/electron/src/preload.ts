@@ -87,7 +87,7 @@ contextBridge.exposeInMainWorld('electron', {
     },
     ai: {
         getStatus: () => ipcRenderer.invoke('ai:getStatus'),
-        saveApiKey: (payload: { apiKey: string }) => ipcRenderer.invoke('ai:saveApiKey', payload),
+        saveApiKey: (payload: { apiKey: string; baseUrl: string }) => ipcRenderer.invoke('ai:saveApiKey', payload),
         clearApiKey: () => ipcRenderer.invoke('ai:clearApiKey'),
         rewrite: (payload: RichPostElectronRewriteInput) => ipcRenderer.invoke('ai:rewrite', payload),
     },

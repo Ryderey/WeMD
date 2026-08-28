@@ -294,6 +294,24 @@ When a hook uses an `id` to manage state, assume the state resets on `id` change
 
 ---
 
+## Async Results Must Still Belong to the Current Source
+
+When a request starts from mutable source data (for example, the active file),
+the source may change before the response arrives. Clearing the previous result
+in an effect is not enough: the old promise can still resolve and write stale
+data into the new view.
+
+Before applying a result or error, verify both:
+
+- it is still the latest request; and
+- the source identity captured at request time still matches the current source.
+
+Also guard loading cleanup so an older request cannot clear the loading state of
+a newer request. Transport cancellation is useful for efficiency, but an
+ownership check is still required because cancellation can race with completion.
+
+---
+
 ## Summary: Quick Reference
 
 | Pitfall                       | Symptom                                       | Fix                            |
@@ -303,6 +321,7 @@ When a hook uses an `id` to manage state, assume the state resets on `id` change
 | State in unmounting component | State lost on navigation                      | Lift state to parent           |
 | Loading on every fetch        | UI flickers                                   | Distinguish initial vs refetch |
 | Hook ID change                | State cleared, race conditions                | Use ref + useEffect            |
+| Source changes during request | Old result appears in new view                | Guard request and source IDs   |
 
 ---
 

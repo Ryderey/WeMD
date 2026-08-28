@@ -68,6 +68,9 @@ export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
   const [error, setError] = useState("");
   const [coverError, setCoverError] = useState("");
   const previewRef = useRef<HTMLDivElement>(null);
+  const rewriteRequestIdRef = useRef(0);
+  const latestSourceRef = useRef({ markdown, currentFilePath });
+  latestSourceRef.current = { markdown, currentFilePath };
 
   const electronAi = window.electron?.ai;
   const isEmpty = markdown.trim().length === 0;
@@ -81,6 +84,7 @@ export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
     setCoverTitle(sourceTitle);
     setHighlightTerms([]);
     setError("");
+    setRewriting(false);
   }, [markdown, currentFilePath, sourceTitle]);
 
   useEffect(() => {
@@ -126,7 +130,10 @@ export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
 
   const saveElectronKey = async (): Promise<boolean> => {
     if (!electronAi) return false;
-    const result = await electronAi.saveApiKey({ apiKey });
+    const result = await electronAi.saveApiKey({
+      apiKey,
+      baseUrl: aiSettings.baseUrl,
+    });
     setHasElectronKey(result.hasKey);
     if (!result.success) {
       setError(result.error);
@@ -154,6 +161,12 @@ export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
 
   const rewrite = async (): Promise<void> => {
     if (isEmpty || rewriting) return;
+    const requestId = ++rewriteRequestIdRef.current;
+    const requestSource = { markdown, currentFilePath };
+    const isCurrentRequest = (): boolean =>
+      requestId === rewriteRequestIdRef.current &&
+      latestSourceRef.current.markdown === requestSource.markdown &&
+      latestSourceRef.current.currentFilePath === requestSource.currentFilePath;
     setRewriting(true);
     setError("");
     try {
@@ -177,17 +190,19 @@ export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
           markdown,
         });
       }
+      if (!isCurrentRequest()) return;
       setBody(result.body);
       setHighlightTerms(
         normalizeHighlightTerms(coverTitle, result.highlightTerms),
       );
       setShowAiSettings(false);
     } catch (rewriteError) {
+      if (!isCurrentRequest()) return;
       const message = getRichPostAiErrorMessage(rewriteError);
       setError(message);
       toast.error(message);
     } finally {
-      setRewriting(false);
+      if (isCurrentRequest()) setRewriting(false);
     }
   };
 

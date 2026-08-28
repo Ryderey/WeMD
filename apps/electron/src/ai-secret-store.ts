@@ -16,14 +16,24 @@ export interface AiSecretStoreOptions {
 
 export interface AiSecretStore {
   getStatus: () => { hasKey: boolean; canPersist: boolean; error?: string };
-  saveApiKey: (apiKey: string) => void;
+  saveApiKey: (apiKey: string, approvedEndpoint: string) => void;
   clearApiKey: () => void;
-  readApiKey: () => string | null;
+  readCredential: () => AiSecretCredential | null;
+}
+
+export interface AiSecretCredential {
+  apiKey: string;
+  approvedEndpoint: string | null;
 }
 
 interface SecretFile {
-  version: 1;
+  version: 1 | 2;
   ciphertext: string;
+}
+
+interface StoredCredentialV2 {
+  apiKey: string;
+  approvedEndpoint: string;
 }
 
 const ENCRYPTION_ERROR = "当前系统无法安全保存 API Key，请使用 Web 版会话密钥";
@@ -40,7 +50,7 @@ export function createAiSecretStore(
     }
   };
 
-  const readApiKey = (): string | null => {
+  const readCredential = (): AiSecretCredential | null => {
     assertEncryptionAvailable();
     const filePath = options.getFilePath();
     if (!fs.existsSync(filePath)) return null;
@@ -48,10 +58,21 @@ export function createAiSecretStore(
     try {
       const parsed: unknown = JSON.parse(fs.readFileSync(filePath, "utf8"));
       if (!isSecretFile(parsed)) throw new Error("invalid secret file");
-      const apiKey = options.cipher
-        .decryptString(Buffer.from(parsed.ciphertext, "base64"))
-        .trim();
-      return apiKey || null;
+      const plaintext = options.cipher.decryptString(
+        Buffer.from(parsed.ciphertext, "base64"),
+      );
+      if (parsed.version === 1) {
+        const apiKey = plaintext.trim();
+        return apiKey ? { apiKey, approvedEndpoint: null } : null;
+      }
+      const credential: unknown = JSON.parse(plaintext);
+      if (!isStoredCredentialV2(credential)) {
+        throw new Error("invalid credential");
+      }
+      return {
+        apiKey: credential.apiKey.trim(),
+        approvedEndpoint: credential.approvedEndpoint,
+      };
     } catch {
       throw new Error("已保存的 API Key 无法解密，请清除后重新保存");
     }
@@ -60,7 +81,7 @@ export function createAiSecretStore(
   return {
     getStatus: () => {
       try {
-        return { hasKey: readApiKey() !== null, canPersist: true };
+        return { hasKey: readCredential() !== null, canPersist: true };
       } catch (error) {
         return {
           hasKey: false,
@@ -69,18 +90,26 @@ export function createAiSecretStore(
         };
       }
     },
-    saveApiKey: (apiKey) => {
+    saveApiKey: (apiKey, approvedEndpoint) => {
       assertEncryptionAvailable();
       const normalized = apiKey.trim();
       if (!normalized) throw new Error("请输入 API Key");
+      if (!approvedEndpoint.trim()) throw new Error("请输入有效的 Base URL");
 
       const filePath = options.getFilePath();
       fs.mkdirSync(path.dirname(filePath), { recursive: true });
       const tempPath = `${filePath}.tmp`;
       const backupPath = `${filePath}.bak`;
       const secret: SecretFile = {
-        version: 1,
-        ciphertext: options.cipher.encryptString(normalized).toString("base64"),
+        version: 2,
+        ciphertext: options.cipher
+          .encryptString(
+            JSON.stringify({
+              apiKey: normalized,
+              approvedEndpoint: approvedEndpoint.trim(),
+            } satisfies StoredCredentialV2),
+          )
+          .toString("base64"),
       };
       try {
         fs.writeFileSync(tempPath, JSON.stringify(secret), {
@@ -107,7 +136,7 @@ export function createAiSecretStore(
         throw new Error("清除 API Key 失败，请重试");
       }
     },
-    readApiKey,
+    readCredential,
   };
 }
 
@@ -116,8 +145,21 @@ function isSecretFile(value: unknown): value is SecretFile {
     typeof value === "object" &&
     value !== null &&
     "version" in value &&
-    value.version === 1 &&
+    (value.version === 1 || value.version === 2) &&
     "ciphertext" in value &&
     typeof value.ciphertext === "string"
+  );
+}
+
+function isStoredCredentialV2(value: unknown): value is StoredCredentialV2 {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "apiKey" in value &&
+    typeof value.apiKey === "string" &&
+    Boolean(value.apiKey.trim()) &&
+    "approvedEndpoint" in value &&
+    typeof value.approvedEndpoint === "string" &&
+    Boolean(value.approvedEndpoint.trim())
   );
 }

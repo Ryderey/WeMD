@@ -121,6 +121,7 @@ interface ElectronAPI {
     getStatus: () => Promise<RichPostAiStatus>;
     saveApiKey: (payload: {
       apiKey: string;
+      baseUrl: string;
     }) => Promise<RichPostAiMutationResponse>;
     clearApiKey: () => Promise<RichPostAiMutationResponse>;
     rewrite: (
