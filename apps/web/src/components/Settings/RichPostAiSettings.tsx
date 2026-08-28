@@ -79,17 +79,19 @@ export function RichPostAiSettings({
         />
       </label>
       <div className="rich-post-ai-settings__key-actions">
-        {onSaveApiKey ? (
-          <>
-            <button type="button" onClick={() => void onSaveApiKey()}>
-              安全保存 Key
-            </button>
-            <button type="button" onClick={() => void onClearApiKey?.()}>
-              清除 Key
-            </button>
-          </>
+        {onSaveApiKey && (
+          <button type="button" onClick={() => void onSaveApiKey()}>
+            安全保存 Key
+          </button>
+        )}
+        {onClearApiKey ? (
+          <button type="button" onClick={() => void onClearApiKey()}>
+            清除 Key
+          </button>
         ) : (
-          <small>Web 版 API Key 只在当前页面会话内保留。</small>
+          !onSaveApiKey && (
+            <small>Web 版 API Key 只在当前页面会话内保留。</small>
+          )
         )}
       </div>
 

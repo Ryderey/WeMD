@@ -92,4 +92,28 @@ describe("RichPostDialog", () => {
       expect(screen.getByLabelText("图文正文")).toHaveValue("文章 B 的新结果"),
     );
   });
+
+  it("allows typing a second highlight term and removes terms invalidated by the title", async () => {
+    useEditorStore.setState({
+      markdown: "# 免费领取 429 会员",
+      currentFilePath: "offer.md",
+    });
+    render(<RichPostDialog open onClose={vi.fn()} />);
+
+    const input = screen.getByLabelText("高亮词（最多两个，用逗号分隔）");
+    const typeNext = (text: string): void => {
+      fireEvent.change(input, {
+        target: { value: `${(input as HTMLInputElement).value}${text}` },
+      });
+    };
+    typeNext("免费");
+    typeNext("，");
+    typeNext("429");
+    expect(input).toHaveValue("免费，429");
+
+    fireEvent.change(screen.getByLabelText("封面专用标题"), {
+      target: { value: "全新标题" },
+    });
+    await waitFor(() => expect(input).toHaveValue(""));
+  });
 });

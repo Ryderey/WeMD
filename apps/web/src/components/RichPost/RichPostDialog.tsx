@@ -59,7 +59,12 @@ export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
   const [showAiSettings, setShowAiSettings] = useState(true);
   const [body, setBody] = useState("");
   const [coverTitle, setCoverTitle] = useState(sourceTitle);
-  const [highlightTerms, setHighlightTerms] = useState<string[]>([]);
+  const [highlightTermsInput, setHighlightTermsInput] = useState("");
+  const highlightTerms = useMemo(
+    () =>
+      normalizeHighlightTerms(coverTitle, highlightTermsInput.split(/[,，\n]/)),
+    [coverTitle, highlightTermsInput],
+  );
   const [coverSettings, setCoverSettings] = useState<RichPostCoverSettings>(
     DEFAULT_RICH_POST_COVER_SETTINGS,
   );
@@ -70,7 +75,9 @@ export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
   const previewRef = useRef<HTMLDivElement>(null);
   const rewriteRequestIdRef = useRef(0);
   const latestSourceRef = useRef({ markdown, currentFilePath });
+  const latestCoverTitleRef = useRef(coverTitle);
   latestSourceRef.current = { markdown, currentFilePath };
+  latestCoverTitleRef.current = coverTitle;
 
   const electronAi = window.electron?.ai;
   const isEmpty = markdown.trim().length === 0;
@@ -82,10 +89,16 @@ export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
   useEffect(() => {
     setBody("");
     setCoverTitle(sourceTitle);
-    setHighlightTerms([]);
+    setHighlightTermsInput("");
     setError("");
     setRewriting(false);
   }, [markdown, currentFilePath, sourceTitle]);
+
+  useEffect(() => {
+    setHighlightTermsInput((current) =>
+      normalizeHighlightTerms(coverTitle, current.split(/[,，\n]/)).join("，"),
+    );
+  }, [coverTitle]);
 
   useEffect(() => {
     if (!open || !electronAi) return;
@@ -192,8 +205,11 @@ export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
       }
       if (!isCurrentRequest()) return;
       setBody(result.body);
-      setHighlightTerms(
-        normalizeHighlightTerms(coverTitle, result.highlightTerms),
+      setHighlightTermsInput(
+        normalizeHighlightTerms(
+          latestCoverTitleRef.current,
+          result.highlightTerms,
+        ).join("，"),
       );
       setShowAiSettings(false);
     } catch (rewriteError) {
@@ -370,15 +386,9 @@ export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
             <label className="rich-post-field">
               <span>高亮词（最多两个，用逗号分隔）</span>
               <input
-                value={highlightTerms.join("，")}
-                onChange={(event) =>
-                  setHighlightTerms(
-                    normalizeHighlightTerms(
-                      coverTitle,
-                      event.target.value.split(/[,，\n]/),
-                    ),
-                  )
-                }
+                value={highlightTermsInput}
+                onChange={(event) => setHighlightTermsInput(event.target.value)}
+                onBlur={() => setHighlightTermsInput(highlightTerms.join("，"))}
                 placeholder="例如：免费，429"
               />
             </label>

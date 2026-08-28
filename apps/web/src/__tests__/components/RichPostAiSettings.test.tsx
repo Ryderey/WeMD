@@ -68,4 +68,21 @@ describe("RichPostAiSettings", () => {
       "仅支持 .txt 或 .md",
     );
   });
+
+  it("keeps the clear action available when secure persistence is unavailable", () => {
+    const onClearApiKey = vi.fn();
+    render(
+      <RichPostAiSettings
+        settings={DEFAULT_RICH_POST_AI_SETTINGS}
+        apiKey=""
+        onSettingsChange={vi.fn()}
+        onApiKeyChange={vi.fn()}
+        onClearApiKey={onClearApiKey}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "清除 Key" }));
+    expect(onClearApiKey).toHaveBeenCalledOnce();
+    expect(screen.queryByText(/Web 版 API Key/)).not.toBeInTheDocument();
+  });
 });
