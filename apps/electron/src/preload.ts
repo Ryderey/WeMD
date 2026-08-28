@@ -1,5 +1,13 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
+interface RichPostElectronRewriteInput {
+    baseUrl: string;
+    model: string;
+    prompt: string;
+    title: string;
+    markdown: string;
+}
+
 contextBridge.exposeInMainWorld('electron', {
     isElectron: true,
     platform: process.platform,
@@ -76,5 +84,11 @@ contextBridge.exposeInMainWorld('electron', {
     export: {
         saveImages: (payload: { files: { filename: string; base64: string }[]; defaultName?: string }) =>
             ipcRenderer.invoke('export:saveImages', payload),
+    },
+    ai: {
+        getStatus: () => ipcRenderer.invoke('ai:getStatus'),
+        saveApiKey: (payload: { apiKey: string }) => ipcRenderer.invoke('ai:saveApiKey', payload),
+        clearApiKey: () => ipcRenderer.invoke('ai:clearApiKey'),
+        rewrite: (payload: RichPostElectronRewriteInput) => ipcRenderer.invoke('ai:rewrite', payload),
     },
 });

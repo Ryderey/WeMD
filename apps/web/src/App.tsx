@@ -36,6 +36,11 @@ const ExportDialog = lazy(() =>
     default: m.ExportDialog,
   })),
 );
+const RichPostDialog = lazy(() =>
+  import("./components/RichPost/RichPostDialog").then((module) => ({
+    default: module.RichPostDialog,
+  })),
+);
 import { MobileThemeSelector } from "./components/Theme/MobileThemeSelector";
 
 function App() {
@@ -53,6 +58,7 @@ function App() {
   const copyAsHtml = useEditorStore((state) => state.copyAsHtml);
   const [showThemePanel, setShowThemePanel] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showRichPostModal, setShowRichPostModal] = useState(false);
 
   // 全局保存快捷键（统一监听器）
   useEffect(() => {
@@ -164,7 +170,7 @@ function App() {
             },
           }}
         />
-        <Header />
+        <Header onOpenRichPost={() => setShowRichPostModal(true)} />
         <button
           className={`history-toggle ${showHistory ? "" : "is-collapsed"}`}
           onClick={() => setShowHistory((prev) => !prev)}
@@ -241,6 +247,7 @@ function App() {
               onCopyAsHtml={copyAsHtml}
               onOpenTheme={() => setShowThemePanel(true)}
               onOpenExport={() => setShowExportModal(true)}
+              onOpenRichPost={() => setShowRichPostModal(true)}
             />
           )}
         </main>
@@ -259,6 +266,13 @@ function App() {
         <ExportDialog
           open={showExportModal}
           onClose={() => setShowExportModal(false)}
+        />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <RichPostDialog
+          open={showRichPostModal}
+          onClose={() => setShowRichPostModal(false)}
         />
       </Suspense>
     </div>

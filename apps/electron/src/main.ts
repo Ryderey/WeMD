@@ -1,8 +1,14 @@
-import { app, BrowserWindow, Menu, dialog, ipcMain, nativeImage, IpcMainInvokeEvent, shell, clipboard } from 'electron';
+import { app, BrowserWindow, Menu, dialog, ipcMain, nativeImage, IpcMainInvokeEvent, shell, clipboard, safeStorage } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { extractFrontmatterMeta } from './utils/frontmatter';
 import { startBundledServer, stopBundledServer } from './server-launcher';
+import { createAiSecretStore } from './ai-secret-store';
+import {
+    getRichPostAiErrorMessage,
+    requestRichPostRewrite,
+    type RichPostElectronRewriteInput,
+} from './shared/richPostAi';
 
 // 判断是否为开发模式 - 使用 app.isPackaged 是最可靠的方式
 // 注意：app.isPackaged 只能在 app ready 之后使用，这里用延迟判断
@@ -15,6 +21,11 @@ let mainWindow: BrowserWindow | null = null;
 let workspaceDir: string | null = null;
 let fileWatcher: fs.FSWatcher | null = null;
 let watcherDebounceTimer: NodeJS.Timeout | null = null;
+
+const aiSecretStore = createAiSecretStore({
+    getFilePath: () => path.join(app.getPath('userData'), 'ai-secrets.json'),
+    cipher: safeStorage,
+});
 
 // --- 文件监听器 ---
 function startWatching(dir: string) {
@@ -252,6 +263,37 @@ ipcMain.handle('window:maximize', () => {
 });
 ipcMain.handle('window:close', () => mainWindow?.close());
 ipcMain.handle('window:isMaximized', () => mainWindow?.isMaximized());
+
+ipcMain.handle('ai:getStatus', () => aiSecretStore.getStatus());
+
+ipcMain.handle('ai:saveApiKey', (_event: IpcMainInvokeEvent, payload: { apiKey?: string }) => {
+    try {
+        aiSecretStore.saveApiKey(payload?.apiKey ?? '');
+        return { success: true, hasKey: true };
+    } catch (error) {
+        return { success: false, hasKey: false, error: getRichPostAiErrorMessage(error) };
+    }
+});
+
+ipcMain.handle('ai:clearApiKey', () => {
+    try {
+        aiSecretStore.clearApiKey();
+        return { success: true, hasKey: false };
+    } catch (error) {
+        return { success: false, hasKey: true, error: getRichPostAiErrorMessage(error) };
+    }
+});
+
+ipcMain.handle('ai:rewrite', async (_event: IpcMainInvokeEvent, input: RichPostElectronRewriteInput) => {
+    try {
+        const apiKey = aiSecretStore.readApiKey();
+        if (!apiKey) return { success: false, error: '请先保存 API Key' };
+        const data = await requestRichPostRewrite({ ...input, apiKey }, { environment: 'electron' });
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: getRichPostAiErrorMessage(error) };
+    }
+});
 
 // 工作区管理
 ipcMain.handle('workspace:select', async () => {

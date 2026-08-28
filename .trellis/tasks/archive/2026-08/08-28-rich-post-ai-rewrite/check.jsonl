@@ -1,0 +1,4 @@
+{"file":".trellis/spec/web/frontend/ipc-electron.md","reason":"Verify secret never crosses IPC in plaintext"}
+{"file":".trellis/spec/web/frontend/quality.md","reason":"Verify error handling and renderer quality"}
+{"file":".trellis/spec/web/shared/code-quality.md","reason":"Verify validation and no duplicate contracts"}
+{"file":".trellis/tasks/08-28-rich-post-ai-rewrite/research/rewrite-prompt.md","reason":"Verify prompt implementation matches approved research"}

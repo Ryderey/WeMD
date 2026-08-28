@@ -1,0 +1,3 @@
+{"file":".trellis/spec/web/frontend/quality.md","reason":"Final renderer quality gate"}
+{"file":".trellis/spec/web/frontend/ipc-electron.md","reason":"Final IPC boundary review"}
+{"file":".trellis/spec/web/shared/code-quality.md","reason":"Cross-package quality gate"}

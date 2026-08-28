@@ -1,0 +1,30 @@
+{
+  "id": "export-rich-post",
+  "name": "export-rich-post",
+  "title": "导出图文",
+  "description": "根据当前 Markdown 生成 AI 改写文案与统一首图，并提供复制和 ZIP 导出",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": "apps/web + apps/electron 导出图文端到端能力",
+  "package": "wemd-electron",
+  "priority": "P1",
+  "creator": "wemd",
+  "assignee": "wemd",
+  "createdAt": "2026-08-28",
+  "completedAt": null,
+  "branch": "codex/feat/export-rich-post",
+  "base_branch": "bugfix",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "08-28-rich-post-ai-rewrite",
+    "08-28-rich-post-cover",
+    "08-28-rich-post-delivery"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

@@ -570,3 +570,63 @@ useEffect(() => {
 ---
 
 **Language**: All documentation must be written in **English**.
+
+## Scenario: Renderer-safe AI credentials
+
+### 1. Scope / Trigger
+
+- Trigger: an Electron renderer needs a user-supplied API key for a main-process network request.
+- Secrets must never cross back from the main process to the renderer.
+
+### 2. Signatures
+
+```ts
+electron.ai.getStatus(): Promise<{ hasKey: boolean; canPersist: boolean; error?: string }>
+electron.ai.saveApiKey({ apiKey }): Promise<MutationResponse>
+electron.ai.clearApiKey(): Promise<MutationResponse>
+electron.ai.rewrite({ baseUrl, model, prompt, title, markdown }): Promise<RewriteResponse>
+```
+
+There is deliberately no `getApiKey` signature.
+
+### 3. Contracts
+
+- The renderer sends non-secret model settings and content to `rewrite`.
+- The main process decrypts the key, attaches the authorization header, and returns only validated content or a sanitized error.
+- Persist ciphertext under `app.getPath("userData")`; write a temporary sibling and replace the previous file with rollback protection.
+- Reject persistence when `safeStorage.isEncryptionAvailable()` is false or Linux reports the `basic_text` backend.
+
+### 4. Validation & Error Matrix
+
+| Condition                    | Required result                                             |
+| ---------------------------- | ----------------------------------------------------------- |
+| Empty key                    | Reject without writing a file                               |
+| Encryption unavailable       | `canPersist: false`; do not write                           |
+| Linux `basic_text`           | `canPersist: false`; do not write                           |
+| Missing saved key on rewrite | Return `请先保存 API Key`                                   |
+| Invalid model response       | Return a retryable, sanitized error                         |
+| Timeout / network failure    | Return a sanitized operational error; never include the key |
+
+### 5. Good / Base / Bad Cases
+
+- Good: renderer saves a key, queries only `hasKey`, and requests a rewrite without receiving plaintext.
+- Base: renderer clears the key and the ciphertext file is removed.
+- Bad: exposing `readApiKey`, returning request headers, or logging the IPC payload.
+
+### 6. Tests Required
+
+- Round-trip encrypted save/read inside the main-process store; assert the file does not contain plaintext.
+- Re-save atomically, clear, unavailable encryption, and Linux `basic_text` refusal.
+- Preload/renderer declarations must expose only status, save, clear, and rewrite.
+- Rewrite tests must assert authorization, timeout, sanitized errors, and response validation.
+
+### 7. Wrong vs Correct
+
+```ts
+// Wrong: plaintext secret crosses the isolation boundary.
+const apiKey = await window.electron.ai.getApiKey();
+
+// Correct: renderer knows only whether a key exists.
+const { hasKey } = await window.electron.ai.getStatus();
+const result = await window.electron.ai.rewrite(inputWithoutApiKey);
+```

@@ -1,3 +1,28 @@
+interface RichPostAiStatus {
+  hasKey: boolean;
+  canPersist: boolean;
+  error?: string;
+}
+
+type RichPostAiMutationResponse =
+  | { success: true; hasKey: boolean }
+  | { success: false; hasKey: boolean; error: string };
+
+interface RichPostElectronRewriteInput {
+  baseUrl: string;
+  model: string;
+  prompt: string;
+  title: string;
+  markdown: string;
+}
+
+type RichPostAiRewriteResponse =
+  | {
+      success: true;
+      data: { body: string; highlightTerms: string[] };
+    }
+  | { success: false; error: string };
+
 interface ElectronAPI {
   isElectron: boolean;
   platform: string;
@@ -91,6 +116,16 @@ interface ElectronAPI {
       canceled?: boolean;
       error?: string;
     }>;
+  };
+  ai?: {
+    getStatus: () => Promise<RichPostAiStatus>;
+    saveApiKey: (payload: {
+      apiKey: string;
+    }) => Promise<RichPostAiMutationResponse>;
+    clearApiKey: () => Promise<RichPostAiMutationResponse>;
+    rewrite: (
+      payload: RichPostElectronRewriteInput,
+    ) => Promise<RichPostAiRewriteResponse>;
   };
 }
 
