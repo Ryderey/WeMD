@@ -133,6 +133,47 @@ export async function rewriteRichPostInBrowser(input: {
   }
 }
 
+export async function probeRichPostAiInBrowser(input: {
+  settings: Pick<RichPostAiSettings, "baseUrl" | "model">;
+  apiKey: string;
+}): Promise<void> {
+  try {
+    const endpoint = normalizeChatCompletionsUrl(input.settings.baseUrl);
+    if (!input.apiKey.trim()) throw new Error("请输入 API Key");
+    if (!input.settings.model.trim()) throw new Error("请输入模型名");
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15_000);
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${input.apiKey.trim()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: input.settings.model.trim(),
+          stream: false,
+          max_tokens: 1,
+          messages: [{ role: "user", content: "ping" }],
+        }),
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error(httpErrorMessage(response.status));
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw new Error("AI 探测超时，请检查网络或稍后重试");
+    }
+    if (error instanceof TypeError) {
+      throw new Error("无法连接 AI 服务；Web 版请确认端点允许 CORS 跨域请求");
+    }
+    throw new Error(getRichPostAiErrorMessage(error));
+  }
+}
+
 export function normalizeChatCompletionsUrl(baseUrl: string): string {
   let parsed: URL;
   try {

@@ -36,6 +36,13 @@
   gap: 12px;
 }
 
+.rich-post-ai-settings__key-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
 .rich-post-ai-settings__key-actions,
 .rich-post-ai-settings__prompt-actions {
   display: flex;
@@ -54,6 +61,7 @@
 }
 
 .rich-post-ai-settings__key-actions small,
+.rich-post-ai-settings__key-note,
 .rich-post-ai-settings p[role="alert"] {
   margin: 0;
   color: var(--text-secondary);
@@ -61,7 +69,8 @@
 }
 
 @media (max-width: 640px) {
-  .rich-post-ai-settings__row {
+  .rich-post-ai-settings__row,
+  .rich-post-ai-settings__key-row {
     grid-template-columns: 1fr;
   }
 }

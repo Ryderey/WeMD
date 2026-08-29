@@ -16,6 +16,7 @@ import { useEditorStore } from "../../store/editorStore";
 import {
   getRichPostAiErrorMessage,
   loadRichPostAiSettings,
+  probeRichPostAiInBrowser,
   rewriteRichPostInBrowser,
   saveRichPostAiSettings,
   type RichPostAiSettings as AiSettings,
@@ -72,6 +73,7 @@ export function RichPostDialog({
     DEFAULT_RICH_POST_COVER_SETTINGS,
   );
   const [rewriting, setRewriting] = useState(false);
+  const [probing, setProbing] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
   const [coverError, setCoverError] = useState("");
@@ -212,6 +214,37 @@ export function RichPostDialog({
       const message = getRichPostAiErrorMessage(clearError);
       setError(message);
       toast.error(message);
+    }
+  };
+
+  const probeAiConfiguration = async (): Promise<void> => {
+    if (probing) return;
+    setProbing(true);
+    setError("");
+    try {
+      if (electronAi) {
+        if (apiKey.trim()) {
+          throw new Error("请先安全保存 API Key 后再探测");
+        }
+        if (!hasElectronKey) throw new Error("请先安全保存 API Key");
+        const response = await electronAi.probe({
+          baseUrl: aiSettings.baseUrl,
+          model: aiSettings.model,
+        });
+        if (!response.success) throw new Error(response.error);
+      } else {
+        await probeRichPostAiInBrowser({
+          settings: aiSettings,
+          apiKey,
+        });
+      }
+      toast.success("AI 配置连通正常");
+    } catch (probeError) {
+      const message = getRichPostAiErrorMessage(probeError);
+      setError(message);
+      toast.error(message);
+    } finally {
+      setProbing(false);
     }
   };
 
@@ -367,6 +400,8 @@ export function RichPostDialog({
               hasElectronKey={hasElectronKey}
               onSettingsChange={setAiSettings}
               onApiKeyChange={setApiKey}
+              onProbe={() => void probeAiConfiguration()}
+              isProbing={probing}
               onSaveApiKey={
                 electronAi && canPersistElectronKey
                   ? () => void saveElectronKey()

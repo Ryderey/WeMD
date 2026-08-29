@@ -87,6 +87,8 @@ contextBridge.exposeInMainWorld('electron', {
         saveApiKey: (payload: RichPostApiKeySaveInput) =>
             ipcRenderer.invoke(RICH_POST_AI_CHANNELS.saveApiKey, payload),
         clearApiKey: () => ipcRenderer.invoke(RICH_POST_AI_CHANNELS.clearApiKey),
+        probe: (payload: { baseUrl: string; model: string }) =>
+            ipcRenderer.invoke(RICH_POST_AI_CHANNELS.probe, payload),
         rewrite: (payload: RichPostElectronRewriteInput) =>
             ipcRenderer.invoke(RICH_POST_AI_CHANNELS.rewrite, payload),
     },

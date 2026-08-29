@@ -85,4 +85,24 @@ describe("RichPostAiSettings", () => {
     expect(onClearApiKey).toHaveBeenCalledOnce();
     expect(screen.queryByText(/Web 版 API Key/)).not.toBeInTheDocument();
   });
+
+  it("places the configuration probe next to the API Key", () => {
+    const onProbe = vi.fn();
+    render(
+      <RichPostAiSettings
+        settings={DEFAULT_RICH_POST_AI_SETTINGS}
+        apiKey=""
+        onSettingsChange={vi.fn()}
+        onApiKeyChange={vi.fn()}
+        onProbe={onProbe}
+      />,
+    );
+
+    const probe = screen.getByRole("button", { name: "探测配置" });
+    expect(probe.closest(".rich-post-ai-settings__key-row")).toContainElement(
+      screen.getByLabelText("API Key"),
+    );
+    fireEvent.click(probe);
+    expect(onProbe).toHaveBeenCalledOnce();
+  });
 });

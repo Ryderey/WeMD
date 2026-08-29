@@ -7,6 +7,7 @@ import {
   loadRichPostAiSettings,
   normalizeChatCompletionsUrl,
   parseRichPostRewriteResult,
+  probeRichPostAiInBrowser,
   rewriteRichPostInBrowser,
   saveRichPostAiSettings,
 } from "../../services/richPostAi";
@@ -111,6 +112,28 @@ describe("richPostAi", () => {
     expect(url).toBe("https://api.openai.com/v1/chat/completions");
     expect(init?.headers).toMatchObject({ Authorization: "Bearer secret-key" });
     expect(JSON.parse(String(init?.body))).toMatchObject({ stream: false });
+  });
+
+  it("probes the configured model without sending article content", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () => new Response(null));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      probeRichPostAiInBrowser({
+        settings: DEFAULT_RICH_POST_AI_SETTINGS,
+        apiKey: "secret-key",
+      }),
+    ).resolves.toBeUndefined();
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://api.openai.com/v1/chat/completions");
+    expect(init?.headers).toMatchObject({ Authorization: "Bearer secret-key" });
+    expect(JSON.parse(String(init?.body))).toEqual({
+      model: "gpt-4o-mini",
+      stream: false,
+      max_tokens: 1,
+      messages: [{ role: "user", content: "ping" }],
+    });
   });
 
   it.each([

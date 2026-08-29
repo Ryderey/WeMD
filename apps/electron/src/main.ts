@@ -9,7 +9,9 @@ import {
     getRichPostAiErrorMessage,
     normalizeChatCompletionsUrl,
     parseRichPostApiKeySaveInput,
+    parseRichPostElectronProbeInput,
     parseRichPostElectronRewriteInput,
+    probeRichPostAi,
     requestRichPostRewrite,
     RICH_POST_AI_CHANNELS,
 } from './shared/richPostAi';
@@ -295,6 +297,22 @@ ipcMain.handle(RICH_POST_AI_CHANNELS.clearApiKey, () => {
             hasKey: aiSecretStore.getStatus().hasKey,
             error: getRichPostAiErrorMessage(error),
         };
+    }
+});
+
+ipcMain.handle(RICH_POST_AI_CHANNELS.probe, async (_event: IpcMainInvokeEvent, payload: unknown) => {
+    try {
+        const input = parseRichPostElectronProbeInput(payload);
+        const credential = aiSecretStore.readCredential();
+        if (!credential) return { success: false, error: '请先安全保存 API Key' };
+        const baseUrl = assertApprovedRichPostEndpoint(input.baseUrl, credential.approvedEndpoint);
+        await probeRichPostAi(
+            { ...input, baseUrl, apiKey: credential.apiKey },
+            { environment: 'electron' },
+        );
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: getRichPostAiErrorMessage(error) };
     }
 });
 

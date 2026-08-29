@@ -14,6 +14,11 @@ export interface RichPostRewriteInput {
 
 export type RichPostElectronRewriteInput = Omit<RichPostRewriteInput, "apiKey">;
 
+export type RichPostElectronProbeInput = Pick<
+  RichPostRewriteInput,
+  "baseUrl" | "model"
+>;
+
 export interface RichPostApiKeySaveInput {
   apiKey: string;
   baseUrl: string;
@@ -33,6 +38,10 @@ export type RichPostAiRewriteResponse =
   | { success: true; data: RichPostRewriteResult }
   | { success: false; error: string };
 
+export type RichPostAiProbeResponse =
+  | { success: true }
+  | { success: false; error: string };
+
 type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
 
 export interface RichPostRewriteRequestOptions {
@@ -45,6 +54,7 @@ export const RICH_POST_AI_CHANNELS = {
   getStatus: "ai:getStatus",
   saveApiKey: "ai:saveApiKey",
   clearApiKey: "ai:clearApiKey",
+  probe: "ai:probe",
   rewrite: "ai:rewrite",
 } as const;
 
@@ -118,6 +128,15 @@ export function parseRichPostElectronRewriteInput(
     prompt: readBoundedString(value, "prompt", IPC_STRING_LIMITS.prompt),
     title: readBoundedString(value, "title", IPC_STRING_LIMITS.title),
     markdown: readBoundedString(value, "markdown", IPC_STRING_LIMITS.markdown),
+  };
+}
+
+export function parseRichPostElectronProbeInput(
+  value: unknown,
+): RichPostElectronProbeInput {
+  return {
+    baseUrl: readBoundedString(value, "baseUrl", IPC_STRING_LIMITS.baseUrl),
+    model: readBoundedString(value, "model", IPC_STRING_LIMITS.model),
   };
 }
 
@@ -224,6 +243,56 @@ export async function requestRichPostRewrite(
     }
     if (error instanceof Error) throw error;
     throw new Error("AI 改写失败，请重试");
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function probeRichPostAi(
+  input: Pick<RichPostRewriteInput, "baseUrl" | "model" | "apiKey">,
+  options: RichPostRewriteRequestOptions = {},
+): Promise<void> {
+  normalizeChatCompletionsUrl(input.baseUrl);
+  if (!input.apiKey.trim()) throw new Error("请输入 API Key");
+  if (!input.model.trim()) throw new Error("请输入模型名");
+
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    options.timeoutMs ?? 15_000,
+  );
+  try {
+    const response = await (options.fetcher ?? fetch)(
+      normalizeChatCompletionsUrl(input.baseUrl),
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${input.apiKey.trim()}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: input.model.trim(),
+          stream: false,
+          max_tokens: 1,
+          messages: [{ role: "user", content: "ping" }],
+        }),
+        signal: controller.signal,
+      },
+    );
+    if (!response.ok) throw new Error(httpErrorMessage(response.status));
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw new Error("AI 探测超时，请检查网络或稍后重试");
+    }
+    if (error instanceof TypeError) {
+      const corsHint =
+        options.environment === "web"
+          ? "；Web 版请确认端点允许 CORS 跨域请求"
+          : "";
+      throw new Error(`无法连接 AI 服务${corsHint}`);
+    }
+    if (error instanceof Error) throw error;
+    throw new Error("AI 探测失败，请重试");
   } finally {
     clearTimeout(timeout);
   }

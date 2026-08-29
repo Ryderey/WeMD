@@ -7,13 +7,20 @@ import {
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RichPostDialog } from "../../components/RichPost/RichPostDialog";
-import { rewriteRichPostInBrowser } from "../../services/richPostAi";
+import {
+  probeRichPostAiInBrowser,
+  rewriteRichPostInBrowser,
+} from "../../services/richPostAi";
 import { useEditorStore } from "../../store/editorStore";
 
 vi.mock("../../services/richPostAi", async (importOriginal) => {
   const actual =
     await importOriginal<typeof import("../../services/richPostAi")>();
-  return { ...actual, rewriteRichPostInBrowser: vi.fn() };
+  return {
+    ...actual,
+    probeRichPostAiInBrowser: vi.fn(),
+    rewriteRichPostInBrowser: vi.fn(),
+  };
 });
 
 vi.mock("../../services/richPostCover", async (importOriginal) => {
@@ -40,6 +47,7 @@ function deferred<T>(): {
 describe("RichPostDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(probeRichPostAiInBrowser).mockReset();
     vi.mocked(rewriteRichPostInBrowser).mockReset();
     localStorage.clear();
     delete window.electron;
@@ -116,6 +124,27 @@ describe("RichPostDialog", () => {
       target: { value: "全新标题" },
     });
     await waitFor(() => expect(input).toHaveValue(""));
+  });
+
+  it("probes the current Web AI configuration without generating an article", async () => {
+    vi.mocked(probeRichPostAiInBrowser).mockResolvedValueOnce();
+    render(<RichPostDialog open onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("API Key"), {
+      target: { value: "test-key" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "探测配置" }));
+
+    await waitFor(() =>
+      expect(probeRichPostAiInBrowser).toHaveBeenCalledWith({
+        settings: expect.objectContaining({
+          baseUrl: "https://api.openai.com/v1",
+          model: "gpt-4o-mini",
+        }),
+        apiKey: "test-key",
+      }),
+    );
+    expect(rewriteRichPostInBrowser).not.toHaveBeenCalled();
   });
 
   it("discards an old rewrite result after switching away and back", async () => {

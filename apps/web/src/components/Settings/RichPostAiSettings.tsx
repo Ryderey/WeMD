@@ -11,6 +11,8 @@ interface RichPostAiSettingsProps {
   hasElectronKey?: boolean;
   onSettingsChange: (settings: Settings) => void;
   onApiKeyChange: (apiKey: string) => void;
+  onProbe?: () => void | Promise<void>;
+  isProbing?: boolean;
   onSaveApiKey?: () => void | Promise<void>;
   onClearApiKey?: () => void | Promise<void>;
 }
@@ -21,6 +23,8 @@ export function RichPostAiSettings({
   hasElectronKey = false,
   onSettingsChange,
   onApiKeyChange,
+  onProbe,
+  isProbing = false,
   onSaveApiKey,
   onClearApiKey,
 }: RichPostAiSettingsProps): ReactElement {
@@ -68,32 +72,44 @@ export function RichPostAiSettings({
         </label>
       </div>
 
-      <label>
-        API Key
-        <input
-          type="password"
-          value={apiKey}
-          onChange={(event) => onApiKeyChange(event.target.value)}
-          autoComplete="off"
-          placeholder={hasElectronKey ? "已安全保存" : "sk-..."}
-        />
-      </label>
-      <div className="rich-post-ai-settings__key-actions">
-        {onSaveApiKey && (
-          <button type="button" onClick={() => void onSaveApiKey()}>
-            安全保存 Key
-          </button>
-        )}
-        {onClearApiKey ? (
-          <button type="button" onClick={() => void onClearApiKey()}>
-            清除 Key
-          </button>
-        ) : (
-          !onSaveApiKey && (
-            <small>Web 版 API Key 只在当前页面会话内保留。</small>
-          )
-        )}
+      <div className="rich-post-ai-settings__key-row">
+        <label>
+          API Key
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(event) => onApiKeyChange(event.target.value)}
+            autoComplete="off"
+            placeholder={hasElectronKey ? "已安全保存" : "sk-..."}
+          />
+        </label>
+        <div className="rich-post-ai-settings__key-actions">
+          {onProbe && (
+            <button
+              type="button"
+              onClick={() => void onProbe()}
+              disabled={isProbing}
+            >
+              {isProbing ? "探测中…" : "探测配置"}
+            </button>
+          )}
+          {onSaveApiKey && (
+            <button type="button" onClick={() => void onSaveApiKey()}>
+              安全保存 Key
+            </button>
+          )}
+          {onClearApiKey && (
+            <button type="button" onClick={() => void onClearApiKey()}>
+              清除 Key
+            </button>
+          )}
+        </div>
       </div>
+      {!onSaveApiKey && !onClearApiKey && (
+        <small className="rich-post-ai-settings__key-note">
+          Web 版 API Key 只在当前页面会话内保留。
+        </small>
+      )}
 
       <label>
         改写提示词

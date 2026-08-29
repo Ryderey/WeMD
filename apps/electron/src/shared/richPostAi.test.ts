@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import {
   assertApprovedRichPostEndpoint,
   parseRichPostApiKeySaveInput,
+  parseRichPostElectronProbeInput,
   parseRichPostElectronRewriteInput,
+  probeRichPostAi,
 } from "./richPostAi";
 
 test("only allows the endpoint bound to the saved API Key", () => {
@@ -74,4 +76,39 @@ test("validates renderer inputs before the main process uses them", () => {
       }),
     /内容过长/,
   );
+  assert.deepEqual(
+    parseRichPostElectronProbeInput({
+      baseUrl: "https://api.example.com/v1",
+      model: "model",
+    }),
+    { baseUrl: "https://api.example.com/v1", model: "model" },
+  );
+});
+
+test("probes the configured endpoint with the saved authorization", async () => {
+  let request: RequestInit | undefined;
+  await probeRichPostAi(
+    {
+      baseUrl: "https://api.example.com/v1",
+      model: "model",
+      apiKey: "secret-key",
+    },
+    {
+      fetcher: async (_url, init) => {
+        request = init;
+        return new Response(null, { status: 200 });
+      },
+    },
+  );
+
+  assert.deepEqual(request?.headers, {
+    Authorization: "Bearer secret-key",
+    "Content-Type": "application/json",
+  });
+  assert.deepEqual(JSON.parse(String(request?.body)), {
+    model: "model",
+    stream: false,
+    max_tokens: 1,
+    messages: [{ role: "user", content: "ping" }],
+  });
 });

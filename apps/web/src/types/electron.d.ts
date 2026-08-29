@@ -23,6 +23,10 @@ type RichPostAiRewriteResponse =
     }
   | { success: false; error: string };
 
+type RichPostAiProbeResponse =
+  | { success: true }
+  | { success: false; error: string };
+
 interface ElectronAPI {
   isElectron: boolean;
   platform: string;
@@ -124,6 +128,10 @@ interface ElectronAPI {
       baseUrl: string;
     }) => Promise<RichPostAiMutationResponse>;
     clearApiKey: () => Promise<RichPostAiMutationResponse>;
+    probe: (payload: {
+      baseUrl: string;
+      model: string;
+    }) => Promise<RichPostAiProbeResponse>;
     rewrite: (
       payload: RichPostElectronRewriteInput,
     ) => Promise<RichPostAiRewriteResponse>;
