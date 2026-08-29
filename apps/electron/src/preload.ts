@@ -1,4 +1,9 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
+import {
+    RICH_POST_AI_CHANNELS,
+    type RichPostApiKeySaveInput,
+    type RichPostElectronRewriteInput,
+} from './shared/richPostAi';
 
 contextBridge.exposeInMainWorld('electron', {
     isElectron: true,
@@ -76,5 +81,15 @@ contextBridge.exposeInMainWorld('electron', {
     export: {
         saveImages: (payload: { files: { filename: string; base64: string }[]; defaultName?: string }) =>
             ipcRenderer.invoke('export:saveImages', payload),
+    },
+    ai: {
+        getStatus: () => ipcRenderer.invoke(RICH_POST_AI_CHANNELS.getStatus),
+        saveApiKey: (payload: RichPostApiKeySaveInput) =>
+            ipcRenderer.invoke(RICH_POST_AI_CHANNELS.saveApiKey, payload),
+        clearApiKey: () => ipcRenderer.invoke(RICH_POST_AI_CHANNELS.clearApiKey),
+        probe: (payload: { baseUrl: string; model: string }) =>
+            ipcRenderer.invoke(RICH_POST_AI_CHANNELS.probe, payload),
+        rewrite: (payload: RichPostElectronRewriteInput) =>
+            ipcRenderer.invoke(RICH_POST_AI_CHANNELS.rewrite, payload),
     },
 });

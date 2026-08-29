@@ -1,0 +1,4 @@
+{"file":".trellis/spec/web/frontend/ipc-electron.md","reason":"Implement the narrow Electron AI bridge safely"}
+{"file":".trellis/spec/web/frontend/electron-browser-api-restrictions.md","reason":"Respect renderer/main-process API boundaries"}
+{"file":".trellis/spec/web/shared/typescript.md","reason":"Define explicit cross-layer payload types"}
+{"file":".trellis/tasks/08-28-rich-post-ai-rewrite/research/rewrite-prompt.md","reason":"Use the approved prompt derived from example pairs"}

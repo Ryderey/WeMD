@@ -132,6 +132,14 @@ describe("Header", () => {
     expect(mockCopyAsHtml).toHaveBeenCalled();
   });
 
+  it("opens rich-post export from the header", () => {
+    const onOpenRichPost = vi.fn();
+    render(<Header onOpenRichPost={onOpenRichPost} />);
+
+    fireEvent.click(screen.getByText("导出图文"));
+    expect(onOpenRichPost).toHaveBeenCalledTimes(1);
+  });
+
   it("does not render window controls on Web/Mac", () => {
     vi.mocked(useWindowControls).mockReturnValue({
       isElectron: false,
@@ -185,13 +193,16 @@ describe("Header", () => {
   });
 
   it("shows floating toolbar buttons when header is hidden", () => {
-    render(<Header />);
+    const onOpenRichPost = vi.fn();
+    render(<Header onOpenRichPost={onOpenRichPost} />);
 
     fireEvent.click(screen.getByLabelText("隐藏标题栏"));
 
     expect(screen.getByLabelText("显示标题栏")).toBeInTheDocument();
     expect(screen.getByLabelText("主题管理")).toBeInTheDocument();
     expect(screen.getByLabelText("图床设置")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("导出图文"));
+    expect(onOpenRichPost).toHaveBeenCalledTimes(1);
     expect(screen.getByLabelText("复制到公众号")).toBeInTheDocument();
   });
 

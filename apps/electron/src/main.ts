@@ -1,8 +1,20 @@
-import { app, BrowserWindow, Menu, dialog, ipcMain, nativeImage, IpcMainInvokeEvent, shell, clipboard } from 'electron';
+import { app, BrowserWindow, Menu, dialog, ipcMain, nativeImage, IpcMainInvokeEvent, shell, clipboard, safeStorage } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { extractFrontmatterMeta } from './utils/frontmatter';
 import { startBundledServer, stopBundledServer } from './server-launcher';
+import { createAiSecretStore } from './ai-secret-store';
+import {
+    assertApprovedRichPostEndpoint,
+    getRichPostAiErrorMessage,
+    normalizeChatCompletionsUrl,
+    parseRichPostApiKeySaveInput,
+    parseRichPostElectronProbeInput,
+    parseRichPostElectronRewriteInput,
+    probeRichPostAi,
+    requestRichPostRewrite,
+    RICH_POST_AI_CHANNELS,
+} from './shared/richPostAi';
 
 // 判断是否为开发模式 - 使用 app.isPackaged 是最可靠的方式
 // 注意：app.isPackaged 只能在 app ready 之后使用，这里用延迟判断
@@ -15,6 +27,11 @@ let mainWindow: BrowserWindow | null = null;
 let workspaceDir: string | null = null;
 let fileWatcher: fs.FSWatcher | null = null;
 let watcherDebounceTimer: NodeJS.Timeout | null = null;
+
+const aiSecretStore = createAiSecretStore({
+    getFilePath: () => path.join(app.getPath('userData'), 'ai-secrets.json'),
+    cipher: safeStorage,
+});
 
 // --- 文件监听器 ---
 function startWatching(dir: string) {
@@ -252,6 +269,68 @@ ipcMain.handle('window:maximize', () => {
 });
 ipcMain.handle('window:close', () => mainWindow?.close());
 ipcMain.handle('window:isMaximized', () => mainWindow?.isMaximized());
+
+ipcMain.handle(RICH_POST_AI_CHANNELS.getStatus, () => aiSecretStore.getStatus());
+
+ipcMain.handle(RICH_POST_AI_CHANNELS.saveApiKey, (_event: IpcMainInvokeEvent, payload: unknown) => {
+    try {
+        const input = parseRichPostApiKeySaveInput(payload);
+        const approvedEndpoint = normalizeChatCompletionsUrl(input.baseUrl);
+        aiSecretStore.saveApiKey(input.apiKey, approvedEndpoint);
+        return { success: true, hasKey: true };
+    } catch (error) {
+        return {
+            success: false,
+            hasKey: aiSecretStore.getStatus().hasKey,
+            error: getRichPostAiErrorMessage(error),
+        };
+    }
+});
+
+ipcMain.handle(RICH_POST_AI_CHANNELS.clearApiKey, () => {
+    try {
+        aiSecretStore.clearApiKey();
+        return { success: true, hasKey: false };
+    } catch (error) {
+        return {
+            success: false,
+            hasKey: aiSecretStore.getStatus().hasKey,
+            error: getRichPostAiErrorMessage(error),
+        };
+    }
+});
+
+ipcMain.handle(RICH_POST_AI_CHANNELS.probe, async (_event: IpcMainInvokeEvent, payload: unknown) => {
+    try {
+        const input = parseRichPostElectronProbeInput(payload);
+        const credential = aiSecretStore.readCredential();
+        if (!credential) return { success: false, error: '请先安全保存 API Key' };
+        const baseUrl = assertApprovedRichPostEndpoint(input.baseUrl, credential.approvedEndpoint);
+        await probeRichPostAi(
+            { ...input, baseUrl, apiKey: credential.apiKey },
+            { environment: 'electron' },
+        );
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: getRichPostAiErrorMessage(error) };
+    }
+});
+
+ipcMain.handle(RICH_POST_AI_CHANNELS.rewrite, async (_event: IpcMainInvokeEvent, payload: unknown) => {
+    try {
+        const input = parseRichPostElectronRewriteInput(payload);
+        const credential = aiSecretStore.readCredential();
+        if (!credential) return { success: false, error: '请先保存 API Key' };
+        const baseUrl = assertApprovedRichPostEndpoint(input.baseUrl, credential.approvedEndpoint);
+        const data = await requestRichPostRewrite(
+            { ...input, baseUrl, apiKey: credential.apiKey },
+            { environment: 'electron' },
+        );
+        return { success: true, data };
+    } catch (error) {
+        return { success: false, error: getRichPostAiErrorMessage(error) };
+    }
+});
 
 // 工作区管理
 ipcMain.handle('workspace:select', async () => {

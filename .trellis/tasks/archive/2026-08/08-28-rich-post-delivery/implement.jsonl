@@ -1,0 +1,4 @@
+{"file":".trellis/spec/web/frontend/components.md","reason":"Implement accessible modal controls and states"}
+{"file":".trellis/spec/web/frontend/react-pitfalls.md","reason":"Avoid stale dialog state and effect loops"}
+{"file":".trellis/spec/web/frontend/css-design.md","reason":"Keep responsive feature styles scoped"}
+{"file":".trellis/spec/web/shared/code-quality.md","reason":"Reuse existing export and naming helpers"}

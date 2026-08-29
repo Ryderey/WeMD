@@ -9,6 +9,7 @@ describe("MobileToolbar", () => {
     const onCopyAsHtml = vi.fn();
     const onOpenTheme = vi.fn();
     const onOpenExport = vi.fn();
+    const onOpenRichPost = vi.fn();
 
     render(
       <MobileToolbar
@@ -18,6 +19,7 @@ describe("MobileToolbar", () => {
         onCopyAsHtml={onCopyAsHtml}
         onOpenTheme={onOpenTheme}
         onOpenExport={onOpenExport}
+        onOpenRichPost={onOpenRichPost}
       />,
     );
 
@@ -33,6 +35,7 @@ describe("MobileToolbar", () => {
     const onCopyAsHtml = vi.fn();
     const onOpenTheme = vi.fn();
     const onOpenExport = vi.fn();
+    const onOpenRichPost = vi.fn();
 
     render(
       <MobileToolbar
@@ -42,6 +45,7 @@ describe("MobileToolbar", () => {
         onCopyAsHtml={onCopyAsHtml}
         onOpenTheme={onOpenTheme}
         onOpenExport={onOpenExport}
+        onOpenRichPost={onOpenRichPost}
       />,
     );
 
@@ -57,6 +61,7 @@ describe("MobileToolbar", () => {
     const onCopyAsHtml = vi.fn();
     const onOpenTheme = vi.fn();
     const onOpenExport = vi.fn();
+    const onOpenRichPost = vi.fn();
 
     render(
       <MobileToolbar
@@ -66,6 +71,7 @@ describe("MobileToolbar", () => {
         onCopyAsHtml={onCopyAsHtml}
         onOpenTheme={onOpenTheme}
         onOpenExport={onOpenExport}
+        onOpenRichPost={onOpenRichPost}
       />,
     );
 
@@ -73,5 +79,25 @@ describe("MobileToolbar", () => {
     fireEvent.click(screen.getByText("导出图片"));
 
     expect(onOpenExport).toHaveBeenCalledTimes(1);
+  });
+
+  it("triggers rich-post export from more menu", () => {
+    const onOpenRichPost = vi.fn();
+    render(
+      <MobileToolbar
+        activeView="editor"
+        onViewChange={vi.fn()}
+        onCopyToWechat={vi.fn()}
+        onCopyAsHtml={vi.fn()}
+        onOpenTheme={vi.fn()}
+        onOpenExport={vi.fn()}
+        onOpenRichPost={onOpenRichPost}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole("button")[3]);
+    fireEvent.click(screen.getByText("导出图文"));
+
+    expect(onOpenRichPost).toHaveBeenCalledTimes(1);
   });
 });

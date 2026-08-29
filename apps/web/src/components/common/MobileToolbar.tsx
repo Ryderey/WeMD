@@ -6,6 +6,7 @@ import {
   Palette,
   Code,
   Download,
+  GalleryVerticalEnd,
   X,
 } from "lucide-react";
 import { useState } from "react";
@@ -19,6 +20,7 @@ interface MobileToolbarProps {
   onCopyAsHtml: () => void;
   onOpenTheme: () => void;
   onOpenExport: () => void;
+  onOpenRichPost: () => void;
 }
 
 /**
@@ -31,6 +33,7 @@ export function MobileToolbar({
   onCopyAsHtml,
   onOpenTheme,
   onOpenExport,
+  onOpenRichPost,
 }: MobileToolbarProps) {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -82,6 +85,16 @@ export function MobileToolbar({
               >
                 <Download size={20} />
                 <span>导出图片</span>
+              </button>
+              <button
+                className="mobile-menu-item"
+                onClick={() => {
+                  onOpenRichPost();
+                  setShowMenu(false);
+                }}
+              >
+                <GalleryVerticalEnd size={20} />
+                <span>导出图文</span>
               </button>
             </div>
           </div>

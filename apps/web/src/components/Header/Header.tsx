@@ -37,6 +37,7 @@ import {
   Moon,
   ChevronsUp,
   ChevronsDown,
+  GalleryVerticalEnd,
 } from "lucide-react";
 import { useUITheme } from "../../hooks/useUITheme";
 import { useWindowControls } from "../../hooks/useWindowControls";
@@ -122,7 +123,11 @@ const WindowControls = ({ fixed = false }: { fixed?: boolean }) => {
   );
 };
 
-export function Header() {
+interface HeaderProps {
+  onOpenRichPost?: () => void;
+}
+
+export function Header({ onOpenRichPost }: HeaderProps) {
   const { copyToWechat, copyAsHtml } = useEditorStore();
   const [showThemePanel, setShowThemePanel] = useState(false);
   const [showStorageModal, setShowStorageModal] = useState(false);
@@ -214,6 +219,11 @@ export function Header() {
             onClick={() => setShowExportModal(true)}
           />
           <FloatingToolbarButton
+            icon={<GalleryVerticalEnd size={18} strokeWidth={2} />}
+            label="导出图文"
+            onClick={() => onOpenRichPost?.()}
+          />
+          <FloatingToolbarButton
             icon={<Code size={18} strokeWidth={2} />}
             label="复制 HTML"
             onClick={copyAsHtml}
@@ -291,6 +301,11 @@ export function Header() {
             >
               <Download size={18} strokeWidth={2} />
               <span>导出图片</span>
+            </button>
+
+            <button className="btn-secondary" onClick={onOpenRichPost}>
+              <GalleryVerticalEnd size={18} strokeWidth={2} />
+              <span>导出图文</span>
             </button>
 
             <button

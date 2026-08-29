@@ -1,0 +1,2 @@
+{"file":".trellis/spec/web/frontend/quality.md","reason":"Verify font loading, DOM cleanup and tests"}
+{"file":".trellis/spec/web/shared/code-quality.md","reason":"Verify title and highlight validation"}
