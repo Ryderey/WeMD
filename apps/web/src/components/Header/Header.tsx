@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useEditorStore } from "../../store/editorStore";
 import "./Header.css";
 
@@ -37,6 +37,7 @@ import {
   Moon,
   ChevronsUp,
   ChevronsDown,
+  ChevronDown,
   GalleryVerticalEnd,
 } from "lucide-react";
 import { useUITheme } from "../../hooks/useUITheme";
@@ -133,7 +134,9 @@ export function Header({ onOpenRichPost }: HeaderProps) {
   const [showStorageModal, setShowStorageModal] = useState(false);
   const [showImageHostModal, setShowImageHostModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [showComponentDialog, setShowComponentDialog] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
   const uiTheme = useUITheme((state) => state.theme);
   const setTheme = useUITheme((state) => state.setTheme);
   const isStructuralismUI = uiTheme === "dark";
@@ -159,6 +162,32 @@ export function Header({ onOpenRichPost }: HeaderProps) {
       // 忽略存储不可用的场景（如隐私模式）
     }
   }, [autoHide]);
+
+  useEffect(() => {
+    if (!showExportMenu) return;
+
+    const closeExportMenu = (event: MouseEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent && event.key === "Escape") {
+        setShowExportMenu(false);
+        return;
+      }
+
+      if (
+        event instanceof MouseEvent &&
+        event.target instanceof Node &&
+        !exportMenuRef.current?.contains(event.target)
+      ) {
+        setShowExportMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeExportMenu);
+    document.addEventListener("keydown", closeExportMenu);
+    return () => {
+      document.removeEventListener("mousedown", closeExportMenu);
+      document.removeEventListener("keydown", closeExportMenu);
+    };
+  }, [showExportMenu]);
 
   // 切换标题栏显示/隐藏
   const handleHideHeader = () => {
@@ -238,7 +267,9 @@ export function Header({ onOpenRichPost }: HeaderProps) {
       )}
 
       <header
-        className={`app-header ${autoHide ? "header-auto-hide" : ""}`}
+        className={`app-header ${autoHide ? "header-auto-hide" : ""} ${
+          isWindows ? "app-header-windows" : ""
+        }`}
         style={headerStyle}
       >
         <div className="header-left">
@@ -295,18 +326,46 @@ export function Header({ onOpenRichPost }: HeaderProps) {
               <span>主题管理</span>
             </button>
 
-            <button
-              className="btn-secondary"
-              onClick={() => setShowExportModal(true)}
-            >
-              <Download size={18} strokeWidth={2} />
-              <span>导出图片</span>
-            </button>
-
-            <button className="btn-secondary" onClick={onOpenRichPost}>
-              <GalleryVerticalEnd size={18} strokeWidth={2} />
-              <span>导出图文</span>
-            </button>
+            <div className="export-menu" ref={exportMenuRef}>
+              <button
+                className="btn-secondary"
+                onClick={() => setShowExportMenu((open) => !open)}
+                aria-haspopup="menu"
+                aria-expanded={showExportMenu}
+              >
+                <Download size={18} strokeWidth={2} />
+                <span>导出</span>
+                <ChevronDown
+                  className={`export-menu-chevron ${showExportMenu ? "is-open" : ""}`}
+                  size={16}
+                  strokeWidth={2}
+                />
+              </button>
+              {showExportMenu && (
+                <div className="export-dropdown" role="menu">
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowExportModal(true);
+                      setShowExportMenu(false);
+                    }}
+                  >
+                    <Download size={16} strokeWidth={2} />
+                    导出图片
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      onOpenRichPost?.();
+                      setShowExportMenu(false);
+                    }}
+                  >
+                    <GalleryVerticalEnd size={16} strokeWidth={2} />
+                    导出图文
+                  </button>
+                </div>
+              )}
+            </div>
 
             <button
               className="btn-secondary"

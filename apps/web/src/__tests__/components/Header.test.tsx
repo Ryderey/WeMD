@@ -25,6 +25,10 @@ vi.mock("../../components/Settings/ImageHostSettings", () => ({
     <div data-testid="image-host-settings">Image Host Settings</div>
   ),
 }));
+vi.mock("../../components/Export/ExportDialog", () => ({
+  ExportDialog: ({ open }: { open: boolean }) =>
+    open ? <div data-testid="export-dialog">Export Dialog</div> : null,
+}));
 
 describe("Header", () => {
   // Default mocks
@@ -136,8 +140,34 @@ describe("Header", () => {
     const onOpenRichPost = vi.fn();
     render(<Header onOpenRichPost={onOpenRichPost} />);
 
-    fireEvent.click(screen.getByText("导出图文"));
+    fireEvent.click(screen.getByRole("button", { name: "导出" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "导出图文" }));
     expect(onOpenRichPost).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens image export from the header menu", async () => {
+    render(<Header />);
+
+    fireEvent.click(screen.getByRole("button", { name: "导出" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "导出图片" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("export-dialog")).toBeInTheDocument();
+    });
+  });
+
+  it("closes the export menu when pressing Escape or clicking outside", () => {
+    render(<Header />);
+
+    fireEvent.click(screen.getByRole("button", { name: "导出" }));
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "导出" }));
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
   it("does not render window controls on Web/Mac", () => {
@@ -174,8 +204,11 @@ describe("Header", () => {
     expect(screen.getByLabelText("最大化")).toBeInTheDocument();
     expect(screen.getByLabelText("关闭")).toBeInTheDocument();
 
-    // Test interactions
+    fireEvent.click(screen.getByLabelText("最小化"));
+    fireEvent.click(screen.getByLabelText("最大化"));
     fireEvent.click(screen.getByLabelText("关闭"));
+    expect(mockMinimize).toHaveBeenCalled();
+    expect(mockMaximize).toHaveBeenCalled();
     expect(mockClose).toHaveBeenCalled();
   });
 

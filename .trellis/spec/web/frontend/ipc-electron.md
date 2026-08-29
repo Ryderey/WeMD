@@ -292,6 +292,13 @@ Rules:
 }
 ```
 
+### Windows custom window controls
+
+When a frameless Windows window renders minimize, maximize, and close controls
+in the renderer, position that control group independently from the toolbar
+flex layout. Reserve matching right-side header padding for the controls so a
+wide action bar cannot push them beyond the visible window.
+
 ---
 
 ## Menu Accelerators (Keyboard Shortcuts)
