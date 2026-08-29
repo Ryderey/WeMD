@@ -40,6 +40,13 @@ repository build entry point that builds and deploys
 does not prepare that ignored resource directory. Verify the packaged output
 contains `resources/server/dist/main.js` and its production dependencies.
 
+### Sandboxed preload scripts
+
+Electron sandboxed preloads may load Electron APIs but cannot load local
+runtime modules. Keep preload imports type-only unless the module is provided
+by Electron; define IPC channel strings locally at this process boundary.
+Otherwise the preload fails before `contextBridge` can expose the desktop API.
+
 ---
 
 ## Testing Requirements

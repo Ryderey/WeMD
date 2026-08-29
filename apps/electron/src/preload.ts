@@ -1,9 +1,18 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
-import {
-    RICH_POST_AI_CHANNELS,
-    type RichPostApiKeySaveInput,
-    type RichPostElectronRewriteInput,
+import type {
+    RichPostApiKeySaveInput,
+    RichPostElectronRewriteInput,
 } from './shared/richPostAi';
+
+// Sandboxed preloads may only require Electron modules, so these channels must
+// remain local instead of importing the shared runtime module.
+const RICH_POST_AI_CHANNELS = {
+    getStatus: 'ai:getStatus',
+    saveApiKey: 'ai:saveApiKey',
+    clearApiKey: 'ai:clearApiKey',
+    probe: 'ai:probe',
+    rewrite: 'ai:rewrite',
+} as const;
 
 contextBridge.exposeInMainWorld('electron', {
     isElectron: true,
