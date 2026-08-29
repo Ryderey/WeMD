@@ -103,6 +103,8 @@ function startProdServer() {
     // 微信图床凭据等环境变量来自用户数据目录的 server.env
     const envFile = path.join(app.getPath('userData'), 'server.env');
     const envFromFile = loadEnvFile(envFile);
+    const uploadsDir = path.join(app.getPath('userData'), 'uploads');
+    fs.mkdirSync(uploadsDir, { recursive: true });
     if (!fs.existsSync(envFile)) {
         console.warn(`[server-launcher] 未找到 ${envFile}，微信图床相关接口将不可用`);
     }
@@ -111,7 +113,12 @@ function startProdServer() {
         cwd: serverDir,
         serviceName: 'wemd-nest-server',
         stdio: 'pipe',
-        env: { ...process.env, ...envFromFile, PORT: String(EMBEDDED_SERVER_PORT) },
+        env: {
+            ...process.env,
+            ...envFromFile,
+            PORT: String(EMBEDDED_SERVER_PORT),
+            UPLOADS_DIR: uploadsDir,
+        },
     });
     prodServerProcess.stdout?.on('data', (chunk: Buffer) => {
         process.stdout.write(`[nest-server] ${chunk}`);

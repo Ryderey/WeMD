@@ -91,6 +91,15 @@ function bumpPackageJson(filePath) {
   return { name: pkg.name, oldVersion, newVersion };
 }
 
+function trimBundledServer() {
+  const runtimeEntries = new Set(['dist', 'node_modules']);
+  for (const entry of fs.readdirSync(serverDeployDir)) {
+    if (!runtimeEntries.has(entry)) {
+      fs.rmSync(path.join(serverDeployDir, entry), { recursive: true, force: true });
+    }
+  }
+}
+
 async function main() {
   if (!noBump) {
     console.log('🔢 自动递增 patch 版本号...');
@@ -127,6 +136,7 @@ async function main() {
   if (!fs.existsSync(deployNestCore)) {
     throw new Error(`服务端依赖部署缺失: ${deployNestCore}`);
   }
+  trimBundledServer();
 
   console.log('\n📦 步骤 3/3：使用 electron-builder 打包 Windows 应用...');
   const targets = includeZip ? ['nsis', 'zip'] : ['nsis'];
