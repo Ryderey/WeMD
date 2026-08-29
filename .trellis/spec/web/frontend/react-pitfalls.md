@@ -306,6 +306,10 @@ Before applying a result or error, verify both:
 - it is still the latest request; and
 - the source identity captured at request time still matches the current source.
 
+Use a monotonically increasing source revision for that identity. Comparing only
+the current values can fail when the user switches A → B → A before the first
+request settles.
+
 Also guard loading cleanup so an older request cannot clear the loading state of
 a newer request. Transport cancellation is useful for efficiency, but an
 ownership check is still required because cancellation can race with completion.

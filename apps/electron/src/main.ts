@@ -8,8 +8,10 @@ import {
     assertApprovedRichPostEndpoint,
     getRichPostAiErrorMessage,
     normalizeChatCompletionsUrl,
+    parseRichPostApiKeySaveInput,
+    parseRichPostElectronRewriteInput,
     requestRichPostRewrite,
-    type RichPostElectronRewriteInput,
+    RICH_POST_AI_CHANNELS,
 } from './shared/richPostAi';
 
 // 判断是否为开发模式 - 使用 app.isPackaged 是最可靠的方式
@@ -266,32 +268,42 @@ ipcMain.handle('window:maximize', () => {
 ipcMain.handle('window:close', () => mainWindow?.close());
 ipcMain.handle('window:isMaximized', () => mainWindow?.isMaximized());
 
-ipcMain.handle('ai:getStatus', () => aiSecretStore.getStatus());
+ipcMain.handle(RICH_POST_AI_CHANNELS.getStatus, () => aiSecretStore.getStatus());
 
-ipcMain.handle('ai:saveApiKey', (_event: IpcMainInvokeEvent, payload: { apiKey?: string; baseUrl?: string }) => {
+ipcMain.handle(RICH_POST_AI_CHANNELS.saveApiKey, (_event: IpcMainInvokeEvent, payload: unknown) => {
     try {
-        const approvedEndpoint = normalizeChatCompletionsUrl(payload?.baseUrl ?? '');
-        aiSecretStore.saveApiKey(payload?.apiKey ?? '', approvedEndpoint);
+        const input = parseRichPostApiKeySaveInput(payload);
+        const approvedEndpoint = normalizeChatCompletionsUrl(input.baseUrl);
+        aiSecretStore.saveApiKey(input.apiKey, approvedEndpoint);
         return { success: true, hasKey: true };
     } catch (error) {
-        return { success: false, hasKey: false, error: getRichPostAiErrorMessage(error) };
+        return {
+            success: false,
+            hasKey: aiSecretStore.getStatus().hasKey,
+            error: getRichPostAiErrorMessage(error),
+        };
     }
 });
 
-ipcMain.handle('ai:clearApiKey', () => {
+ipcMain.handle(RICH_POST_AI_CHANNELS.clearApiKey, () => {
     try {
         aiSecretStore.clearApiKey();
         return { success: true, hasKey: false };
     } catch (error) {
-        return { success: false, hasKey: true, error: getRichPostAiErrorMessage(error) };
+        return {
+            success: false,
+            hasKey: aiSecretStore.getStatus().hasKey,
+            error: getRichPostAiErrorMessage(error),
+        };
     }
 });
 
-ipcMain.handle('ai:rewrite', async (_event: IpcMainInvokeEvent, input: RichPostElectronRewriteInput) => {
+ipcMain.handle(RICH_POST_AI_CHANNELS.rewrite, async (_event: IpcMainInvokeEvent, payload: unknown) => {
     try {
+        const input = parseRichPostElectronRewriteInput(payload);
         const credential = aiSecretStore.readCredential();
         if (!credential) return { success: false, error: '请先保存 API Key' };
-        const baseUrl = assertApprovedRichPostEndpoint(input?.baseUrl ?? '', credential.approvedEndpoint);
+        const baseUrl = assertApprovedRichPostEndpoint(input.baseUrl, credential.approvedEndpoint);
         const data = await requestRichPostRewrite(
             { ...input, baseUrl, apiKey: credential.apiKey },
             { environment: 'electron' },

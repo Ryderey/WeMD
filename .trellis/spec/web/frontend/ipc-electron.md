@@ -595,6 +595,7 @@ There is deliberately no `getApiKey` signature.
 - The renderer sends non-secret model settings and content to `rewrite`; the main process must reject a requested endpoint that differs from the endpoint bound to the key.
 - Only after the endpoint matches may the main process attach the authorization header and return validated content or a sanitized error.
 - Persist ciphertext under `app.getPath("userData")`; write a temporary sibling and replace the previous file with rollback protection.
+- If replacement uses `.bak` or `.tmp` siblings, recover a valid backup when the primary file is absent at startup; `clear` must remove every sibling so no ciphertext survives a successful clear.
 - Reject persistence when `safeStorage.isEncryptionAvailable()` is false or Linux reports the `basic_text` backend.
 
 ### 4. Validation & Error Matrix
@@ -619,7 +620,7 @@ There is deliberately no `getApiKey` signature.
 ### 6. Tests Required
 
 - Round-trip encrypted save/read inside the main-process store; assert the file does not contain plaintext.
-- Re-save atomically, clear, unavailable encryption, and Linux `basic_text` refusal.
+- Re-save atomically, recover both backup and first-save temporary files, clear every ciphertext sibling, unavailable encryption, and Linux `basic_text` refusal.
 - Preload/renderer declarations must expose only status, save, clear, and rewrite.
 - Rewrite tests must assert authorization, timeout, sanitized errors, and response validation.
 - Endpoint-binding tests must prove that a mismatched renderer endpoint is rejected before any request can carry the key.

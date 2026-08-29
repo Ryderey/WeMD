@@ -25,7 +25,7 @@ import {
 describe("richPostCover", () => {
   beforeEach(() => {
     domToBlobMock.mockClear();
-    fontLoadMock = vi.fn(async () => []);
+    fontLoadMock = vi.fn(async () => [{} as FontFace]);
     Object.defineProperty(document, "fonts", {
       configurable: true,
       value: {
@@ -172,5 +172,18 @@ describe("richPostCover", () => {
 
   it("uses a dedicated overflow error", () => {
     expect(new RichPostCoverOverflowError().message).toContain("缩短");
+  });
+
+  it("blocks capture when a bundled font is unavailable", async () => {
+    fontLoadMock.mockResolvedValueOnce([]);
+
+    await expect(
+      captureRichPostCover({
+        title: "标题",
+        highlightTerms: [],
+        settings: DEFAULT_RICH_POST_COVER_SETTINGS,
+      }),
+    ).rejects.toThrow("字体加载失败");
+    expect(domToBlobMock).not.toHaveBeenCalled();
   });
 });

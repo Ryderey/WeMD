@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactElement } from "react";
 import {
   DEFAULT_RICH_POST_AI_PROMPT,
   type RichPostAiSettings as Settings,
@@ -23,7 +23,7 @@ export function RichPostAiSettings({
   onApiKeyChange,
   onSaveApiKey,
   onClearApiKey,
-}: RichPostAiSettingsProps) {
+}: RichPostAiSettingsProps): ReactElement {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState("");
 

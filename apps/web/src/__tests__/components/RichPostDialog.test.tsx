@@ -40,6 +40,7 @@ function deferred<T>(): {
 describe("RichPostDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(rewriteRichPostInBrowser).mockReset();
     localStorage.clear();
     delete window.electron;
     useEditorStore.setState({
@@ -115,5 +116,105 @@ describe("RichPostDialog", () => {
       target: { value: "全新标题" },
     });
     await waitFor(() => expect(input).toHaveValue(""));
+  });
+
+  it("discards an old rewrite result after switching away and back", async () => {
+    const rewrite = deferred<{ body: string; highlightTerms: string[] }>();
+    vi.mocked(rewriteRichPostInBrowser).mockReturnValueOnce(rewrite.promise);
+
+    render(<RichPostDialog open onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("API Key"), {
+      target: { value: "test-key" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "生成图文" }));
+    await waitFor(() =>
+      expect(rewriteRichPostInBrowser).toHaveBeenCalledTimes(1),
+    );
+
+    act(() => {
+      useEditorStore.setState({
+        markdown: "# 文章 B\n\n新内容",
+        currentFilePath: "B.md",
+      });
+    });
+    await waitFor(() =>
+      expect(screen.getByLabelText("封面专用标题")).toHaveValue("文章 B"),
+    );
+    act(() => {
+      useEditorStore.setState({
+        markdown: "# 文章 A\n\n旧内容",
+        currentFilePath: "A.md",
+      });
+    });
+    await waitFor(() =>
+      expect(screen.getByLabelText("封面专用标题")).toHaveValue("文章 A"),
+    );
+
+    await act(async () => {
+      rewrite.resolve({ body: "文章 A 的过期结果", highlightTerms: [] });
+      await rewrite.promise;
+    });
+    expect(screen.getByLabelText("图文正文")).toHaveValue("");
+  });
+
+  it("restores secure save immediately after clearing a damaged key", async () => {
+    const getStatus = vi
+      .fn()
+      .mockResolvedValueOnce({
+        hasKey: false,
+        canPersist: false,
+        error: "已保存的 API Key 无法解密，请清除后重新保存",
+      })
+      .mockResolvedValueOnce({ hasKey: false, canPersist: true });
+    const clearApiKey = vi
+      .fn()
+      .mockResolvedValue({ success: true, hasKey: false });
+    Object.defineProperty(window, "electron", {
+      configurable: true,
+      writable: true,
+      value: {
+        ai: {
+          getStatus,
+          saveApiKey: vi.fn(),
+          clearApiKey,
+          rewrite: vi.fn(),
+        },
+      },
+    });
+
+    render(<RichPostDialog open onClose={vi.fn()} />);
+    await screen.findByText("已保存的 API Key 无法解密，请清除后重新保存");
+    expect(
+      screen.queryByRole("button", { name: "安全保存 Key" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "清除 Key" }));
+
+    await waitFor(() => expect(clearApiKey).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "安全保存 Key" }),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByText("已保存的 API Key 无法解密，请清除后重新保存"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clears a stale preview and blocks export for an empty cover title", async () => {
+    const { container } = render(<RichPostDialog open onClose={vi.fn()} />);
+    const preview = container.querySelector(".rich-post-cover-preview__stage");
+    expect(preview?.childElementCount).toBe(1);
+
+    fireEvent.change(screen.getByLabelText("图文正文"), {
+      target: { value: "可发布正文" },
+    });
+    fireEvent.change(screen.getByLabelText("封面专用标题"), {
+      target: { value: "" },
+    });
+
+    await screen.findByText("封面标题不能为空");
+    expect(preview?.childElementCount).toBe(0);
+    expect(screen.getByRole("button", { name: "导出 ZIP" })).toBeDisabled();
   });
 });

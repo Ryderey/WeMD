@@ -53,6 +53,7 @@ export function createAiSecretStore(
   const readCredential = (): AiSecretCredential | null => {
     assertEncryptionAvailable();
     const filePath = options.getFilePath();
+    recoverInterruptedWrite(filePath);
     if (!fs.existsSync(filePath)) return null;
 
     try {
@@ -130,14 +131,37 @@ export function createAiSecretStore(
     },
     clearApiKey: () => {
       const filePath = options.getFilePath();
-      try {
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      } catch {
+      const paths = [filePath, `${filePath}.tmp`, `${filePath}.bak`];
+      let failed = false;
+      for (const candidate of paths) {
+        try {
+          if (fs.existsSync(candidate)) fs.unlinkSync(candidate);
+        } catch {
+          failed = true;
+        }
+      }
+      if (failed) {
         throw new Error("清除 API Key 失败，请重试");
       }
     },
     readCredential,
   };
+}
+
+function recoverInterruptedWrite(filePath: string): void {
+  if (fs.existsSync(filePath)) return;
+
+  const backupPath = `${filePath}.bak`;
+  const tempPath = `${filePath}.tmp`;
+  try {
+    if (fs.existsSync(backupPath)) {
+      fs.renameSync(backupPath, filePath);
+    } else if (fs.existsSync(tempPath)) {
+      fs.renameSync(tempPath, filePath);
+    }
+  } catch {
+    throw new Error("已保存的 API Key 恢复失败，请清除后重新保存");
+  }
 }
 
 function isSecretFile(value: unknown): value is SecretFile {

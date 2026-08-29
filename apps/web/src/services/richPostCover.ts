@@ -202,10 +202,13 @@ export function fitRichPostCoverTitle(root: HTMLElement): number | null {
 
 export async function ensureRichPostCoverFonts(): Promise<void> {
   if (!document.fonts) throw new Error("当前环境不支持加载封面字体");
-  await Promise.all([
+  const loadedFonts = await Promise.all([
     document.fonts.load('700 116px "Noto Sans SC"'),
     document.fonts.load('400 104px "LXGW WenKai Lite"'),
   ]);
+  if (loadedFonts.some((fonts) => fonts.length === 0)) {
+    throw new Error("封面字体加载失败，请重试");
+  }
   await document.fonts.ready;
 }
 

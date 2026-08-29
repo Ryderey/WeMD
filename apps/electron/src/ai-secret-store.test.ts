@@ -23,7 +23,10 @@ test("API Key is encrypted, readable, queryable, and clearable", () => {
       getFilePath: () => filePath,
       cipher: createCipher(),
     });
-    store.saveApiKey("secret-key", "https://api.example.com/v1/chat/completions");
+    store.saveApiKey(
+      "secret-key",
+      "https://api.example.com/v1/chat/completions",
+    );
 
     const stored = fs.readFileSync(filePath, "utf8");
     assert.equal(stored.includes("secret-key"), false);
@@ -73,6 +76,70 @@ test("legacy keys remain readable but are not trusted for any endpoint", () => {
       apiKey: "legacy-key",
       approvedEndpoint: null,
     });
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("recovers a committed backup after an interrupted replacement", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "wemd-ai-secret-"));
+  const filePath = path.join(dir, "ai-secrets.json");
+  try {
+    const store = createAiSecretStore({
+      getFilePath: () => filePath,
+      cipher: createCipher(),
+    });
+    store.saveApiKey("secret-key", "https://api.example.com/chat/completions");
+    fs.renameSync(filePath, `${filePath}.bak`);
+    fs.writeFileSync(`${filePath}.tmp`, "incomplete", "utf8");
+
+    assert.deepEqual(store.readCredential(), {
+      apiKey: "secret-key",
+      approvedEndpoint: "https://api.example.com/chat/completions",
+    });
+    assert.equal(fs.existsSync(filePath), true);
+    assert.equal(fs.existsSync(`${filePath}.bak`), false);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("recovers a completed temporary file on the first interrupted save", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "wemd-ai-secret-"));
+  const filePath = path.join(dir, "ai-secrets.json");
+  try {
+    const store = createAiSecretStore({
+      getFilePath: () => filePath,
+      cipher: createCipher(),
+    });
+    store.saveApiKey("secret-key", "https://api.example.com/chat/completions");
+    fs.renameSync(filePath, `${filePath}.tmp`);
+
+    assert.equal(store.getStatus().hasKey, true);
+    assert.equal(fs.existsSync(filePath), true);
+    assert.equal(fs.existsSync(`${filePath}.tmp`), false);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("clear removes the main, temporary, and backup ciphertext files", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "wemd-ai-secret-"));
+  const filePath = path.join(dir, "ai-secrets.json");
+  try {
+    const store = createAiSecretStore({
+      getFilePath: () => filePath,
+      cipher: createCipher(),
+    });
+    store.saveApiKey("secret-key", "https://api.example.com/chat/completions");
+    fs.copyFileSync(filePath, `${filePath}.tmp`);
+    fs.copyFileSync(filePath, `${filePath}.bak`);
+
+    store.clearApiKey();
+
+    for (const candidate of [filePath, `${filePath}.tmp`, `${filePath}.bak`]) {
+      assert.equal(fs.existsSync(candidate), false);
+    }
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

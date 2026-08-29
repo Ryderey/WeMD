@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import {
   Check,
   Copy,
@@ -43,7 +43,10 @@ interface RichPostDialogProps {
   onClose: () => void;
 }
 
-export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
+export function RichPostDialog({
+  open,
+  onClose,
+}: RichPostDialogProps): ReactElement {
   const markdown = useEditorStore((state) => state.markdown);
   const currentFilePath = useEditorStore((state) => state.currentFilePath);
   const sourceTitle = useMemo(
@@ -74,9 +77,18 @@ export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
   const [coverError, setCoverError] = useState("");
   const previewRef = useRef<HTMLDivElement>(null);
   const rewriteRequestIdRef = useRef(0);
-  const latestSourceRef = useRef({ markdown, currentFilePath });
+  const latestSourceRef = useRef({ markdown, currentFilePath, revision: 0 });
   const latestCoverTitleRef = useRef(coverTitle);
-  latestSourceRef.current = { markdown, currentFilePath };
+  if (
+    latestSourceRef.current.markdown !== markdown ||
+    latestSourceRef.current.currentFilePath !== currentFilePath
+  ) {
+    latestSourceRef.current = {
+      markdown,
+      currentFilePath,
+      revision: latestSourceRef.current.revision + 1,
+    };
+  }
   latestCoverTitleRef.current = coverTitle;
 
   const electronAi = window.electron?.ai;
@@ -102,19 +114,33 @@ export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
 
   useEffect(() => {
     if (!open || !electronAi) return;
-    void electronAi.getStatus().then((status) => {
-      setHasElectronKey(status.hasKey);
-      setCanPersistElectronKey(status.canPersist);
-      if (status.error) setError(status.error);
-    });
+    let cancelled = false;
+    void electronAi
+      .getStatus()
+      .then((status) => {
+        if (cancelled) return;
+        setHasElectronKey(status.hasKey);
+        setCanPersistElectronKey(status.canPersist);
+        setError(status.error ?? "");
+      })
+      .catch((statusError: unknown) => {
+        if (!cancelled) setError(getRichPostAiErrorMessage(statusError));
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [electronAi, open]);
 
   useEffect(() => {
     const host = previewRef.current;
-    if (!open || !host || !coverTitle.trim()) return;
+    if (!open || !host) return;
     let cancelled = false;
     host.replaceChildren();
     setCoverError("");
+    if (!coverTitle.trim()) {
+      setCoverError("封面标题不能为空");
+      return;
+    }
 
     const cover = createRichPostCoverElement({
       title: coverTitle,
@@ -143,50 +169,69 @@ export function RichPostDialog({ open, onClose }: RichPostDialogProps) {
 
   const saveElectronKey = async (): Promise<boolean> => {
     if (!electronAi) return false;
-    const result = await electronAi.saveApiKey({
-      apiKey,
-      baseUrl: aiSettings.baseUrl,
-    });
-    setHasElectronKey(result.hasKey);
-    if (!result.success) {
-      setError(result.error);
-      toast.error(result.error);
+    try {
+      const result = await electronAi.saveApiKey({
+        apiKey,
+        baseUrl: aiSettings.baseUrl,
+      });
+      setHasElectronKey(result.hasKey);
+      if (!result.success) {
+        setError(result.error);
+        toast.error(result.error);
+        return false;
+      }
+      setApiKey("");
+      setError("");
+      toast.success("API Key 已安全保存");
+      return true;
+    } catch (saveError) {
+      const message = getRichPostAiErrorMessage(saveError);
+      setError(message);
+      toast.error(message);
       return false;
     }
-    setApiKey("");
-    setError("");
-    toast.success("API Key 已安全保存");
-    return true;
   };
 
   const clearElectronKey = async (): Promise<void> => {
     if (!electronAi) return;
-    const result = await electronAi.clearApiKey();
-    setHasElectronKey(result.hasKey);
-    if (result.success) {
-      setApiKey("");
-      toast.success("API Key 已清除");
-    } else {
-      setError(result.error);
-      toast.error(result.error);
+    try {
+      const result = await electronAi.clearApiKey();
+      setHasElectronKey(result.hasKey);
+      if (result.success) {
+        setApiKey("");
+        const status = await electronAi.getStatus();
+        setHasElectronKey(status.hasKey);
+        setCanPersistElectronKey(status.canPersist);
+        setError(status.error ?? "");
+        toast.success("API Key 已清除");
+      } else {
+        setError(result.error);
+        toast.error(result.error);
+      }
+    } catch (clearError) {
+      const message = getRichPostAiErrorMessage(clearError);
+      setError(message);
+      toast.error(message);
     }
   };
 
   const rewrite = async (): Promise<void> => {
     if (isEmpty || rewriting) return;
     const requestId = ++rewriteRequestIdRef.current;
-    const requestSource = { markdown, currentFilePath };
+    const requestSourceRevision = latestSourceRef.current.revision;
     const isCurrentRequest = (): boolean =>
       requestId === rewriteRequestIdRef.current &&
-      latestSourceRef.current.markdown === requestSource.markdown &&
-      latestSourceRef.current.currentFilePath === requestSource.currentFilePath;
+      latestSourceRef.current.revision === requestSourceRevision;
     setRewriting(true);
     setError("");
     try {
       let result;
       if (electronAi) {
         let keyReady = hasElectronKey;
-        if (apiKey.trim()) keyReady = await saveElectronKey();
+        if (apiKey.trim()) {
+          keyReady = await saveElectronKey();
+          if (!keyReady) return;
+        }
         if (!keyReady) throw new Error("请先安全保存 API Key");
         const response = await electronAi.rewrite({
           ...aiSettings,
