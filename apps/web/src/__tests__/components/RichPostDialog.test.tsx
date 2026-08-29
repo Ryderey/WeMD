@@ -263,4 +263,12 @@ describe("RichPostDialog", () => {
     expect(onClose).toHaveBeenCalledOnce();
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  it("keeps the close control outside Electron drag regions", () => {
+    const { container } = render(<RichPostDialog open onClose={vi.fn()} />);
+
+    expect(container.querySelector(".modal-overlay")).toHaveClass(
+      "modal-overlay--no-drag",
+    );
+  });
 });

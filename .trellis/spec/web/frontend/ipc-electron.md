@@ -292,6 +292,10 @@ Rules:
 }
 ```
 
+Modal overlays that cover a draggable title bar must also explicitly use
+`-webkit-app-region: no-drag`. A higher CSS `z-index` alone does not prevent
+Electron's native drag hit-test from intercepting clicks in the overlap.
+
 ### Windows custom window controls
 
 When a frameless Windows window renders minimize, maximize, and close controls

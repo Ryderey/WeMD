@@ -11,6 +11,11 @@
   padding: 20px;
 }
 
+/* Keep modal interactions clickable above an Electron draggable title bar. */
+.modal-overlay--no-drag {
+  -webkit-app-region: no-drag;
+}
+
 .modal-panel {
   background: var(--bg-primary);
   border-radius: var(--radius-xl);

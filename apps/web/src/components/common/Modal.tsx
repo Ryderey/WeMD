@@ -28,7 +28,7 @@ export function Modal({
   if (!open) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay modal-overlay--no-drag" onClick={onClose}>
       <div
         className={`modal-panel ${className || ""}`}
         onClick={(e) => e.stopPropagation()}
