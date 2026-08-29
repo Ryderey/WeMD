@@ -8,9 +8,10 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { memoryStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
 import { COSService } from '../services/cos.service';
 import { writeFileSync } from 'fs';
+import { getUploadsDirectory } from '../uploads-directory';
 
 type StorageMode = 'local' | 'cos';
 
@@ -86,10 +87,11 @@ export class UploadController {
     }
 
     // 默认使用本地存储
-    const localPath = `./uploads/${filename}`;
+    const localPath = join(getUploadsDirectory(), filename);
     writeFileSync(localPath, file.buffer);
 
-    const url = `http://localhost:4000/uploads/${filename}`;
+    const port = process.env.PORT ?? 4000;
+    const url = `http://localhost:${port}/uploads/${filename}`;
     return {
       url,
       filename: originalName,
