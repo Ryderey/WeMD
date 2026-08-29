@@ -16,6 +16,19 @@ Use proper HTML elements for accessibility and native browser behavior:
 <div role="button" onClick={handleClick}>Click me</div>
 ```
 
+### Non-submit Buttons
+
+A native `<button>` defaults to `type="submit"` when it is rendered within a
+form. Every control that does not submit a form — including modal close,
+cancel, toolbar, and toggle buttons — must explicitly use `type="button"`.
+
+```tsx
+// Good - a close control must not submit an enclosing form
+<button type="button" onClick={onClose} aria-label="关闭">
+  ×
+</button>
+```
+
 ### Exception: Nested Interactive Elements
 
 HTML does not allow `<button>` inside `<button>`. When a clickable card contains nested buttons (e.g., delete button), use `<div role="button">` for the outer container:

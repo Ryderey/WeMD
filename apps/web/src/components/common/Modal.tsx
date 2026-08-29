@@ -35,7 +35,12 @@ export function Modal({
       >
         <div className="modal-header">
           <h3>{title}</h3>
-          <button className="modal-close" onClick={onClose} aria-label="关闭">
+          <button
+            type="button"
+            className="modal-close"
+            onClick={onClose}
+            aria-label="关闭"
+          >
             ×
           </button>
         </div>

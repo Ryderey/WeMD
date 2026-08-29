@@ -5,6 +5,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import type { FormEvent } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RichPostDialog } from "../../components/RichPost/RichPostDialog";
 import {
@@ -245,5 +246,21 @@ describe("RichPostDialog", () => {
     await screen.findByText("封面标题不能为空");
     expect(preview?.childElementCount).toBe(0);
     expect(screen.getByRole("button", { name: "导出 ZIP" })).toBeDisabled();
+  });
+
+  it("closes from the header without submitting a surrounding form", () => {
+    const onClose = vi.fn();
+    const onSubmit = vi.fn((event: FormEvent) => event.preventDefault());
+
+    render(
+      <form onSubmit={onSubmit}>
+        <RichPostDialog open onClose={onClose} />
+      </form>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "关闭" }));
+
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });
