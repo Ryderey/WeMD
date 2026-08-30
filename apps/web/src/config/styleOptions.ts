@@ -111,6 +111,7 @@ export const headingStylePresets: StylePresetOption[] = [
   { id: "bottom-highlight", label: "底部高亮" },
   { id: "gradient-highlight", label: "渐变高亮" },
   { id: "pill", label: "高亮胶囊" },
+  { id: "numbered-label", label: "编号标签" },
   { id: "bracket", label: "括号装饰" },
 ];
 

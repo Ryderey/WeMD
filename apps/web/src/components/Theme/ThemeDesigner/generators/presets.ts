@@ -109,6 +109,20 @@ const headingPresetTemplates: Record<
             border-radius: 20px;
         `,
   }),
+  "numbered-label": () => ({
+    content: `
+            display: inline-block;
+            width: -webkit-fit-content;
+            width: -moz-fit-content;
+            width: fit-content;
+            max-width: 100%;
+            background: var(--wemd-primary-gradient);
+            color: #fff;
+            padding: 6px 16px;
+            border-radius: 2px;
+            box-shadow: 5px 5px 0 var(--wemd-primary-color-30);
+        `,
+  }),
   bracket: (tag) => ({
     content: `
             display: inline-block;
