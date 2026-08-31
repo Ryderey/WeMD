@@ -35,4 +35,28 @@ describe("heading style presets", () => {
     expect(css).toContain("padding: 6px 16px");
     expect(css).toContain("border-radius: 2px");
   });
+
+  it("renders corner-brackets with only bottom-left and top-right corners", () => {
+    const { content, extra } = getHeadingPresetCSS(
+      "corner-brackets",
+      "#07c160",
+      "h2",
+    );
+
+    expect(headingStylePresets.some(({ id }) => id === "corner-brackets")).toBe(
+      true,
+    );
+    expect(content).toContain("width: fit-content");
+    expect(content).toContain("position: relative");
+    expect(extra).toContain("#wemd h2 .content::before");
+    expect(extra).toContain("border-left: 1px solid var(--wemd-primary-color)");
+    expect(extra).toContain(
+      "border-bottom: 1px solid var(--wemd-primary-color)",
+    );
+    expect(extra).toContain("#wemd h2 .content::after");
+    expect(extra).toContain("border-top: 1px solid var(--wemd-primary-color)");
+    expect(extra).toContain(
+      "border-right: 1px solid var(--wemd-primary-color)",
+    );
+  });
 });

@@ -123,6 +123,41 @@ const headingPresetTemplates: Record<
             box-shadow: 5px 5px 0 var(--wemd-primary-color-30);
         `,
   }),
+  "corner-brackets": (tag) => ({
+    content: `
+            display: inline-block;
+            width: -webkit-fit-content;
+            width: -moz-fit-content;
+            width: fit-content;
+            max-width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            padding: 10px 14px;
+        `,
+    extra: `
+        #wemd ${tag} .content::before,
+        #wemd ${tag} .content::after {
+            content: "";
+            position: absolute;
+            width: 48px;
+            max-width: 45%;
+            height: 18px;
+            pointer-events: none;
+        }
+        #wemd ${tag} .content::before {
+            left: 0;
+            bottom: 0;
+            border-left: 1px solid var(--wemd-primary-color);
+            border-bottom: 1px solid var(--wemd-primary-color);
+        }
+        #wemd ${tag} .content::after {
+            top: 0;
+            right: 0;
+            border-top: 1px solid var(--wemd-primary-color);
+            border-right: 1px solid var(--wemd-primary-color);
+        }
+        `,
+  }),
   bracket: (tag) => ({
     content: `
             display: inline-block;
