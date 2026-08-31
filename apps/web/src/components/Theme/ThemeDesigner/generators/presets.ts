@@ -137,24 +137,34 @@ const headingPresetTemplates: Record<
     extra: `
         #wemd ${tag} .content::before,
         #wemd ${tag} .content::after {
-            content: "";
+            content: "\u00a0";
             position: absolute;
             width: 48px;
             max-width: 45%;
             height: 18px;
+            font-size: 0;
+            line-height: 0;
             pointer-events: none;
         }
         #wemd ${tag} .content::before {
             left: 0;
             bottom: 0;
-            border-left: 1px solid var(--wemd-primary-color);
-            border-bottom: 1px solid var(--wemd-primary-color);
+            border-left-width: 3px;
+            border-left-style: solid;
+            border-left-color: var(--wemd-primary-color);
+            border-bottom-width: 3px;
+            border-bottom-style: solid;
+            border-bottom-color: var(--wemd-primary-color);
         }
         #wemd ${tag} .content::after {
             top: 0;
             right: 0;
-            border-top: 1px solid var(--wemd-primary-color);
-            border-right: 1px solid var(--wemd-primary-color);
+            border-top-width: 3px;
+            border-top-style: solid;
+            border-top-color: var(--wemd-primary-color);
+            border-right-width: 3px;
+            border-right-style: solid;
+            border-right-color: var(--wemd-primary-color);
         }
         `,
   }),

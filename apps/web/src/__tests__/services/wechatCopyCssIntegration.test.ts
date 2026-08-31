@@ -188,6 +188,58 @@ describe("wechat copy css integration", () => {
     expect(output).not.toMatch(/--wemd-[\w-]+\s*:/);
   });
 
+  it("keeps corner bracket decorations after empty-node cleanup", () => {
+    const html = '<h2><span class="content">标题</span></h2>';
+    const css = generateCSS({
+      ...defaultVariables,
+      h2: {
+        ...defaultVariables.h2,
+        preset: "corner-brackets",
+      },
+    });
+    const output = resolveInlineStyleVariablesForCopy(
+      processHtml(html, css, true, true),
+    );
+    const container = document.createElement("div");
+    container.innerHTML = output;
+    normalizeCopyContainer(container);
+
+    const headingContent = container.querySelector<HTMLElement>("h2 .content");
+    expect(headingContent).not.toBeNull();
+    if (!headingContent) return;
+
+    headingContent.querySelectorAll("span:empty").forEach((node) => {
+      node.remove();
+    });
+    const decorations =
+      headingContent.querySelectorAll<HTMLElement>(":scope > span");
+
+    expect(decorations).toHaveLength(2);
+    expect(Array.from(decorations, (node) => node.textContent)).toEqual([
+      "\u00a0",
+      "\u00a0",
+    ]);
+    const bottomLeft = Array.from(decorations).find(
+      (node) => node.style.borderLeftWidth === "3px",
+    );
+    const topRight = Array.from(decorations).find(
+      (node) => node.style.borderTopWidth === "3px",
+    );
+    const colorProbe = document.createElement("span");
+    colorProbe.style.color = defaultVariables.primaryColor;
+    const expectedColor = colorProbe.style.color;
+
+    expect(bottomLeft?.style.borderBottomWidth).toBe("3px");
+    expect(topRight?.style.borderRightWidth).toBe("3px");
+    expect(bottomLeft?.style.borderLeftStyle).toBe("solid");
+    expect(topRight?.style.borderTopStyle).toBe("solid");
+    expect(bottomLeft?.style.borderLeftColor).toBe(expectedColor);
+    expect(topRight?.style.borderTopColor).toBe(expectedColor);
+    expect(
+      Array.from(decorations, (node) => node.style.cssText).join(" "),
+    ).not.toContain("var(");
+  });
+
   it("relocates horizontal page padding in full pipeline", () => {
     const html = "<p>段落</p><h2><span class='content'>标题</span></h2>";
     const css = generateCSS({

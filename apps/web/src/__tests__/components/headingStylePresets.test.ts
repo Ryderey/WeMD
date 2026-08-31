@@ -49,14 +49,15 @@ describe("heading style presets", () => {
     expect(content).toContain("width: fit-content");
     expect(content).toContain("position: relative");
     expect(extra).toContain("#wemd h2 .content::before");
-    expect(extra).toContain("border-left: 1px solid var(--wemd-primary-color)");
-    expect(extra).toContain(
-      "border-bottom: 1px solid var(--wemd-primary-color)",
-    );
+    expect(extra).toContain('content: "\u00a0"');
+    expect(extra).toContain("border-left-width: 3px");
+    expect(extra).toContain("border-left-color: var(--wemd-primary-color)");
+    expect(extra).toContain("border-bottom-width: 3px");
+    expect(extra).toContain("border-bottom-color: var(--wemd-primary-color)");
     expect(extra).toContain("#wemd h2 .content::after");
-    expect(extra).toContain("border-top: 1px solid var(--wemd-primary-color)");
-    expect(extra).toContain(
-      "border-right: 1px solid var(--wemd-primary-color)",
-    );
+    expect(extra).toContain("border-top-width: 3px");
+    expect(extra).toContain("border-top-color: var(--wemd-primary-color)");
+    expect(extra).toContain("border-right-width: 3px");
+    expect(extra).toContain("border-right-color: var(--wemd-primary-color)");
   });
 });

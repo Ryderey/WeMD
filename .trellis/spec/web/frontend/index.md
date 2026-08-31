@@ -26,6 +26,7 @@
 | [directory-structure.md](./directory-structure.md)                             | Project structure conventions                   | Reference     |
 | [css-design.md](./css-design.md)                                               | CSS organization and design tokens              | Reference     |
 | [quality.md](./quality.md)                                                     | Code quality and performance standards          | Reference     |
+| [wechat-copy-pitfalls.md](./wechat-copy-pitfalls.md)                           | WeChat copy symptoms and correct patterns       | **Must Read** |
 
 ---
 
@@ -41,12 +42,13 @@
 
 ### During Development
 
-| Task                     | Document                                     |
-| ------------------------ | -------------------------------------------- |
-| Create custom hooks      | [hooks.md](./hooks.md)                       |
-| Manage application state | [state-management.md](./state-management.md) |
-| Build UI components      | [components.md](./components.md)             |
-| Ensure type safety       | [type-safety.md](./type-safety.md)           |
+| Task                     | Document                                             |
+| ------------------------ | ---------------------------------------------------- |
+| Create custom hooks      | [hooks.md](./hooks.md)                               |
+| Manage application state | [state-management.md](./state-management.md)         |
+| Build UI components      | [components.md](./components.md)                     |
+| Ensure type safety       | [type-safety.md](./type-safety.md)                   |
+| Change copy/theme output | [wechat-copy-pitfalls.md](./wechat-copy-pitfalls.md) |
 
 ### Before Committing
 
@@ -68,6 +70,7 @@
 | **Distinguish initial load vs refetch**                      | [react-pitfalls.md](./react-pitfalls.md)                                       |
 | **No non-null assertions `!`**                               | [quality.md](./quality.md)                                                     |
 | **Use `scrollbar-gutter: stable`** for scrollable containers | [components.md](./components.md)                                               |
+| **Verify final inline DOM for WeChat copy changes**          | [wechat-copy-pitfalls.md](./wechat-copy-pitfalls.md)                           |
 
 ---
 
