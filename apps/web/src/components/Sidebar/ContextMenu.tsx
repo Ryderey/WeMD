@@ -6,6 +6,7 @@ import {
   ChevronRight,
   MoveRight,
   FolderPlus,
+  FolderOpen,
 } from "lucide-react";
 import type { FileItem, FolderItem } from "../../store/fileTypes";
 
@@ -23,6 +24,7 @@ interface ContextMenuProps {
   folderMoveTargets: FolderOption[];
   onClose: () => void;
   onCopyTitle: () => void;
+  onRevealFile?: (path: string) => void;
   onStartRename: () => void;
   onToggleMoveMenu: () => void;
   onMoveToFolder: (path: string) => void;
@@ -42,6 +44,7 @@ export function ContextMenu({
   folderMoveTargets,
   onClose,
   onCopyTitle,
+  onRevealFile,
   onStartRename,
   onToggleMoveMenu,
   onMoveToFolder,
@@ -63,6 +66,14 @@ export function ContextMenu({
             <button onClick={onCopyTitle}>
               <Copy size={14} /> 复制标题
             </button>
+            {onRevealFile && (
+              <button
+                type="button"
+                onClick={() => onRevealFile(menuTarget.path)}
+              >
+                <FolderOpen size={14} /> 打开文件位置
+              </button>
+            )}
             <button onClick={onStartRename}>
               <Edit2 size={14} /> 重命名
             </button>

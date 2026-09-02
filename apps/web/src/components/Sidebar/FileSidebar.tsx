@@ -30,6 +30,7 @@ import type { SortMode } from "./sortUtils";
 import "./FileSidebar.css";
 
 import type { FileItem, FolderItem, TreeItem } from "../../store/fileTypes";
+import { getElectron } from "../../hooks/useFileSystemHelpers";
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: "recent", label: "最近编辑" },
@@ -39,6 +40,7 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
 
 export function FileSidebar() {
   const state = useSidebarState();
+  const electron = getElectron();
   const currentThemeName = useThemeStore((s) => s.themeName);
   const [showSortMenu, setShowSortMenu] = useState(false);
   const sortBtnRef = useRef<HTMLButtonElement>(null);
@@ -366,6 +368,14 @@ export function FileSidebar() {
           onClose={state.closeMenu}
           onCopyTitle={() =>
             state.menuTarget && state.copyTitle(state.menuTarget)
+          }
+          onRevealFile={
+            electron
+              ? (filePath) => {
+                  void electron.fs.revealInFinder(filePath);
+                  state.closeMenu();
+                }
+              : undefined
           }
           onStartRename={() =>
             state.menuTarget && state.startRename(state.menuTarget)
