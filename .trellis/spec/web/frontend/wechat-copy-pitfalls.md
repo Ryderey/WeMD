@@ -43,3 +43,9 @@
 **Symptom:** The first or last pasted block is difficult to select or edit, or visible blank lines appear at the clipboard boundaries.
 
 **Correct pattern:** Use zero-font-size, zero-line-height, zero-margin NBSP paragraphs as non-visible selection anchors at both clipboard boundaries.
+
+## Wrapped Inline Underlines Overlap the Next Line
+
+**Symptom:** A per-line heading underline looks correct on one line but crosses the glyphs on the following line after the heading wraps.
+
+**Correct pattern:** Use native `text-decoration` with explicit thickness for per-line underlines, and leave its offset at the browser default for wrapped headings. Do not combine vertical padding with `border-bottom` on an inline fragment because the padding and border do not expand the line box; fixed underline offsets are likewise unsafe when a theme uses compact heading line-height.

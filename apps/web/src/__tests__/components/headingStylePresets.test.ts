@@ -3,6 +3,17 @@ import { headingStylePresets } from "../../config/styleOptions";
 import { getHeadingPresetCSS } from "../../components/Theme/ThemeDesigner/generators/presets";
 
 describe("heading style presets", () => {
+  it("keeps each bottom underline clear of wrapped heading text", () => {
+    const css = getHeadingPresetCSS("bottom-border", "#07c160", "h2").content;
+
+    expect(css).toContain("text-decoration-line: underline");
+    expect(css).toContain("text-decoration-thickness: 2px");
+    expect(css).toContain("text-decoration-skip-ink: none");
+    expect(css).not.toContain("text-underline-offset");
+    expect(css).not.toContain("padding-bottom");
+    expect(css).not.toContain("border-bottom");
+  });
+
   it("sizes the gradient underline to the heading text", () => {
     const css = getHeadingPresetCSS(
       "gradient-underline",

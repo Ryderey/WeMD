@@ -27,10 +27,10 @@ const headingPresetTemplates: Record<
   "bottom-border": () => ({
     content: `
             display: inline;
-            -webkit-box-decoration-break: clone;
-            box-decoration-break: clone;
-            border-bottom: 2px solid var(--wemd-primary-color);
-            padding-bottom: 8px;
+            text-decoration-line: underline;
+            text-decoration-color: var(--wemd-primary-color);
+            text-decoration-thickness: 2px;
+            text-decoration-skip-ink: none;
         `,
   }),
   "gradient-underline": () => ({

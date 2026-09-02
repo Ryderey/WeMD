@@ -188,6 +188,36 @@ describe("wechat copy css integration", () => {
     expect(output).not.toMatch(/--wemd-[\w-]+\s*:/);
   });
 
+  it("keeps the wrapped heading underline clear in copied HTML", () => {
+    const css = generateCSS({
+      ...defaultVariables,
+      h2: {
+        ...defaultVariables.h2,
+        preset: "bottom-border",
+      },
+    });
+    const output = resolveInlineStyleVariablesForCopy(
+      processHtml(
+        '<h2><span class="content">会换成两行的长标题</span></h2>',
+        css,
+        true,
+        true,
+      ),
+    );
+    const container = document.createElement("div");
+    container.innerHTML = output;
+    const heading = container.querySelector<HTMLElement>("h2 .content");
+
+    expect(heading).not.toBeNull();
+    if (!heading) return;
+
+    expect(heading.style.textDecorationLine).toBe("underline");
+    expect(heading.style.textDecorationThickness).toBe("2px");
+    expect(heading.style.textUnderlineOffset).toBe("");
+    expect(heading.style.paddingBottom).toBe("");
+    expect(heading.style.borderBottomWidth).toBe("");
+  });
+
   it("keeps corner bracket decorations after empty-node cleanup", () => {
     const html = '<h2><span class="content">标题</span></h2>';
     const css = generateCSS({
