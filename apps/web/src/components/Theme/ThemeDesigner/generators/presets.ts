@@ -30,6 +30,7 @@ const headingPresetTemplates: Record<
             text-decoration-line: underline;
             text-decoration-color: var(--wemd-primary-color);
             text-decoration-thickness: 2px;
+            text-underline-offset: 3px;
             text-decoration-skip-ink: none;
         `,
   }),

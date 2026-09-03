@@ -48,4 +48,4 @@
 
 **Symptom:** A per-line heading underline looks correct on one line but crosses the glyphs on the following line after the heading wraps.
 
-**Correct pattern:** Use native `text-decoration` with explicit thickness for per-line underlines, and leave its offset at the browser default for wrapped headings. Do not combine vertical padding with `border-bottom` on an inline fragment because the padding and border do not expand the line box; fixed underline offsets are likewise unsafe when a theme uses compact heading line-height.
+**Correct pattern:** Use native `text-decoration` with explicit thickness for per-line underlines. Keep any fixed underline offset small enough for compact heading line-height; the visual theme uses `3px`. Do not combine vertical padding with `border-bottom` on an inline fragment because the padding and border do not expand the line box.

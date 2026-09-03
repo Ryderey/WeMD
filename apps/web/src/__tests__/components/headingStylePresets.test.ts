@@ -8,8 +8,8 @@ describe("heading style presets", () => {
 
     expect(css).toContain("text-decoration-line: underline");
     expect(css).toContain("text-decoration-thickness: 2px");
+    expect(css).toContain("text-underline-offset: 3px");
     expect(css).toContain("text-decoration-skip-ink: none");
-    expect(css).not.toContain("text-underline-offset");
     expect(css).not.toContain("padding-bottom");
     expect(css).not.toContain("border-bottom");
   });

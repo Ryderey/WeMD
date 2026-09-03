@@ -213,7 +213,7 @@ describe("wechat copy css integration", () => {
 
     expect(heading.style.textDecorationLine).toBe("underline");
     expect(heading.style.textDecorationThickness).toBe("2px");
-    expect(heading.style.textUnderlineOffset).toBe("");
+    expect(heading.style.textUnderlineOffset).toBe("3px");
     expect(heading.style.paddingBottom).toBe("");
     expect(heading.style.borderBottomWidth).toBe("");
   });
