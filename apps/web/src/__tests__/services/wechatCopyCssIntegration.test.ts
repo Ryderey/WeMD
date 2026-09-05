@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { createMarkdownParser, processHtml } from "@wemd/core";
+import {
+  basicTheme,
+  createMarkdownParser,
+  processHtml,
+  sunsetFilmTheme,
+} from "@wemd/core";
 import {
   applyLightRootVars,
   resolveInlineStyleVariablesForCopy,
@@ -10,6 +15,127 @@ import { defaultVariables } from "../../components/Theme/ThemeDesigner/defaults"
 import { generateCSS } from "../../components/Theme/ThemeDesigner/generateCSS";
 
 describe("wechat copy css integration", () => {
+  it.each(["transparent", "#f5f3ef"])(
+    "starts with article content without blank boundary paragraphs (%s)",
+    (pageBackgroundColor) => {
+      const container = document.createElement("div");
+      container.innerHTML = resolveInlineStyleVariablesForCopy(
+        processHtml(
+          createMarkdownParser().render(
+            "这期继续分享几个开源项目。\n\n往期推荐👉",
+          ),
+          generateCSS({ ...defaultVariables, pageBackgroundColor }),
+          true,
+          true,
+        ),
+      );
+      normalizeCopyContainer(container);
+      const beforeCopy = container.innerHTML;
+      const snapshot = document.createElement("div");
+      snapshot.innerHTML = serializeWechatCopyHtml(container);
+
+      expect(
+        Array.from(snapshot.querySelectorAll("p"), (node) => node.textContent),
+      ).toEqual(["这期继续分享几个开源项目。", "往期推荐👉"]);
+      expect(snapshot.firstElementChild?.textContent).toContain(
+        "这期继续分享几个开源项目。",
+      );
+      expect(snapshot.lastElementChild?.textContent).toContain("往期推荐👉");
+      expect(snapshot.querySelector("p")?.style.marginTop).toBe("0px");
+      expect(snapshot.querySelectorAll("p")[1].style.marginTop).toBe("16px");
+      if (pageBackgroundColor !== "transparent") {
+        expect(snapshot.children).toHaveLength(1);
+        expect(
+          (snapshot.firstElementChild as HTMLElement).style.backgroundColor,
+        ).toBe("rgb(245, 243, 239)");
+      }
+      expect(container.innerHTML).toBe(beforeCopy);
+    },
+  );
+
+  it.each([
+    ["designer", generateCSS(defaultVariables)],
+    ["basic", basicTheme],
+    ["sunset", sunsetFilmTheme],
+    [
+      "sunset with background",
+      `${sunsetFilmTheme}\n#wemd { background-color: #f5f3ef; }`,
+    ],
+  ])(
+    "copies cards and images without neutral wrappers or image gaps (%s)",
+    (_name, css) => {
+      const html = createMarkdownParser().render(
+        [
+          "上方正文。",
+          '<MpProfile mpId="test" nickname="测试" />',
+          "![图片说明](https://example.com/image.png)",
+          '<AuthorBlock name="作者" avatar="https://example.com/avatar.png" bio="作者简介" />',
+          "下方正文。",
+        ].join("\n\n"),
+      );
+      const container = document.createElement("div");
+      container.innerHTML = resolveInlineStyleVariablesForCopy(
+        processHtml(html, css, true, true),
+      );
+      normalizeCopyContainer(container);
+      const beforeCopy = container.innerHTML;
+      const snapshot = document.createElement("div");
+      snapshot.innerHTML = serializeWechatCopyHtml(container);
+
+      expect(snapshot.querySelector("div")).toBeNull();
+      expect(snapshot.querySelectorAll("img")).toHaveLength(2);
+      for (const node of snapshot.querySelectorAll<HTMLElement>(
+        "img, figure",
+      )) {
+        expect(node.style.marginTop).toBe("0px");
+        expect(node.style.marginBottom).toBe("0px");
+      }
+      expect(
+        snapshot.querySelector<HTMLImageElement>('img[alt="作者"]')?.style
+          .width,
+      ).toBe("56px");
+      expect(snapshot.querySelector("figcaption")?.textContent).toBe(
+        "图片说明",
+      );
+      expect(
+        snapshot.querySelector("mp-common-profile")?.getAttribute("data-id"),
+      ).toBe("test");
+      const originalParagraph = Array.from(
+        container.querySelectorAll("p"),
+      ).find((p) => p.textContent === "上方正文。");
+      const copiedParagraph = Array.from(snapshot.querySelectorAll("p")).find(
+        (p) => p.textContent === "上方正文。",
+      );
+      expect(copiedParagraph?.style.marginTop).toBe("0px");
+      expect(copiedParagraph?.style.marginBottom).toBe(
+        originalParagraph?.style.marginBottom,
+      );
+      const originalLastParagraph = Array.from(
+        container.querySelectorAll("p"),
+      ).find((p) => p.textContent === "下方正文。");
+      const copiedLastParagraph = Array.from(
+        snapshot.querySelectorAll("p"),
+      ).find((p) => p.textContent === "下方正文。");
+      expect(copiedLastParagraph?.style.marginTop).toBe(
+        originalLastParagraph?.style.marginTop,
+      );
+      expect(copiedLastParagraph?.style.marginBottom).toBe(
+        originalLastParagraph?.style.marginBottom,
+      );
+      expect(snapshot.querySelector("[data-wemd-copy-wrapper]")).toBeNull();
+      expect(container.innerHTML).toBe(beforeCopy);
+      if (css.includes("padding: 5px 22px")) {
+        const paddingLayer = Array.from(
+          snapshot.querySelectorAll<HTMLElement>("section"),
+        ).find((node) => node.style.paddingTop === "5px");
+        expect(paddingLayer?.style.paddingBottom).toBe("5px");
+        expect(snapshot.querySelector("figure")?.style.paddingLeft).toBe(
+          "22px",
+        );
+      }
+    },
+  );
+
   it("resolves inline var() values with scope-aware computed values", () => {
     const html = "<p>段落</p>";
     const css = `
@@ -617,7 +743,7 @@ describe("wechat copy css integration", () => {
 
     const snapshot = document.createElement("div");
     snapshot.innerHTML = serializeWechatCopyHtml(container);
-    const backgroundLayer = snapshot.children[1] as HTMLElement | undefined;
+    const backgroundLayer = snapshot.firstElementChild as HTMLElement | null;
     const profileBlock = backgroundLayer?.querySelector<HTMLElement>(
       ".mp_profile_iframe_wrp",
     );
@@ -632,7 +758,7 @@ describe("wechat copy css integration", () => {
       backgroundLayer?.querySelectorAll("span") ?? [],
     ).find((span) => span.textContent === "Vue 3")?.parentElement;
 
-    expect(snapshot.children).toHaveLength(3);
+    expect(snapshot.children).toHaveLength(1);
     expect(backgroundLayer?.style.backgroundColor).toBe("rgb(245, 243, 239)");
     expect(backgroundLayer?.style.marginTop || "0px").toBe("0px");
     expect(backgroundLayer?.style.marginBottom || "0px").toBe("0px");

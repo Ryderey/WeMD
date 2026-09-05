@@ -260,7 +260,7 @@ describe("wechatCopyNormalizer", () => {
     expect(outerP?.style.backgroundColor).toBe("rgb(255, 255, 255)");
   });
 
-  it("serializes root children directly with zero-height clipboard boundaries", () => {
+  it("serializes root children directly without extra clipboard paragraphs", () => {
     const container = document.createElement("div");
     container.innerHTML =
       '<div style="font-family: serif; line-height: 1.8;"><p>上方正文。</p><section class="mp_profile_iframe_wrp"><mp-common-profile></mp-common-profile><br class="ProseMirror-trailingBreak"></section><p>下方正文。</p></div>';
@@ -268,16 +268,11 @@ describe("wechatCopyNormalizer", () => {
     const snapshot = document.createElement("div");
     snapshot.innerHTML = serializeWechatCopyHtml(container);
 
-    expect(snapshot.children).toHaveLength(5);
+    expect(snapshot.children).toHaveLength(3);
     expect(snapshot.children[0].tagName).toBe("P");
-    expect(snapshot.children[0].textContent).toBe("\u00a0");
-    expect((snapshot.children[0] as HTMLElement).style.fontSize).toBe("0px");
-    expect((snapshot.children[0] as HTMLElement).style.lineHeight).toBe("0");
-    expect((snapshot.children[0] as HTMLElement).style.margin).toBe("0px");
-    expect(snapshot.children[1].textContent).toBe("上方正文。");
-    expect(snapshot.children[2].tagName).toBe("SECTION");
-    expect(snapshot.children[3].textContent).toBe("下方正文。");
-    expect(snapshot.children[4].textContent).toBe("\u00a0");
+    expect(snapshot.children[0].textContent).toBe("上方正文。");
+    expect(snapshot.children[1].tagName).toBe("SECTION");
+    expect(snapshot.children[2].textContent).toBe("下方正文。");
     expect(snapshot.querySelector(":scope > div")).toBeNull();
   });
 
@@ -288,8 +283,8 @@ describe("wechatCopyNormalizer", () => {
 
     const snapshot = document.createElement("div");
     snapshot.innerHTML = serializeWechatCopyHtml(container);
-    const paragraph = snapshot.children[1] as HTMLElement;
-    const section = snapshot.children[2] as HTMLElement;
+    const paragraph = snapshot.children[0] as HTMLElement;
+    const section = snapshot.children[1] as HTMLElement;
 
     expect(paragraph.style.fontFamily).toBe("serif");
     expect(paragraph.style.lineHeight).toBe("2");
@@ -300,4 +295,21 @@ describe("wechatCopyNormalizer", () => {
     expect(paragraph.style.padding).toBe("");
     expect(section.style.padding).toBe("");
   });
+
+  it.each([
+    '<h2>标题</h2><p style="margin-top: 24px;">正文</p>',
+    '<blockquote><p style="margin-top: 24px;">引用</p></blockquote>',
+    '<section><p style="margin-top: 24px;">自定义内容</p></section>',
+  ])(
+    "preserves paragraph spacing when the article starts with another block: %s",
+    (html) => {
+      const container = document.createElement("div");
+      container.innerHTML = `<section id="wemd" style="background-color: #f5f3ef; padding: 5px 20px;">${html}</section>`;
+      normalizeCopyContainer(container);
+      const snapshot = document.createElement("div");
+      snapshot.innerHTML = serializeWechatCopyHtml(container);
+      expect(snapshot.querySelector("p")?.style.marginTop).toBe("24px");
+      expect(snapshot.querySelector("[data-wemd-copy-wrapper]")).toBeNull();
+    },
+  );
 });

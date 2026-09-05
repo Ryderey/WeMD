@@ -352,7 +352,9 @@ const relocateRootPaddingToInnerWrapper = (container: HTMLElement): void => {
 
   // 仅当存在垂直 padding 时，才额外包一层承接上下留白。
   if (hasVerticalPadding) {
-    const innerWrapper = document.createElement("div");
+    // 这层会进入剪贴板，必须使用 section，避免微信解包 div 时生成空段。
+    const innerWrapper = document.createElement("section");
+    innerWrapper.setAttribute("data-wemd-copy-wrapper", "");
     innerWrapper.style.display = "block";
     innerWrapper.style.width = "100%";
     innerWrapper.style.boxSizing = "border-box";
@@ -483,6 +485,7 @@ const wrapRootContentWithBackground = (
 
   // 微信编辑器会解包普通 div，但会保留 section 及其背景样式。
   const backgroundLayer = document.createElement("section");
+  backgroundLayer.setAttribute("data-wemd-copy-wrapper", "");
   backgroundLayer.style.display = "block";
   backgroundLayer.style.width = "100%";
   backgroundLayer.style.boxSizing = "border-box";
@@ -541,9 +544,6 @@ const INHERITED_ROOT_STYLE_PROPERTIES = new Set([
   "word-spacing",
 ]);
 
-const WECHAT_COPY_BOUNDARY_HTML =
-  '<p style="font-size: 0px; line-height: 0; margin: 0px;">&nbsp;</p>';
-
 const copyInheritedRootStyles = (
   root: HTMLElement,
   target: HTMLElement,
@@ -567,7 +567,25 @@ const copyInheritedRootStyles = (
   }
 };
 
-const trimBuiltInComponentVerticalSpacing = (root: HTMLElement): void => {
+const trimCopyVerticalSpacing = (root: HTMLElement): void => {
+  // 只穿过管线生成的页面容器，不能误清引用、列表或组件内部的首段间距。
+  let firstBlock = root.firstElementChild;
+  while (firstBlock?.hasAttribute("data-wemd-copy-wrapper")) {
+    firstBlock = firstBlock.firstElementChild;
+  }
+  if (firstBlock instanceof HTMLElement && firstBlock.tagName === "P") {
+    firstBlock.style.setProperty("margin-top", "0");
+  }
+  root.querySelectorAll("[data-wemd-copy-wrapper]").forEach((node) => {
+    node.removeAttribute("data-wemd-copy-wrapper");
+  });
+
+  // 主题的图片间距也会作用于组件内部的头像；只清外壳无法消除这些留白。
+  root.querySelectorAll<HTMLElement>("img, figure").forEach((node) => {
+    node.style.setProperty("margin-top", "0");
+    node.style.setProperty("margin-bottom", "0");
+  });
+
   root
     .querySelectorAll<HTMLElement>("[data-wemd-component]")
     .forEach((component) => {
@@ -581,7 +599,7 @@ const trimBuiltInComponentVerticalSpacing = (root: HTMLElement): void => {
 
 /**
  * 复制时只输出根容器的直接内容，避免公众号把中性外层解包为组件两侧的可见空段。
- * 根级继承样式下沉到一级块，首尾增加零高度边界，兼容微信的粘贴选区处理。
+ * 根级继承样式下沉到一级块；首尾不添加占位空段，避免微信粘贴后出现额外空行。
  */
 export const serializeWechatCopyHtml = (container: HTMLElement): string => {
   const root = container.firstElementChild;
@@ -589,7 +607,7 @@ export const serializeWechatCopyHtml = (container: HTMLElement): string => {
 
   if (root instanceof HTMLElement && container.childElementCount === 1) {
     const copyRoot = root.cloneNode(true) as HTMLElement;
-    trimBuiltInComponentVerticalSpacing(copyRoot);
+    trimCopyVerticalSpacing(copyRoot);
     Array.from(copyRoot.children).forEach((child) => {
       if (child instanceof HTMLElement) {
         copyInheritedRootStyles(copyRoot, child);
@@ -598,5 +616,5 @@ export const serializeWechatCopyHtml = (container: HTMLElement): string => {
     content = copyRoot.innerHTML;
   }
 
-  return `${WECHAT_COPY_BOUNDARY_HTML}${content}${WECHAT_COPY_BOUNDARY_HTML}`;
+  return content;
 };

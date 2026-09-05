@@ -26,6 +26,8 @@
 
 **Correct pattern:** Serialize the root container's children directly. Avoid neutral wrapper `div` elements, and use a semantic `section` when a continuous article background must span block margins.
 
+Use `section` for the inner vertical-padding layer too: it survives root unwrapping and enters the clipboard payload. Test themes with nonzero top/bottom page padding, with both transparent and opaque backgrounds.
+
 ## Layout Breaks After Saving and Reopening
 
 **Symptom:** Content looks correct immediately after paste but loses layout after the WeChat draft is saved and reopened.
@@ -38,11 +40,15 @@
 
 **Correct pattern:** Clear the component root's outer margin and padding in the copied DOM, and keep the article background on a semantic wrapper that survives paste.
 
-## First or Last Block Is Hard to Edit
+Clear vertical margins on copied `img` and `figure` elements as well. Global image rules also reach built-in avatars, so clearing only component roots leaves internal gaps. Apply this on the serializer's clone; retain horizontal alignment, captions, paragraph spacing, and preview image margins.
 
-**Symptom:** The first or last pasted block is difficult to select or edit, or visible blank lines appear at the clipboard boundaries.
+## Blank Lines Before or After the Article
 
-**Correct pattern:** Use zero-font-size, zero-line-height, zero-margin NBSP paragraphs as non-visible selection anchors at both clipboard boundaries.
+**Symptom:** A blank line appears before the first paragraph or outside the article background after paste.
+
+**Correct pattern:** Serialize only the article content, without synthetic NBSP paragraphs at either clipboard boundary. Zero font size and line height do not remove the paragraph from the pasted document. Test paragraph counts for both transparent and colored article backgrounds, and preserve intentional article spacing and decorative NBSP spans.
+
+A payload with no empty paragraphs can still have a leading gap from the first paragraph's top margin (16px in the designer, 26px in the sunset theme). On the clipboard clone, traverse only generated page wrappers and zero the leading paragraph's top margin. Preserve subsequent paragraphs, nested content, page padding, and preview styles. Verify the first paragraph's position in a real browser in addition to counting DOM nodes.
 
 ## Wrapped Inline Underlines Overlap the Next Line
 
