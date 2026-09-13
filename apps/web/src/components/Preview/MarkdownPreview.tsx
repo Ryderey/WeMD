@@ -26,6 +26,12 @@ import {
   mapSourceLineToScrollTop,
   type ScrollAnchor,
 } from "../Workspace/scrollAnchorMapping";
+import { fitInlineEquations } from "../../utils/fitInlineEquations";
+import {
+  hydrateMathJaxEquations,
+  loadMathJax,
+  needsMathJaxPreview,
+} from "../../utils/mathJaxLoader";
 import "./MarkdownPreview.css";
 
 interface MarkdownPreviewProps {
@@ -71,6 +77,7 @@ export function MarkdownPreview({
   const [tableWrapEnabled, setTableWrapEnabledState] = useState(() =>
     getPublishingPreference("tableWrap"),
   );
+  const [mathJaxReady, setMathJaxReady] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   // 锚点缓存跨 html 变化保留在 ref 上，内容变了只置空、不重建 adapter
@@ -92,16 +99,38 @@ export function MarkdownPreview({
   );
   const designerVars = currentTheme?.designerVariables;
   const showMacBar = designerVars?.showMacBar ?? false;
+  const useMathJaxForPreview = needsMathJaxPreview(markdown);
+
+  useEffect(() => {
+    if (!useMathJaxForPreview) {
+      setMathJaxReady(false);
+      return;
+    }
+
+    let cancelled = false;
+    loadMathJax()
+      .then(() => {
+        if (!cancelled) setMathJaxReady(true);
+      })
+      .catch((error) => {
+        console.error("MathJax preview load failed:", error);
+        if (!cancelled) setMathJaxReady(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [useMathJaxForPreview]);
 
   // 缓存 parser 实例，避免每次渲染都创建新实例
   const parser = useMemo(
     () =>
       createMarkdownParser({
         showMacBar,
-        mathRenderer: "katex",
+        mathRenderer: useMathJaxForPreview && mathJaxReady ? "auto" : "katex",
         includeSourcePosition: true,
       }),
-    [showMacBar],
+    [showMacBar, useMathJaxForPreview, mathJaxReady],
   );
 
   useEffect(() => {
@@ -265,6 +294,48 @@ export function MarkdownPreview({
   useEffect(() => {
     return subscribePublishingPreference("tableWrap", setTableWrapEnabledState);
   }, []);
+
+  useEffect(() => {
+    if (
+      !previewRef.current ||
+      !html ||
+      !useMathJaxForPreview ||
+      !mathJaxReady
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    const runFit = () => {
+      if (previewRef.current) {
+        fitInlineEquations(previewRef.current);
+      }
+    };
+
+    hydrateMathJaxEquations(previewRef.current)
+      .then(() => {
+        if (cancelled) return;
+        runFit();
+        requestAnimationFrame(runFit);
+      })
+      .catch((error) => {
+        console.error("MathJax preview hydrate failed:", error);
+      });
+
+    const wemd =
+      previewRef.current.querySelector<HTMLElement>("#wemd") ??
+      previewRef.current;
+    let resizeObserver: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(() => runFit());
+      resizeObserver.observe(wemd);
+    }
+
+    return () => {
+      cancelled = true;
+      resizeObserver?.disconnect();
+    };
+  }, [html, useMathJaxForPreview, mathJaxReady]);
 
   return (
     <div className="markdown-preview">

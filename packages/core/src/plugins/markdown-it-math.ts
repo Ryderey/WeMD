@@ -15,6 +15,22 @@ const escapeAttribute = (str: string) => escapeHtml(str).replace(/'/g, "&#39;");
 
 type MathRenderer = "auto" | "katex";
 
+const MATHJAX_READY_VERSION = 2;
+
+/** 与 apps/web mathJaxLoader 保持同步：KaTeX 无法渲染、需 MathJax 扩展的 TeX 命令 */
+const MATHJAX_ONLY_COMMAND =
+  /\\(?:color|colorbox|bbox|definecolor|textcolor|fcolorbox)\b/;
+
+const isMathJaxReady = (): boolean => {
+  if (typeof window === "undefined") return false;
+  if (window.__wemdMathJaxVersion !== MATHJAX_READY_VERSION) return false;
+  const mathJax = window.MathJax;
+  return !!(mathJax?.tex2svg || mathJax?.tex2svgPromise);
+};
+
+const needsMathJaxOnly = (latex: string): boolean =>
+  MATHJAX_ONLY_COMMAND.test(latex);
+
 const renderMathJax = (
   latex: string,
   display: boolean,
@@ -22,6 +38,7 @@ const renderMathJax = (
 ): string | null => {
   if (renderer === "katex") return null;
   if (typeof window === "undefined") return null;
+  if (!isMathJaxReady()) return null;
   const mathJax = window.MathJax;
   if (!mathJax || typeof mathJax.tex2svg !== "function") return null;
 
@@ -35,7 +52,7 @@ const renderMathJax = (
     const width = svg.getAttribute("width") || svg.style.minWidth;
     svg.removeAttribute("width");
     svg.style.display = "initial";
-    svg.style.setProperty("max-width", "300vw", "important");
+    svg.style.setProperty("max-width", display ? "300vw" : "100%", "important");
     svg.style.flexShrink = "0";
     if (width) {
       svg.style.width = width;
@@ -46,6 +63,12 @@ const renderMathJax = (
     console.error("MathJax render error:", error);
     return null;
   }
+};
+
+const renderMathJaxPlaceholder = (latex: string, display: boolean): string => {
+  const tag = display ? "section" : "span";
+  const className = display ? "block-equation" : "inline-equation";
+  return `<${tag} class="${className}" data-latex="${escapeAttribute(latex)}" data-mathjax-pending></${tag}>`;
 };
 
 /* 处理内联数学公式 */
@@ -241,7 +264,10 @@ export default (md: MarkdownIt, options: any) => {
     options.displayMode = false;
     const mathJaxContent = renderMathJax(latex, false, renderer);
     if (mathJaxContent) {
-      return `<span class="inline-equation">${mathJaxContent}</span>`;
+      return `<span class="inline-equation" data-latex="${escapeAttribute(latex)}">${mathJaxContent}</span>`;
+    }
+    if (renderer === "auto" && needsMathJaxOnly(latex)) {
+      return renderMathJaxPlaceholder(latex, false);
     }
     try {
       const rendered = katex.renderToString(latex, {
@@ -265,7 +291,10 @@ export default (md: MarkdownIt, options: any) => {
     options.displayMode = true;
     const mathJaxContent = renderMathJax(latex, true, renderer);
     if (mathJaxContent) {
-      return `<section class="block-equation">${mathJaxContent}</section>`;
+      return `<section class="block-equation" data-latex="${escapeAttribute(latex)}">${mathJaxContent}</section>`;
+    }
+    if (renderer === "auto" && needsMathJaxOnly(latex)) {
+      return renderMathJaxPlaceholder(latex, true);
     }
     try {
       const rendered = katex.renderToString(latex, {
@@ -295,12 +324,20 @@ export default (md: MarkdownIt, options: any) => {
 
 declare global {
   interface Window {
+    /** MathJax 配置版本，由 apps/web 的 mathJaxLoader 写入 */
+    __wemdMathJaxVersion?: number;
     MathJax?: {
       tex2svg?: (math: string, options: { display: boolean }) => HTMLElement;
+      tex2svgPromise?: (
+        math: string,
+        options: { display: boolean },
+      ) => Promise<HTMLElement>;
       texReset?: () => void;
       startup?: {
-        defaultReady: () => void;
+        /** 由 MathJax 在加载完成后挂载，配置阶段可以缺省 */
+        defaultReady?: () => void;
         ready?: () => void;
+        promise?: Promise<void>;
       };
       typesetClear?: (elements: Element[]) => void;
       typesetPromise?: (elements: Element[]) => Promise<void>;

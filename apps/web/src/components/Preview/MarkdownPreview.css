@@ -91,6 +91,17 @@
   overflow: auto hidden;
 }
 
+/* 行内公式：MathJax SVG 等比缩小；KaTeX 超长时由 fitInlineEquations 处理 */
+#wemd .inline-equation > svg {
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+#wemd .inline-equation--fitted {
+  box-sizing: border-box;
+}
+
 /* 强制图片自适应，修复浏览器存储模式下图片过大的问题 */
 #wemd img {
   max-width: 100% !important;

@@ -9,6 +9,7 @@ const MATHJAX_LOAD_TIMEOUT_MS = 4000;
 
 interface MathImageRenderResult {
   imageCount: number;
+  fallbackCount: number;
 }
 
 const withTimeout = async <T>(
@@ -27,24 +28,71 @@ const withTimeout = async <T>(
   }
 };
 
+/** MathJax 在按需加载扩展时会抛出带 retry 承诺的错误，重试耗尽后按普通失败处理 */
+const MAX_MATHJAX_RETRIES = 5;
+
+const renderWithMathJaxRetries = async (
+  render: () => HTMLElement | Promise<HTMLElement>,
+  retriesLeft = MAX_MATHJAX_RETRIES,
+): Promise<HTMLElement> => {
+  try {
+    return await render();
+  } catch (error) {
+    const retry =
+      typeof error === "object" && error !== null && "retry" in error
+        ? error.retry
+        : undefined;
+    if (
+      !retry ||
+      retriesLeft <= 0 ||
+      (typeof retry !== "object" && typeof retry !== "function") ||
+      !("then" in retry) ||
+      typeof retry.then !== "function"
+    ) {
+      throw error;
+    }
+
+    await retry;
+    return renderWithMathJaxRetries(render, retriesLeft - 1);
+  }
+};
+
 const applyCurrentColor = (svg: SVGElement): void => {
+  const isDefaultBlack = (value: string): boolean =>
+    ["black", "#000", "#000000", "rgb(0,0,0)", "rgba(0,0,0,1)"].includes(
+      value.trim().toLowerCase().replace(/\s+/g, ""),
+    );
+
   const retarget = (el: Element) => {
+    // MathJax marks \colorbox / \bbox background shapes explicitly.
+    // Recoloring those shapes would make their contents disappear.
+    if (el.hasAttribute("data-bgcolor")) return;
+
     for (const attr of ["fill", "stroke"] as const) {
       const value = el.getAttribute(attr);
-      if (!value) continue;
-      const normalized = value.trim().toLowerCase();
-      if (normalized === "none" || normalized === "transparent") continue;
-      el.setAttribute(attr, "currentColor");
+      if (value && isDefaultBlack(value)) {
+        el.setAttribute(attr, "currentColor");
+      }
+
+      if ("style" in el && el.style instanceof CSSStyleDeclaration) {
+        const styleValue = el.style.getPropertyValue(attr);
+        if (isDefaultBlack(styleValue)) {
+          el.style.setProperty(attr, "currentColor");
+        }
+      }
     }
   };
 
   retarget(svg);
-  svg.querySelectorAll("[fill], [stroke]").forEach(retarget);
+  svg.querySelectorAll("[fill], [stroke], [style]").forEach(retarget);
 };
 
-const renderLatexToSvg = (latex: string, display: boolean): SVGElement => {
+const renderLatexToSvg = async (
+  latex: string,
+  display: boolean,
+): Promise<SVGElement> => {
   const mathJax = window.MathJax;
-  if (!mathJax?.tex2svg) {
+  if (!mathJax?.tex2svg && !mathJax?.tex2svgPromise) {
     throw new Error("复杂公式渲染失败");
   }
   if (typeof mathJax.texReset === "function") mathJax.texReset();
@@ -52,7 +100,11 @@ const renderLatexToSvg = (latex: string, display: boolean): SVGElement => {
   let lastError: unknown;
   for (const candidate of getMathJaxLatexCandidates(latex)) {
     try {
-      const container = mathJax.tex2svg(candidate, { display }) as HTMLElement;
+      const container = await renderWithMathJaxRetries(() =>
+        mathJax.tex2svgPromise
+          ? mathJax.tex2svgPromise(candidate, { display })
+          : mathJax.tex2svg!(candidate, { display }),
+      );
       if (
         container.textContent?.includes(BOLDSYMBOL_COMMAND) ||
         container.querySelector("mjx-merror, merror, [data-mjx-error]")
@@ -62,11 +114,23 @@ const renderLatexToSvg = (latex: string, display: boolean): SVGElement => {
       const svg = container.querySelector("svg");
       if (!svg) throw new Error("MathJax 未输出 SVG");
       const clone = svg.cloneNode(true) as SVGElement;
+      const width =
+        clone.getAttribute("width") ||
+        clone.style.width ||
+        clone.style.minWidth;
+      const height = clone.getAttribute("height") || clone.style.height;
+      const hasViewBox = clone.hasAttribute("viewBox");
+      clone.removeAttribute("width");
+      clone.removeAttribute("height");
+      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      clone.style.removeProperty("min-width");
+      if (width) clone.style.width = width;
+      clone.style.height = hasViewBox || !height ? "auto" : height;
+      clone.style.maxWidth = "100%";
       applyCurrentColor(clone);
       if (display) {
         clone.style.display = "block";
         clone.style.margin = "1em auto";
-        clone.style.maxWidth = "100%";
       }
       return clone;
     } catch (error) {
@@ -86,21 +150,31 @@ export const renderHighRiskMathAsImages = async (
     ),
   );
 
-  if (formulaNodes.length === 0) return { imageCount: 0 };
+  if (formulaNodes.length === 0) return { imageCount: 0, fallbackCount: 0 };
 
   await withTimeout(loadMathJax(), MATHJAX_LOAD_TIMEOUT_MS, "MathJax 加载超时");
-  if (!window.MathJax?.tex2svg) {
+  if (!window.MathJax?.tex2svg && !window.MathJax?.tex2svgPromise) {
     throw new Error("复杂公式渲染失败");
   }
 
+  let imageCount = 0;
+  let fallbackCount = 0;
   for (const node of formulaNodes) {
     const latex = node.getAttribute("data-latex") || "";
     const display = node.classList.contains("block-equation");
-    node.replaceChildren(renderLatexToSvg(latex, display));
+    try {
+      node.replaceChildren(await renderLatexToSvg(latex, display));
+      imageCount += 1;
+    } catch {
+      // A single unsupported formula should not prevent copying the article.
+      // Plain text is less pretty but survives WeChat sanitization reliably.
+      node.textContent = display ? `$$${latex}$$` : `$${latex}$`;
+      fallbackCount += 1;
+    }
     node.removeAttribute("data-latex");
   }
 
-  return { imageCount: formulaNodes.length };
+  return { imageCount, fallbackCount };
 };
 
 /**

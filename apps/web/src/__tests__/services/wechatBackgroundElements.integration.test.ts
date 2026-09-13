@@ -103,6 +103,14 @@ const CSS = `
   #wemd pre code { display: block; padding: 16px; }
 `;
 
+const ISSUE_102_MARKDOWN = `
+## 方差公式
+
+$Var(X)=\\sum {P(X_i)(X_i-E(X))^2}$
+
+我们把平方展开 $\\sum {P(X_i)(X_i^2-2X_iE(x)+E(X)^2)}$，然后显然这就变成了三个求和 $\\sum {P(X_i)(X_i^2)}$、$\\sum {P(X_i)(-2X_iE(X))}$、$\\sum {P(X_i)(E(X)^2)}$。
+`;
+
 describe("公众号背景文章综合元素复制", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -233,5 +241,31 @@ describe("公众号背景文章综合元素复制", () => {
       root.querySelector("img[src='data:image/png;base64,mermaid']"),
     ).toBeTruthy();
     expect(root.querySelector("hr")).toBeTruthy();
+  });
+
+  it("完整复制 Issue 102 的五个公式并保持响应式 SVG", async () => {
+    await copyToWechat(ISSUE_102_MARKDOWN, CSS);
+
+    const [payload] = mocked.clipboardWrite.mock.calls[0] as [
+      { html: string; text: string },
+    ];
+    const snapshot = document.createElement("div");
+    snapshot.innerHTML = payload.html;
+    const formulas = Array.from(
+      snapshot.querySelectorAll<SVGElement>(".inline-equation > svg"),
+    );
+
+    expect(formulas).toHaveLength(5);
+    formulas.forEach((formula) => {
+      expect(formula.getAttribute("width")).toBeNull();
+      expect(formula.getAttribute("height")).toBeNull();
+      expect(formula.getAttribute("xmlns")).toBe("http://www.w3.org/2000/svg");
+      expect(formula.style.width).toBe("1ex");
+      expect(formula.style.height).toBe("auto");
+      expect(formula.style.maxWidth).toBe("100%");
+    });
+    expect(payload.html).not.toContain("height:0");
+    expect(payload.html).not.toContain("katex-html");
+    expect(payload.html).not.toContain("katex-mathml");
   });
 });

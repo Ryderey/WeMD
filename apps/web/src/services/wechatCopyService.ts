@@ -335,9 +335,11 @@ export async function copyToWechat(
     }
 
     toast.success(
-      mathFallback.imageCount > 0
-        ? "已复制，部分复杂公式已自动保真处理"
-        : "已复制，可以直接粘贴至微信公众号",
+      mathFallback.fallbackCount > 0
+        ? `已复制，${mathFallback.fallbackCount} 个公式已降级为源码`
+        : mathFallback.imageCount > 0
+          ? "已复制，部分复杂公式已自动保真处理"
+          : "已复制，可以直接粘贴至微信公众号",
       {
         duration: 3000,
       },

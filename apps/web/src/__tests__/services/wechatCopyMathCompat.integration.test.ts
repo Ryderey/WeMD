@@ -225,6 +225,77 @@ describe("wechat copy math compatibility", () => {
     expect(payload.html).not.toContain("katex-html");
   });
 
+  it("renders explicit color and colorbox formulas through MathJax", async () => {
+    mocked.processHtml.mockReturnValue(
+      '<section id="wemd"><section class="block-equation" data-latex="\\color{red}{E=mc^2}"><span class="katex">E=mc^2</span></section><section class="block-equation" data-latex="\\colorbox{yellow}{x^2+y^2=r^2}"><span class="katex">x^2+y^2=r^2</span></section></section>',
+    );
+    const tex2svg = installMathJax();
+
+    await copyToWechat(
+      "$$\\color{red}{E=mc^2}$$\n\n$$\\colorbox{yellow}{x^2+y^2=r^2}$$",
+      "#wemd p { margin: 18px 0; }",
+    );
+
+    expect(tex2svg).toHaveBeenCalledWith("\\color{red}{E=mc^2}", {
+      display: true,
+    });
+    expect(tex2svg).toHaveBeenCalledWith("\\colorbox{yellow}{x^2+y^2=r^2}", {
+      display: true,
+    });
+  });
+
+  it("waits for the MathJax retry promise and renders again", async () => {
+    mocked.processHtml.mockReturnValue(
+      '<section id="wemd"><p><span class="inline-equation" data-latex="x^2"><span class="katex-html">x</span></span></p></section>',
+    );
+    const tex2svg = vi.fn((latex: string) => {
+      if (tex2svg.mock.calls.length === 1) {
+        throw Object.assign(new Error("retry"), { retry: Promise.resolve() });
+      }
+      return createMathJaxSvg(latex);
+    });
+    installMathJax(tex2svg);
+
+    await copyToWechat("$x^2$", "#wemd p { margin: 18px 0; }");
+
+    const [payload] = mocked.electronClipboardWrite.mock.calls[0] as [
+      { html: string; text: string },
+    ];
+    expect(tex2svg).toHaveBeenCalledTimes(2);
+    expect(payload.html).toContain("<svg");
+    expect(payload.html).not.toContain("katex-html");
+    expect(mocked.toastSuccess).toHaveBeenCalledWith(
+      "已复制，部分复杂公式已自动保真处理",
+      expect.any(Object),
+    );
+  });
+
+  it("falls back to TeX source when a single formula cannot render", async () => {
+    mocked.processHtml.mockReturnValue(
+      '<section id="wemd"><p><span class="inline-equation" data-latex="\\notAWeMDCommand{x}"><span class="katex-error">\\notAWeMDCommand{x}</span></span> 结束</p></section>',
+    );
+    installMathJax(
+      vi.fn(() => {
+        throw new Error("unsupported command");
+      }),
+    );
+
+    await copyToWechat(
+      "$\\notAWeMDCommand{x}$ 结束",
+      "#wemd p { margin: 18px 0; }",
+    );
+
+    const [payload] = mocked.electronClipboardWrite.mock.calls[0] as [
+      { html: string; text: string },
+    ];
+    expect(payload.html).toContain("$\\notAWeMDCommand{x}$");
+    expect(payload.html).toContain("结束");
+    expect(mocked.toastSuccess).toHaveBeenCalledWith(
+      "已复制，1 个公式已降级为源码",
+      expect.any(Object),
+    );
+  });
+
   it("fails copy when MathJax loading hangs", async () => {
     vi.useFakeTimers();
     mocked.processHtml.mockReturnValue(

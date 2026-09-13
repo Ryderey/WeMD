@@ -445,13 +445,18 @@ const normalizeBlockBackgroundForWechat = (
     // 祖先元素（如 blockquote）已有显式背景色时，不覆盖子元素的背景
     if (root && hasAncestorWithExplicitBackground(node, root)) return;
 
+    // Formula SVGs use currentColor for dark mode, so their wrapper must not
+    // block WeChat's color/background overrides with !important.
+    const priority = node.classList.contains("block-equation")
+      ? undefined
+      : "important";
     if (rootBgColor) {
-      node.style.setProperty("background-color", rootBgColor, "important");
+      node.style.setProperty("background-color", rootBgColor, priority);
     } else {
-      node.style.setProperty("background", "transparent", "important");
-      node.style.setProperty("background-color", "transparent", "important");
+      node.style.setProperty("background", "transparent", priority);
+      node.style.setProperty("background-color", "transparent", priority);
     }
-    node.style.setProperty("background-image", "none", "important");
+    node.style.setProperty("background-image", "none", priority);
   });
 };
 

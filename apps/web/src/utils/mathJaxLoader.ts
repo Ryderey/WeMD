@@ -3,7 +3,20 @@
  * 仅在检测到数学公式时才加载 MathJax，避免不必要的内存占用
  */
 
+const MATHJAX_ES5_BASE = `${import.meta.env.BASE_URL}libs/mathjax/es5`;
+
+/** 离线 tex-svg 包内建扩展 + 本地 es5 扩展；禁用 autoload/require 避免异步拉取失败触发 MathJax retry */
+export const MATHJAX_TEX_PACKAGES = [
+  "base",
+  "ams",
+  "newcommand",
+  "noundefined",
+  "configmacros",
+  "color",
+  "boldsymbol",
+] as const;
 let mathJaxPromise: Promise<void> | null = null;
+const MATHJAX_CONFIG_VERSION = 2;
 let isLoaded = false;
 
 /**
@@ -14,13 +27,119 @@ export function hasMathFormula(content: string): boolean {
   return /\$[^$]+\$/.test(content);
 }
 
+/** KaTeX 无法正确预览的 TeX 命令，需要 MathJax 离线扩展 */
+export const MATHJAX_ONLY_COMMAND =
+  /\\(?:color|colorbox|bbox|definecolor|textcolor|fcolorbox)\b/;
+
+export function needsMathJaxPreview(content: string): boolean {
+  return MATHJAX_ONLY_COMMAND.test(content);
+}
+
+export function isMathJaxReady(): boolean {
+  if (typeof window === "undefined") return false;
+  const version = window.__wemdMathJaxVersion;
+  if (version !== MATHJAX_CONFIG_VERSION) return false;
+  const mathJax = window.MathJax;
+  return !!(mathJax?.tex2svg || mathJax?.tex2svgPromise);
+}
+
+const normalizeMathJaxSvg = (svg: SVGElement, display: boolean): void => {
+  const width = svg.getAttribute("width") || svg.style.minWidth;
+  svg.removeAttribute("width");
+  svg.style.display = "initial";
+  svg.style.setProperty("max-width", display ? "300vw" : "100%", "important");
+  svg.style.flexShrink = "0";
+  if (width) {
+    svg.style.width = width;
+  }
+  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+};
+
+export async function renderLatexToSvgHtml(
+  latex: string,
+  display: boolean,
+): Promise<string | null> {
+  if (!isMathJaxReady()) return null;
+
+  const mathJax = window.MathJax;
+  if (!mathJax) return null;
+
+  if (typeof mathJax.texReset === "function") {
+    mathJax.texReset();
+  }
+
+  let container: HTMLElement;
+  if (typeof mathJax.tex2svg === "function") {
+    container = mathJax.tex2svg(latex, { display });
+  } else if (mathJax.tex2svgPromise) {
+    container = await mathJax.tex2svgPromise(latex, { display });
+  } else {
+    return null;
+  }
+
+  const svg = container.querySelector("svg");
+  if (!svg) return null;
+
+  const clone = svg.cloneNode(true) as SVGElement;
+  normalizeMathJaxSvg(clone, display);
+  return clone.outerHTML;
+}
+
+/**
+ * 将预览中仍由 KaTeX 占位/报错的 MathJax 专用公式替换为 SVG。
+ */
+export async function hydrateMathJaxEquations(
+  root: HTMLElement,
+): Promise<void> {
+  if (!isMathJaxReady()) return;
+
+  const wemd =
+    root.querySelector<HTMLElement>("#wemd") ??
+    (root.id === "wemd" ? root : null);
+  if (!wemd) return;
+
+  const nodes = wemd.querySelectorAll<HTMLElement>(
+    ".inline-equation[data-latex], .block-equation[data-latex]",
+  );
+
+  for (const node of nodes) {
+    const latex = node.getAttribute("data-latex") || "";
+    const needsMathJax =
+      node.hasAttribute("data-mathjax-pending") ||
+      node.querySelector(".katex-error") !== null ||
+      MATHJAX_ONLY_COMMAND.test(latex);
+    if (!needsMathJax) continue;
+
+    const display = node.classList.contains("block-equation");
+    try {
+      const html = await renderLatexToSvgHtml(latex, display);
+      if (!html) continue;
+      node.innerHTML = html;
+      node.removeAttribute("data-mathjax-pending");
+    } catch (error) {
+      console.error("MathJax hydrate error:", error);
+    }
+  }
+}
+
 /**
  * 动态加载 MathJax
  */
 export function loadMathJax(): Promise<void> {
-  if (window.MathJax?.tex2svg) {
+  const configuredVersion = window.__wemdMathJaxVersion;
+  if (
+    configuredVersion === MATHJAX_CONFIG_VERSION &&
+    (window.MathJax?.tex2svg || window.MathJax?.tex2svgPromise)
+  ) {
     isLoaded = true;
     return Promise.resolve();
+  }
+
+  if (configuredVersion !== MATHJAX_CONFIG_VERSION) {
+    isLoaded = false;
+    mathJaxPromise = null;
+    document.getElementById("MathJax-script")?.remove();
+    delete window.MathJax;
   }
 
   if (isLoaded && window.MathJax) {
@@ -30,12 +149,10 @@ export function loadMathJax(): Promise<void> {
   if (mathJaxPromise) {
     return mathJaxPromise;
   }
-
   mathJaxPromise = new Promise((resolve, reject) => {
-    // 配置 MathJax（使用 any 绕过配置对象的类型检查）
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).MathJax = {
+    const bootstrap = {
       tex: {
+        packages: [...MATHJAX_TEX_PACKAGES],
         inlineMath: [["$", "$"]],
         displayMath: [["$$", "$$"]],
         tags: "ams",
@@ -52,18 +169,37 @@ export function loadMathJax(): Promise<void> {
       startup: {
         typeset: false,
         ready: () => {
-          window.MathJax?.startup?.defaultReady();
-          isLoaded = true;
-          resolve();
+          window.MathJax?.startup?.defaultReady?.();
+          const startupPromise = window.MathJax?.startup?.promise;
+          if (startupPromise && typeof startupPromise.then === "function") {
+            startupPromise
+              .then(() => {
+                isLoaded = true;
+                window.__wemdMathJaxVersion = MATHJAX_CONFIG_VERSION;
+                resolve();
+              })
+              .catch((err: unknown) => {
+                mathJaxPromise = null;
+                reject(err instanceof Error ? err : new Error(String(err)));
+              });
+          } else {
+            isLoaded = true;
+            resolve();
+          }
         },
       },
       loader: {
+        paths: {
+          mathjax: MATHJAX_ES5_BASE,
+        },
+        load: ["[tex]/color", "[tex]/boldsymbol"],
         failed: (error: { message?: string }) => {
           mathJaxPromise = null;
           reject(new Error(error.message || "Failed to load MathJax"));
         },
       },
     };
+    window.MathJax = bootstrap;
 
     // 动态加载脚本
     const script = document.createElement("script");
@@ -101,12 +237,20 @@ export async function typesetElement(element: Element): Promise<void> {
 // 声明 MathJax 类型
 declare global {
   interface Window {
+    /** 当前 MathJax 配置版本；与模块内常量不一致时视为尚未配置 */
+    __wemdMathJaxVersion?: number;
     MathJax?: {
       tex2svg?: (math: string, options: { display: boolean }) => HTMLElement;
+      tex2svgPromise?: (
+        math: string,
+        options: { display: boolean },
+      ) => Promise<HTMLElement>;
       texReset?: () => void;
       startup?: {
-        defaultReady: () => void;
+        /** 由 MathJax 在加载完成后挂载，配置阶段可以缺省 */
+        defaultReady?: () => void;
         ready?: () => void;
+        promise?: Promise<void>;
       };
       typesetClear?: (elements: Element[]) => void;
       typesetPromise?: (elements: Element[]) => Promise<void>;

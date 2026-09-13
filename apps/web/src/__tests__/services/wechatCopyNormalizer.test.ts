@@ -47,6 +47,23 @@ describe("wechatCopyNormalizer", () => {
     expect(paragraphs[1].style.backgroundColor).not.toBe("transparent");
   });
 
+  it("does not add important background styles to block formulas", () => {
+    const container = document.createElement("div");
+    container.innerHTML =
+      '<section id="wemd" style="background-color: rgb(248, 251, 255);"><section class="block-equation"><svg viewBox="0 0 10 10"></svg></section><p>正文</p></section>';
+
+    normalizeCopyContainer(container);
+
+    const formula = container.querySelector<HTMLElement>(".block-equation");
+    const paragraph = container.querySelector<HTMLElement>("p");
+    expect(formula?.style.backgroundColor).toBe("rgb(248, 251, 255)");
+    expect(formula?.style.getPropertyPriority("background-color")).toBe("");
+    expect(formula?.style.getPropertyPriority("background-image")).toBe("");
+    expect(paragraph?.style.getPropertyPriority("background-color")).toBe(
+      "important",
+    );
+  });
+
   it("keeps the single root section as a continuous background canvas", () => {
     const container = document.createElement("div");
     container.innerHTML = `
@@ -298,6 +315,7 @@ describe("wechatCopyNormalizer", () => {
     normalizeCopyContainer(container);
 
     const sections = container.querySelectorAll("li > section");
+
     expect(sections).toHaveLength(2);
     expect((sections[0] as HTMLElement).style.backgroundColor).toBe(
       "transparent",
