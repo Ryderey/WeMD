@@ -53,6 +53,29 @@ describe("MarkdownParser code block", () => {
     expect(html).not.toContain("<svg");
     expect(html).not.toContain("mathjax");
   });
+
+  it("MathJax 报错输出不进入预览，退回可读原文", () => {
+    vi.stubGlobal("window", {
+      __wemdMathJaxVersion: 3,
+      MathJax: {
+        texReset: vi.fn(),
+        tex2svg: () => {
+          const container = document.createElement("div");
+          container.innerHTML =
+            '<svg viewBox="0 0 100 50" data-mjx-error="Undefined control sequence"><rect width="100" height="50"></rect><text>Undefined control sequence</text></svg>';
+          return container;
+        },
+      },
+    });
+
+    const parser = createMarkdownParser({ mathRenderer: "auto" });
+    const html = parser.render("$\\ce{H2O}$");
+
+    expect(html).not.toContain("data-mjx-error");
+    expect(html).not.toContain("<rect");
+    expect(html).toContain("katex-html");
+    expect(html).toContain("\\ce{H2O}");
+  });
 });
 
 describe("MarkdownParser 预览源位置", () => {

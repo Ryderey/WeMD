@@ -10,13 +10,25 @@ export const MATHJAX_TEX_PACKAGES = [
   "base",
   "ams",
   "newcommand",
-  "noundefined",
   "configmacros",
   "color",
   "boldsymbol",
+  "cancel",
+  "enclose",
 ] as const;
+
+/**
+ * 补上 KaTeX 认、MathJax 不认的同义命令，避免“预览正常、复制后变红字”：
+ * - \bm 是 \boldsymbol 的常用简写，MathJax 的 boldsymbol 扩展只提供后者
+ * - \sout 对应 enclose 扩展的水平删除线
+ */
+const MATHJAX_TEX_MACROS = {
+  bm: ["\\boldsymbol{#1}", 1],
+  sout: ["\\enclose{horizontalstrike}{#1}", 1],
+} as const;
+
 let mathJaxPromise: Promise<void> | null = null;
-const MATHJAX_CONFIG_VERSION = 2;
+const MATHJAX_CONFIG_VERSION = 3;
 let isLoaded = false;
 
 /**
@@ -55,6 +67,13 @@ const normalizeMathJaxSvg = (svg: SVGElement, display: boolean): void => {
   svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 };
 
+/** MathJax 渲染失败的输出带 mjx-merror / data-mjx-error 标记，其无填充背景块会在预览里显示成黑块 */
+const MATHJAX_ERROR_SELECTOR = "mjx-merror, merror, [data-mjx-error]";
+
+const hasMathJaxError = (container: Element): boolean =>
+  container.matches(MATHJAX_ERROR_SELECTOR) ||
+  container.querySelector(MATHJAX_ERROR_SELECTOR) !== null;
+
 export async function renderLatexToSvgHtml(
   latex: string,
   display: boolean,
@@ -77,6 +96,7 @@ export async function renderLatexToSvgHtml(
     return null;
   }
 
+  if (hasMathJaxError(container)) return null;
   const svg = container.querySelector("svg");
   if (!svg) return null;
 
@@ -113,7 +133,12 @@ export async function hydrateMathJaxEquations(
     const display = node.classList.contains("block-equation");
     try {
       const html = await renderLatexToSvgHtml(latex, display);
-      if (!html) continue;
+      if (!html) {
+        // MathJax 也渲染不出来：退回可读原文，避免留下空白公式
+        node.textContent = display ? `$$${latex}$$` : `$${latex}$`;
+        node.removeAttribute("data-mathjax-pending");
+        continue;
+      }
       node.innerHTML = html;
       node.removeAttribute("data-mathjax-pending");
     } catch (error) {
@@ -153,6 +178,7 @@ export function loadMathJax(): Promise<void> {
     const bootstrap = {
       tex: {
         packages: [...MATHJAX_TEX_PACKAGES],
+        macros: { ...MATHJAX_TEX_MACROS },
         inlineMath: [["$", "$"]],
         displayMath: [["$$", "$$"]],
         tags: "ams",
@@ -192,7 +218,12 @@ export function loadMathJax(): Promise<void> {
         paths: {
           mathjax: MATHJAX_ES5_BASE,
         },
-        load: ["[tex]/color", "[tex]/boldsymbol"],
+        load: [
+          "[tex]/color",
+          "[tex]/boldsymbol",
+          "[tex]/cancel",
+          "[tex]/enclose",
+        ],
         failed: (error: { message?: string }) => {
           mathJaxPromise = null;
           reject(new Error(error.message || "Failed to load MathJax"));

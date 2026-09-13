@@ -296,6 +296,32 @@ describe("wechat copy math compatibility", () => {
     );
   });
 
+  it("degrades formulas whose MathJax output carries an error", async () => {
+    mocked.processHtml.mockReturnValue(
+      '<section id="wemd"><p>前文<span class="inline-equation" data-latex="\\ce{H2O}"><span class="katex-error">\\ce{H2O}</span></span>后文</p></section>',
+    );
+    installMathJax(
+      vi.fn(() => {
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML =
+          '<mjx-container><mjx-merror data-mjx-error="Undefined control sequence \\ce"><mtext>Undefined control sequence</mtext></mjx-merror></mjx-container>';
+        return wrapper;
+      }),
+    );
+
+    await copyToWechat("前文 $\\ce{H2O}$ 后文", "#wemd p { margin: 18px 0; }");
+
+    const [payload] = mocked.electronClipboardWrite.mock.calls[0] as [
+      { html: string; text: string },
+    ];
+    expect(payload.html).toContain("$\\ce{H2O}$");
+    expect(payload.html).toContain("前文");
+    expect(mocked.toastSuccess).toHaveBeenCalledWith(
+      "已复制，1 个公式已降级为源码",
+      expect.any(Object),
+    );
+  });
+
   it("fails copy when MathJax loading hangs", async () => {
     vi.useFakeTimers();
     mocked.processHtml.mockReturnValue(

@@ -15,7 +15,7 @@ const escapeAttribute = (str: string) => escapeHtml(str).replace(/'/g, "&#39;");
 
 type MathRenderer = "auto" | "katex";
 
-const MATHJAX_READY_VERSION = 2;
+const MATHJAX_READY_VERSION = 3;
 
 /** 与 apps/web mathJaxLoader 保持同步：KaTeX 无法渲染、需 MathJax 扩展的 TeX 命令 */
 const MATHJAX_ONLY_COMMAND =
@@ -30,6 +30,16 @@ const isMathJaxReady = (): boolean => {
 
 const needsMathJaxOnly = (latex: string): boolean =>
   MATHJAX_ONLY_COMMAND.test(latex);
+
+/**
+ * MathJax 渲染失败的输出带 mjx-merror / data-mjx-error 标记，其中还有个没有 fill 的背景方框，
+ * 直接用会在预览里显示成黑块。这类输出一律不采用，退回 KaTeX 的可读原文。
+ */
+const MATHJAX_ERROR_SELECTOR = "mjx-merror, merror, [data-mjx-error]";
+
+const hasMathJaxError = (container: Element): boolean =>
+  container.matches(MATHJAX_ERROR_SELECTOR) ||
+  container.querySelector(MATHJAX_ERROR_SELECTOR) !== null;
 
 const renderMathJax = (
   latex: string,
@@ -47,6 +57,7 @@ const renderMathJax = (
       mathJax.texReset();
     }
     const container = mathJax.tex2svg(latex, { display });
+    if (hasMathJaxError(container)) return null;
     const svg = container.querySelector("svg");
     if (!svg) return null;
     const width = svg.getAttribute("width") || svg.style.minWidth;
@@ -266,7 +277,7 @@ export default (md: MarkdownIt, options: any) => {
     if (mathJaxContent) {
       return `<span class="inline-equation" data-latex="${escapeAttribute(latex)}">${mathJaxContent}</span>`;
     }
-    if (renderer === "auto" && needsMathJaxOnly(latex)) {
+    if (renderer === "auto" && needsMathJaxOnly(latex) && !isMathJaxReady()) {
       return renderMathJaxPlaceholder(latex, false);
     }
     try {
@@ -293,7 +304,7 @@ export default (md: MarkdownIt, options: any) => {
     if (mathJaxContent) {
       return `<section class="block-equation" data-latex="${escapeAttribute(latex)}">${mathJaxContent}</section>`;
     }
-    if (renderer === "auto" && needsMathJaxOnly(latex)) {
+    if (renderer === "auto" && needsMathJaxOnly(latex) && !isMathJaxReady()) {
       return renderMathJaxPlaceholder(latex, true);
     }
     try {
