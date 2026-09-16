@@ -4,7 +4,10 @@ import { domToBlob } from "modern-screenshot";
 export const RICH_POST_COVER_WIDTH = 1080;
 export const RICH_POST_COVER_HEIGHT = 1440;
 
-export type RichPostCoverTemplateId = "warm-quote" | "cool-underline";
+export type RichPostCoverTemplateId =
+  | "warm-quote"
+  | "cool-underline"
+  | "burst-black";
 
 export interface RichPostCoverSettings {
   templateId: RichPostCoverTemplateId;
@@ -58,6 +61,18 @@ export const RICH_POST_COVER_PRESETS: Record<
     fontWeight: "400",
     maxFontSize: 104,
     minFontSize: 48,
+  },
+  "burst-black": {
+    id: "burst-black",
+    name: "放射黑底",
+    description: "黑底放射线、白色粗体与红色关键词",
+    backgroundColor: "#1c1c1c",
+    accentColor: "#f46550",
+    textColor: "#ffffff",
+    fontFamily: '"Noto Sans SC", sans-serif',
+    fontWeight: "900",
+    maxFontSize: 188,
+    minFontSize: 52,
   },
 };
 
@@ -135,22 +150,56 @@ export function createRichPostCoverElement(
     background: input.settings.backgroundColor,
   });
 
+  if (input.settings.templateId === "burst-black") {
+    root.appendChild(createBurstRays());
+  }
+
   const title = document.createElement("div");
   title.dataset.richPostTitle = "true";
+  const isBurst = input.settings.templateId === "burst-black";
   setStyles(title, {
     position: "absolute",
-    left: input.settings.templateId === "warm-quote" ? "176px" : "132px",
-    top: input.settings.templateId === "warm-quote" ? "288px" : "310px",
-    width: input.settings.templateId === "warm-quote" ? "728px" : "816px",
-    height: input.settings.templateId === "warm-quote" ? "864px" : "820px",
+    left: isBurst
+      ? "144px"
+      : input.settings.templateId === "warm-quote"
+        ? "176px"
+        : "132px",
+    top: isBurst
+      ? "50%"
+      : input.settings.templateId === "warm-quote"
+        ? "288px"
+        : "310px",
+    width: isBurst
+      ? "792px"
+      : input.settings.templateId === "warm-quote"
+        ? "728px"
+        : "816px",
+    height: isBurst
+      ? "auto"
+      : input.settings.templateId === "warm-quote"
+        ? "864px"
+        : "820px",
+    maxHeight: isBurst ? "756px" : "none",
+    paddingBlock: isBurst ? "0.12em" : "0",
+    boxSizing: "border-box",
+    transform: isBurst ? "translateY(-50%)" : "none",
+    textWrap: isBurst ? "balance" : "wrap",
     overflow: "hidden",
     color: preset.textColor,
     fontFamily: preset.fontFamily,
     fontWeight: preset.fontWeight,
     fontSize: `${preset.maxFontSize}px`,
-    lineHeight: input.settings.templateId === "warm-quote" ? "1.34" : "1.48",
-    letterSpacing: input.settings.templateId === "warm-quote" ? "-2px" : "1px",
-    whiteSpace: "normal",
+    lineHeight: isBurst
+      ? "1.38"
+      : input.settings.templateId === "warm-quote"
+        ? "1.34"
+        : "1.48",
+    letterSpacing: isBurst
+      ? "8px"
+      : input.settings.templateId === "warm-quote"
+        ? "-2px"
+        : "1px",
+    whiteSpace: isBurst ? "pre-wrap" : "normal",
     overflowWrap: "break-word",
     wordBreak: "break-all",
   });
@@ -183,15 +232,25 @@ export function fitRichPostCoverTitle(root: HTMLElement): number | null {
     | undefined;
   if (!title || !templateId) return null;
   const preset = RICH_POST_COVER_PRESETS[templateId];
+  const titleLength = Array.from(title.textContent ?? "").length;
+  const maxFontSize =
+    templateId === "burst-black"
+      ? titleLength <= 8
+        ? 188
+        : titleLength <= 16
+          ? 156
+          : 132
+      : preset.maxFontSize;
 
   for (
-    let fontSize = preset.maxFontSize;
+    let fontSize = maxFontSize;
     fontSize >= preset.minFontSize;
     fontSize -= 4
   ) {
     title.style.fontSize = `${fontSize}px`;
     if (
-      title.scrollHeight <= title.clientHeight &&
+      // Browser rounding can add one pixel to an auto-height text block.
+      title.scrollHeight <= title.clientHeight + 1 &&
       title.scrollWidth <= title.clientWidth
     ) {
       return fontSize;
@@ -205,6 +264,7 @@ export async function ensureRichPostCoverFonts(): Promise<void> {
   const loadedFonts = await Promise.all([
     document.fonts.load('700 116px "Noto Sans SC"'),
     document.fonts.load('400 104px "LXGW WenKai Lite"'),
+    document.fonts.load('900 120px "Noto Sans SC"'),
   ]);
   if (loadedFonts.some((fonts) => fonts.length === 0)) {
     throw new Error("封面字体加载失败，请重试");
@@ -266,7 +326,7 @@ function appendHighlightedTitle(
     if (match.index > cursor) element.append(title.slice(cursor, match.index));
     const highlight = document.createElement("span");
     highlight.textContent = match.term;
-    if (templateId === "warm-quote") {
+    if (templateId === "warm-quote" || templateId === "burst-black") {
       highlight.style.color = accentColor;
     } else {
       highlight.style.backgroundImage = `linear-gradient(${accentColor}, ${accentColor})`;
@@ -277,6 +337,43 @@ function appendHighlightedTitle(
     element.appendChild(highlight);
     cursor = match.index + match.term.length;
   }
+}
+
+function createBurstRays(): SVGSVGElement {
+  const namespace = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(namespace, "svg");
+  svg.setAttribute("viewBox", "0 0 1080 1440");
+  svg.setAttribute("width", "1080");
+  svg.setAttribute("height", "1440");
+  svg.setAttribute("aria-hidden", "true");
+  svg.style.position = "absolute";
+  svg.style.inset = "0";
+
+  // Fixed variation keeps the preview and exported image identical.
+  for (let index = 0; index < 144; index += 1) {
+    const variation = ((index * 73) % 101) / 101;
+    const angle = ((index + variation * 0.7) * Math.PI * 2) / 144;
+    const x = Math.cos(angle);
+    const y = Math.sin(angle);
+    const edge = Math.min(540 / Math.abs(x), 720 / Math.abs(y));
+    const inner = edge * (0.7 + variation * 0.23);
+    const outer = edge + 12;
+    const halfWidth = 1.5 + variation * 3;
+    const ray = document.createElementNS(namespace, "polygon");
+    ray.setAttribute(
+      "points",
+      [
+        `${540 + x * inner},${720 + y * inner}`,
+        `${540 + x * outer - y * halfWidth},${720 + y * outer + x * halfWidth}`,
+        `${540 + x * outer + y * halfWidth},${720 + y * outer - x * halfWidth}`,
+      ].join(" "),
+    );
+    ray.setAttribute("fill", "#ffffff");
+    ray.setAttribute("fill-opacity", String(0.38 + variation * 0.48));
+    svg.appendChild(ray);
+  }
+
+  return svg;
 }
 
 function createQuote(

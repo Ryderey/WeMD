@@ -98,6 +98,27 @@ describe("richPostCover", () => {
     expect(highlight?.style.backgroundImage).toContain("rgb(0, 255, 204)");
   });
 
+  it("renders the black burst template with rays and red highlighted text", () => {
+    const cover = createRichPostCoverElement({
+      title: "你不需要忍气吞声，只需要让话慢半拍",
+      highlightTerms: ["忍气吞声"],
+      settings: {
+        templateId: "burst-black",
+        backgroundColor: "#1c1c1c",
+        accentColor: "#f46550",
+      },
+    });
+
+    expect(cover.querySelectorAll("svg polygon").length).toBeGreaterThan(0);
+    expect(cover.querySelector("[data-rich-post-title]")?.textContent).toBe(
+      "你不需要忍气吞声，只需要让话慢半拍",
+    );
+    expect(
+      cover.querySelector<HTMLElement>("[data-rich-post-title] span")?.style
+        .color,
+    ).toBe("rgb(244, 101, 80)");
+  });
+
   it("shrinks the title and reports overflow at the minimum size", () => {
     const cover = createRichPostCoverElement({
       title: "较长标题",
@@ -126,6 +147,26 @@ describe("richPostCover", () => {
     expect(fitRichPostCoverTitle(cover)).toBeNull();
   });
 
+  it("keeps short burst titles large despite one-pixel browser rounding", () => {
+    const cover = createRichPostCoverElement({
+      title: "未命名文章",
+      highlightTerms: [],
+      settings: {
+        ...DEFAULT_RICH_POST_COVER_SETTINGS,
+        templateId: "burst-black",
+      },
+    });
+    const title = cover.querySelector<HTMLElement>("[data-rich-post-title]");
+    if (!title) throw new Error("Missing cover title");
+    Object.defineProperties(title, {
+      clientHeight: { value: 519 },
+      scrollHeight: { value: 520 },
+      clientWidth: { value: 792 },
+      scrollWidth: { value: 792 },
+    });
+    expect(fitRichPostCoverTitle(cover)).toBe(188);
+  });
+
   it("captures an exact 1080 by 1440 PNG after loading fonts", async () => {
     const originalDescriptors = Object.fromEntries(
       ["clientHeight", "clientWidth", "scrollHeight", "scrollWidth"].map(
@@ -148,7 +189,7 @@ describe("richPostCover", () => {
         settings: DEFAULT_RICH_POST_COVER_SETTINGS,
       });
       expect(blob.type).toBe("image/png");
-      expect(fontLoadMock).toHaveBeenCalledTimes(2);
+      expect(fontLoadMock).toHaveBeenCalledTimes(3);
       expect(domToBlobMock).toHaveBeenCalledWith(
         expect.any(HTMLElement),
         expect.objectContaining({
