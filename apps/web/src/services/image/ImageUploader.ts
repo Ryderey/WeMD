@@ -26,6 +26,8 @@ export interface ImageHostConfig {
   config?: any;
 }
 
+export const NON_WECHAT_MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
 /**
  * 图床管理器
  * 使用动态导入实现按需加载，减少首屏加载体积
@@ -84,8 +86,10 @@ export class ImageHostManager {
 
   async upload(file: File): Promise<string> {
     // 微信图床有更严格的独立限制，由其 adapter 返回对应错误。
-    const MAX_SIZE = 10 * 1024 * 1024;
-    if (this.config.type !== "wechat" && file.size > MAX_SIZE) {
+    if (
+      this.config.type !== "wechat" &&
+      file.size > NON_WECHAT_MAX_UPLOAD_BYTES
+    ) {
       throw new Error("图片大小不能超过 10MB");
     }
     const uploader = await this.uploaderPromise;

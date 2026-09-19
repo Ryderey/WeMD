@@ -9,6 +9,7 @@ import { cacheWechatPreviewImage } from "./wechatPreviewCache";
 export interface UploadEditorImageOptions {
   compressionOptions?: PrepareImageForUploadOptions;
   compressionDependencies?: ImageCompressionDependencies;
+  skipCompression?: boolean;
   getImageHostConfig?: () => ImageHostConfig;
   createManager?: (config: ImageHostConfig) => {
     upload: (file: File) => Promise<string>;
@@ -46,7 +47,7 @@ export async function uploadEditorImage(
     ? options.getImageHostConfig()
     : getStoredImageHostConfig();
   const prepared =
-    config.type === "wechat"
+    config.type === "wechat" || options.skipCompression
       ? {
           file: sourceFile,
           originalSize: sourceFile.size,
