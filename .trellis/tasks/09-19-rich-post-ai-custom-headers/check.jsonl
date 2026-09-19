@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/web/frontend/quality.md", "reason": "质量检查清单：禁止 non-null 断言、类型与 lint 要求，check 阶段逐条核对"}
+{"file": ".trellis/spec/web/frontend/index.md", "reason": "Core Rules Summary 与提交前检查项"}
+{"file": ".trellis/spec/web/frontend/ipc-electron.md", "reason": "核对主进程 IPC 重校验、通道契约与 preload/d.ts 同步是否完整"}
+{"file": ".agentdocs/rich-post-ai-custom-headers-plan.md", "reason": "验收标准与平台边界：对照检查错误信息不泄露、校验不被误分类为 CORS"}

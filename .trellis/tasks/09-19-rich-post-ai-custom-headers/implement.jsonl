@@ -1,0 +1,6 @@
+{"file": ".agentdocs/rich-post-ai-custom-headers-plan.md", "reason": "本任务的来源方案：范围、数据模型、校验规则、会话生命周期、验收标准"}
+{"file": ".trellis/spec/web/frontend/index.md", "reason": "Web/Electron 前端规范入口：Must-Read 列表与核心规则"}
+{"file": ".trellis/spec/web/frontend/ipc-electron.md", "reason": "IPC 通道命名、payload 校验、contextBridge 模式约定"}
+{"file": ".trellis/spec/web/frontend/react-pitfalls.md", "reason": "useState/useMemo/闭包陷阱，弹窗内会话状态与快照实现需遵循"}
+{"file": ".trellis/spec/web/frontend/type-safety.md", "reason": "严格类型、无 any、IPC 声明同步的约定"}
+{"file": ".trellis/spec/web/frontend/electron-browser-api-restrictions.md", "reason": "Electron 渲染进程受限浏览器 API 清单，避免误用"}
