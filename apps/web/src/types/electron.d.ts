@@ -8,12 +8,31 @@ type RichPostAiMutationResponse =
   | { success: true; hasKey: boolean }
   | { success: false; hasKey: boolean; error: string };
 
+type RichPostAiCustomHeaderValueSource = "literal" | "session";
+
+interface RichPostAiCustomHeader {
+  name: string;
+  value: string;
+  valueSource: RichPostAiCustomHeaderValueSource;
+  enabled: boolean;
+  remember: boolean;
+}
+
 interface RichPostElectronRewriteInput {
   baseUrl: string;
   model: string;
   prompt: string;
+  customHeaders: RichPostAiCustomHeader[];
+  sessionId: string | null;
   title: string;
   markdown: string;
+}
+
+interface RichPostElectronProbeInput {
+  baseUrl: string;
+  model: string;
+  customHeaders: RichPostAiCustomHeader[];
+  sessionId: string | null;
 }
 
 type RichPostAiRewriteResponse =
@@ -128,10 +147,9 @@ interface ElectronAPI {
       baseUrl: string;
     }) => Promise<RichPostAiMutationResponse>;
     clearApiKey: () => Promise<RichPostAiMutationResponse>;
-    probe: (payload: {
-      baseUrl: string;
-      model: string;
-    }) => Promise<RichPostAiProbeResponse>;
+    probe: (
+      payload: RichPostElectronProbeInput,
+    ) => Promise<RichPostAiProbeResponse>;
     rewrite: (
       payload: RichPostElectronRewriteInput,
     ) => Promise<RichPostAiRewriteResponse>;

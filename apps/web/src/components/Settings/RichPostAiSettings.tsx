@@ -1,14 +1,17 @@
-import { useRef, useState, type ReactElement } from "react";
+import { useMemo, useRef, useState, type ReactElement } from "react";
 import {
   DEFAULT_RICH_POST_AI_PROMPT,
+  collectRichPostCustomHeaderErrors,
   type RichPostAiSettings as Settings,
 } from "../../services/richPostAi";
+import { RichPostCustomHeaderEditor } from "./RichPostCustomHeaderEditor";
 import "./RichPostAiSettings.css";
 
 interface RichPostAiSettingsProps {
   settings: Settings;
   apiKey: string;
   hasElectronKey?: boolean;
+  sessionId?: string | null;
   onSettingsChange: (settings: Settings) => void;
   onApiKeyChange: (apiKey: string) => void;
   onProbe?: () => void | Promise<void>;
@@ -17,10 +20,13 @@ interface RichPostAiSettingsProps {
   onClearApiKey?: () => void | Promise<void>;
 }
 
+type TextSettingKey = "baseUrl" | "model" | "prompt";
+
 export function RichPostAiSettings({
   settings,
   apiKey,
   hasElectronKey = false,
+  sessionId = null,
   onSettingsChange,
   onApiKeyChange,
   onProbe,
@@ -30,8 +36,18 @@ export function RichPostAiSettings({
 }: RichPostAiSettingsProps): ReactElement {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const update = (key: keyof Settings, value: string) => {
+  const headerErrors = useMemo(
+    () => collectRichPostCustomHeaderErrors(settings.customHeaders, sessionId),
+    [settings.customHeaders, sessionId],
+  );
+  const hasHeaderErrors =
+    headerErrors.error !== null ||
+    headerErrors.rowErrors.some((message) => message !== null);
+  const advancedVisible = showAdvanced || hasHeaderErrors;
+
+  const updateText = (key: TextSettingKey, value: string) => {
     onSettingsChange({ ...settings, [key]: value });
   };
 
@@ -42,7 +58,7 @@ export function RichPostAiSettings({
       return;
     }
     try {
-      update("prompt", await file.text());
+      updateText("prompt", await file.text());
       setImportError("");
     } catch {
       setImportError("读取提示词文件失败");
@@ -58,7 +74,7 @@ export function RichPostAiSettings({
           Base URL
           <input
             value={settings.baseUrl}
-            onChange={(event) => update("baseUrl", event.target.value)}
+            onChange={(event) => updateText("baseUrl", event.target.value)}
             placeholder="https://api.openai.com/v1"
           />
         </label>
@@ -66,7 +82,7 @@ export function RichPostAiSettings({
           模型名
           <input
             value={settings.model}
-            onChange={(event) => update("model", event.target.value)}
+            onChange={(event) => updateText("model", event.target.value)}
             placeholder="gpt-4o-mini"
           />
         </label>
@@ -88,7 +104,7 @@ export function RichPostAiSettings({
             <button
               type="button"
               onClick={() => void onProbe()}
-              disabled={isProbing}
+              disabled={isProbing || hasHeaderErrors}
             >
               {isProbing ? "探测中…" : "探测配置"}
             </button>
@@ -111,12 +127,32 @@ export function RichPostAiSettings({
         </small>
       )}
 
+      <button
+        type="button"
+        className="rich-post-ai-settings__advanced-toggle"
+        aria-expanded={advancedVisible}
+        onClick={() => setShowAdvanced((visible) => !visible)}
+      >
+        高级配置 · 自定义请求头
+        {advancedVisible ? "（收起）" : "（展开）"}
+      </button>
+
+      {advancedVisible && (
+        <RichPostCustomHeaderEditor
+          headers={settings.customHeaders}
+          errors={headerErrors}
+          onChange={(customHeaders) =>
+            onSettingsChange({ ...settings, customHeaders })
+          }
+        />
+      )}
+
       <label>
         改写提示词
         <textarea
           rows={12}
           value={settings.prompt}
-          onChange={(event) => update("prompt", event.target.value)}
+          onChange={(event) => updateText("prompt", event.target.value)}
         />
       </label>
       <div className="rich-post-ai-settings__prompt-actions">
@@ -129,7 +165,7 @@ export function RichPostAiSettings({
         />
         <button
           type="button"
-          onClick={() => update("prompt", DEFAULT_RICH_POST_AI_PROMPT)}
+          onClick={() => updateText("prompt", DEFAULT_RICH_POST_AI_PROMPT)}
         >
           恢复默认
         </button>

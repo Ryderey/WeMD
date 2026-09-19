@@ -105,4 +105,134 @@ describe("RichPostAiSettings", () => {
     fireEvent.click(probe);
     expect(onProbe).toHaveBeenCalledOnce();
   });
+
+  it("keeps the custom header editor collapsed by default", () => {
+    render(
+      <RichPostAiSettings
+        settings={DEFAULT_RICH_POST_AI_SETTINGS}
+        apiKey=""
+        onSettingsChange={vi.fn()}
+        onApiKeyChange={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "添加请求头" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /高级配置/ }));
+    expect(
+      screen.getByRole("button", { name: "添加请求头" }),
+    ).toBeInTheDocument();
+  });
+
+  it("adds the OpenCode session header preset", () => {
+    const onSettingsChange = vi.fn();
+    render(
+      <RichPostAiSettings
+        settings={DEFAULT_RICH_POST_AI_SETTINGS}
+        apiKey=""
+        sessionId="session-123"
+        onSettingsChange={onSettingsChange}
+        onApiKeyChange={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /高级配置/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "添加 OpenCode 会话头" }),
+    );
+    expect(onSettingsChange).toHaveBeenCalledWith({
+      ...DEFAULT_RICH_POST_AI_SETTINGS,
+      customHeaders: [
+        {
+          name: "x-opencode-session",
+          value: "",
+          valueSource: "session",
+          enabled: true,
+          remember: true,
+        },
+      ],
+    });
+  });
+
+  it("edits custom header rows and disables probes while a row is invalid", () => {
+    const onSettingsChange = vi.fn();
+    const onProbe = vi.fn();
+    const settings = {
+      ...DEFAULT_RICH_POST_AI_SETTINGS,
+      customHeaders: [
+        {
+          name: "x-demo",
+          value: "demo-value",
+          valueSource: "literal" as const,
+          enabled: true,
+          remember: false,
+        },
+      ],
+    };
+    const { rerender } = render(
+      <RichPostAiSettings
+        settings={settings}
+        apiKey=""
+        sessionId="session-123"
+        onSettingsChange={onSettingsChange}
+        onApiKeyChange={vi.fn()}
+        onProbe={onProbe}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /高级配置/ }));
+    fireEvent.change(screen.getByLabelText("请求头值 1"), {
+      target: { value: "next-value" },
+    });
+    expect(onSettingsChange).toHaveBeenCalledWith({
+      ...settings,
+      customHeaders: [{ ...settings.customHeaders[0], value: "next-value" }],
+    });
+
+    const invalid = {
+      ...settings,
+      customHeaders: [{ ...settings.customHeaders[0], value: "" }],
+    };
+    rerender(
+      <RichPostAiSettings
+        settings={invalid}
+        apiKey=""
+        sessionId="session-123"
+        onSettingsChange={onSettingsChange}
+        onApiKeyChange={vi.fn()}
+        onProbe={onProbe}
+      />,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent("请填写请求头值");
+    expect(screen.getByRole("button", { name: "探测配置" })).toBeDisabled();
+  });
+
+  it("disables the value input for session-generated rows", () => {
+    const settings = {
+      ...DEFAULT_RICH_POST_AI_SETTINGS,
+      customHeaders: [
+        {
+          name: "x-opencode-session",
+          value: "",
+          valueSource: "session" as const,
+          enabled: true,
+          remember: false,
+        },
+      ],
+    };
+    render(
+      <RichPostAiSettings
+        settings={settings}
+        apiKey=""
+        sessionId="session-123"
+        onSettingsChange={vi.fn()}
+        onApiKeyChange={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /高级配置/ }));
+    expect(screen.getByLabelText("请求头值 1")).toBeDisabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
 });

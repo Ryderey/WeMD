@@ -9,6 +9,7 @@ import type { FormEvent } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RichPostDialog } from "../../components/RichPost/RichPostDialog";
 import {
+  RICH_POST_AI_SETTINGS_KEY,
   probeRichPostAiInBrowser,
   rewriteRichPostInBrowser,
 } from "../../services/richPostAi";
@@ -143,9 +144,195 @@ describe("RichPostDialog", () => {
           model: "gpt-4o-mini",
         }),
         apiKey: "test-key",
+        sessionId: expect.any(String),
       }),
     );
     expect(rewriteRichPostInBrowser).not.toHaveBeenCalled();
+  });
+
+  it("keeps one session id per article and refreshes it on article or endpoint change", async () => {
+    vi.mocked(rewriteRichPostInBrowser).mockResolvedValue({
+      body: "正文",
+      highlightTerms: [],
+    });
+    render(<RichPostDialog open onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("API Key"), {
+      target: { value: "test-key" },
+    });
+
+    const captureSessionId = async (): Promise<string> => {
+      const before = vi.mocked(rewriteRichPostInBrowser).mock.calls.length;
+      fireEvent.click(
+        screen.getByRole("button", { name: /生成图文|重新改写/ }),
+      );
+      await waitFor(() =>
+        expect(vi.mocked(rewriteRichPostInBrowser).mock.calls.length).toBe(
+          before + 1,
+        ),
+      );
+      const [input] =
+        vi.mocked(rewriteRichPostInBrowser).mock.calls[before] ?? [];
+      return String(input?.sessionId);
+    };
+
+    const initial = await captureSessionId();
+
+    act(() => {
+      useEditorStore.setState({ markdown: "# 文章 A\n\n编辑后的内容" });
+    });
+    const afterEdit = await captureSessionId();
+    expect(afterEdit).toBe(initial);
+
+    act(() => {
+      useEditorStore.setState({
+        markdown: "# 文章 B\n\n新内容",
+        currentFilePath: "B.md",
+      });
+    });
+    const afterArticleSwitch = await captureSessionId();
+    expect(afterArticleSwitch).not.toBe(initial);
+
+    fireEvent.click(screen.getByRole("button", { name: "AI 配置" }));
+    fireEvent.change(screen.getByLabelText("Base URL"), {
+      target: { value: "https://api.example.com/v1" },
+    });
+    const afterEndpointChange = await captureSessionId();
+    expect(afterEndpointChange).not.toBe(afterArticleSwitch);
+  });
+
+  it("passes stored custom headers to the browser rewrite", async () => {
+    localStorage.setItem(
+      RICH_POST_AI_SETTINGS_KEY,
+      JSON.stringify({
+        baseUrl: "https://api.openai.com/v1",
+        model: "gpt-4o-mini",
+        prompt: "custom",
+        customHeaders: [
+          {
+            name: "x-opencode-session",
+            value: "",
+            valueSource: "session",
+            enabled: true,
+            remember: true,
+          },
+        ],
+      }),
+    );
+    vi.mocked(rewriteRichPostInBrowser).mockResolvedValue({
+      body: "正文",
+      highlightTerms: [],
+    });
+
+    render(<RichPostDialog open onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("API Key"), {
+      target: { value: "test-key" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "生成图文" }));
+
+    await waitFor(() =>
+      expect(rewriteRichPostInBrowser).toHaveBeenCalledTimes(1),
+    );
+    const [input] = vi.mocked(rewriteRichPostInBrowser).mock.calls[0] ?? [];
+    expect(input?.settings.customHeaders).toEqual([
+      {
+        name: "x-opencode-session",
+        value: "",
+        valueSource: "session",
+        enabled: true,
+        remember: true,
+      },
+    ]);
+    expect(input?.sessionId).toEqual(expect.any(String));
+  });
+
+  it("forwards custom headers and the session id to Electron without the key", async () => {
+    localStorage.setItem(
+      RICH_POST_AI_SETTINGS_KEY,
+      JSON.stringify({
+        baseUrl: "https://api.openai.com/v1",
+        model: "gpt-4o-mini",
+        prompt: "custom",
+        customHeaders: [
+          {
+            name: "x-opencode-session",
+            value: "",
+            valueSource: "session",
+            enabled: true,
+            remember: true,
+          },
+        ],
+      }),
+    );
+    const rewrite = vi.fn().mockResolvedValue({
+      success: true,
+      data: { body: "正文", highlightTerms: [] },
+    });
+    Object.defineProperty(window, "electron", {
+      configurable: true,
+      writable: true,
+      value: {
+        ai: {
+          getStatus: vi
+            .fn()
+            .mockResolvedValue({ hasKey: true, canPersist: true }),
+          saveApiKey: vi.fn(),
+          clearApiKey: vi.fn(),
+          probe: vi.fn(),
+          rewrite,
+        },
+      },
+    });
+
+    render(<RichPostDialog open onClose={vi.fn()} />);
+    await waitFor(() =>
+      expect(screen.getByLabelText("API Key")).toHaveAttribute(
+        "placeholder",
+        "已安全保存",
+      ),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "生成图文" }));
+
+    await waitFor(() => expect(rewrite).toHaveBeenCalledTimes(1));
+    const [payload] = rewrite.mock.calls[0] ?? [];
+    expect(payload).toMatchObject({
+      baseUrl: "https://api.openai.com/v1",
+      title: "文章 A",
+    });
+    expect(payload?.customHeaders).toEqual([
+      {
+        name: "x-opencode-session",
+        value: "",
+        valueSource: "session",
+        enabled: true,
+        remember: true,
+      },
+    ]);
+    expect(payload?.sessionId).toEqual(expect.any(String));
+    expect(payload).not.toHaveProperty("apiKey");
+  });
+
+  it("disables generation while a custom header row is invalid", () => {
+    localStorage.setItem(
+      RICH_POST_AI_SETTINGS_KEY,
+      JSON.stringify({
+        baseUrl: "https://api.openai.com/v1",
+        model: "gpt-4o-mini",
+        prompt: "custom",
+        customHeaders: [
+          {
+            name: "x-demo",
+            value: "",
+            valueSource: "literal",
+            enabled: true,
+            remember: false,
+          },
+        ],
+      }),
+    );
+
+    render(<RichPostDialog open onClose={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: "生成图文" })).toBeDisabled();
   });
 
   it("discards an old rewrite result after switching away and back", async () => {

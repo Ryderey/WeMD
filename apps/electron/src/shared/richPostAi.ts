@@ -3,10 +3,30 @@ export interface RichPostRewriteResult {
   highlightTerms: string[];
 }
 
+export type RichPostAiCustomHeaderValueSource = "literal" | "session";
+
+export interface RichPostAiCustomHeader {
+  name: string;
+  value: string;
+  valueSource: RichPostAiCustomHeaderValueSource;
+  enabled: boolean;
+  remember: boolean;
+}
+
+export const RICH_POST_CUSTOM_HEADER_LIMITS = {
+  maxRows: 20,
+  maxTotalBytes: 16 * 1024,
+  maxNameLength: 256,
+  maxValueLength: 8 * 1024,
+  maxSessionIdLength: 128,
+} as const;
+
 export interface RichPostRewriteInput {
   baseUrl: string;
   model: string;
   prompt: string;
+  customHeaders: RichPostAiCustomHeader[];
+  sessionId: string | null;
   apiKey: string;
   title: string;
   markdown: string;
@@ -16,7 +36,7 @@ export type RichPostElectronRewriteInput = Omit<RichPostRewriteInput, "apiKey">;
 
 export type RichPostElectronProbeInput = Pick<
   RichPostRewriteInput,
-  "baseUrl" | "model"
+  "baseUrl" | "model" | "customHeaders" | "sessionId"
 >;
 
 export interface RichPostApiKeySaveInput {
@@ -96,6 +116,203 @@ export function normalizeChatCompletionsUrl(baseUrl: string): string {
   return parsed.toString();
 }
 
+const HTTP_FIELD_NAME_PATTERN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+
+const SYSTEM_HEADER_NAMES = new Set(["authorization", "content-type"]);
+
+const FORBIDDEN_HEADER_NAMES = new Set([
+  "accept-charset",
+  "accept-encoding",
+  "access-control-request-headers",
+  "access-control-request-method",
+  "connection",
+  "content-length",
+  "cookie",
+  "cookie2",
+  "date",
+  "dnt",
+  "expect",
+  "host",
+  "keep-alive",
+  "origin",
+  "referer",
+  "set-cookie",
+  "te",
+  "trailer",
+  "transfer-encoding",
+  "upgrade",
+  "user-agent",
+  "via",
+]);
+
+const FORBIDDEN_HEADER_PREFIXES = ["proxy-", "sec-"];
+
+export interface RichPostCustomHeaderErrors {
+  rowErrors: (string | null)[];
+  error: string | null;
+}
+
+export function collectRichPostCustomHeaderErrors(
+  headers: RichPostAiCustomHeader[],
+  sessionId: string | null,
+): RichPostCustomHeaderErrors {
+  const normalizedSessionId = normalizeRichPostSessionId(sessionId);
+  const rowErrors: (string | null)[] = headers.map(() => null);
+  const seenNames = new Map<string, number[]>();
+  let activeCount = 0;
+  let totalBytes = 0;
+
+  headers.forEach((header, index) => {
+    if (!header.enabled || isBlankCustomHeader(header)) return;
+    activeCount += 1;
+
+    const name = header.name.trim();
+    let nameError: string | null = null;
+    if (!name) {
+      nameError = "请填写请求头名称";
+    } else if (name.length > RICH_POST_CUSTOM_HEADER_LIMITS.maxNameLength) {
+      nameError = "请求头名称过长";
+    } else if (!HTTP_FIELD_NAME_PATTERN.test(name)) {
+      nameError = "请求头名称只能使用 HTTP 字段名合法字符";
+    } else {
+      const lowerName = name.toLowerCase();
+      if (SYSTEM_HEADER_NAMES.has(lowerName)) {
+        nameError = "Authorization 与 Content-Type 由系统管理，不能自定义";
+      } else if (
+        FORBIDDEN_HEADER_NAMES.has(lowerName) ||
+        FORBIDDEN_HEADER_PREFIXES.some((prefix) => lowerName.startsWith(prefix))
+      ) {
+        nameError = "该请求头受浏览器或传输层限制，无法自定义";
+      }
+    }
+
+    let valueError: string | null = null;
+    if (header.valueSource === "session") {
+      if (!normalizedSessionId) {
+        valueError = "会话 ID 未就绪，请重新打开导出图文";
+      } else if (isUnsupportedHeaderValue(normalizedSessionId)) {
+        valueError = "会话 ID 包含非法字符，请重新打开导出图文";
+      }
+    } else if (!header.value.trim()) {
+      valueError = "请填写请求头值";
+    } else if (header.value.length > RICH_POST_CUSTOM_HEADER_LIMITS.maxValueLength) {
+      valueError = "请求头值过长";
+    } else if (hasIllegalHeaderControlChar(header.value)) {
+      valueError = "请求头值不能包含换行或控制字符";
+    } else if (hasNonLatin1HeaderChar(header.value)) {
+      valueError = "请求头值只能包含 ASCII 或 Latin-1 字符";
+    }
+
+    rowErrors[index] = nameError ?? valueError;
+    if (!nameError) {
+      const key = name.toLowerCase();
+      const indexes = seenNames.get(key);
+      if (indexes) indexes.push(index);
+      else seenNames.set(key, [index]);
+    }
+
+    totalBytes +=
+      utf8ByteLength(name) +
+      utf8ByteLength(
+        header.valueSource === "session"
+          ? (normalizedSessionId ?? "")
+          : header.value.trim(),
+      );
+  });
+
+  for (const indexes of seenNames.values()) {
+    if (indexes.length < 2) continue;
+    for (const index of indexes) {
+      if (rowErrors[index] === null) {
+        rowErrors[index] = "请求头名称重复（不区分大小写）";
+      }
+    }
+  }
+
+  let error: string | null = null;
+  if (activeCount > RICH_POST_CUSTOM_HEADER_LIMITS.maxRows) {
+    error = `自定义请求头最多 ${RICH_POST_CUSTOM_HEADER_LIMITS.maxRows} 行`;
+  } else if (totalBytes > RICH_POST_CUSTOM_HEADER_LIMITS.maxTotalBytes) {
+    error = "自定义请求头总大小超出 16 KB 限制";
+  }
+  return { rowErrors, error };
+}
+
+export function validateRichPostCustomHeaders(
+  headers: RichPostAiCustomHeader[],
+  sessionId: string | null,
+): void {
+  const { rowErrors, error } = collectRichPostCustomHeaderErrors(
+    headers,
+    sessionId,
+  );
+  if (error) throw new Error(error);
+  const firstRowError = rowErrors.find((message) => message !== null);
+  if (firstRowError) throw new Error(firstRowError);
+}
+
+export function buildRichPostRequestHeaders(input: {
+  apiKey: string;
+  customHeaders?: RichPostAiCustomHeader[];
+  sessionId?: string | null;
+}): Record<string, string> {
+  const sessionId = normalizeRichPostSessionId(input.sessionId ?? null);
+  const customHeaders = input.customHeaders ?? [];
+  validateRichPostCustomHeaders(customHeaders, sessionId);
+
+  const entries: [string, string][] = [
+    ["Authorization", `Bearer ${input.apiKey.trim()}`],
+    ["Content-Type", "application/json"],
+  ];
+  for (const header of customHeaders) {
+    if (!header.enabled || isBlankCustomHeader(header)) continue;
+    entries.push([
+      header.name.trim(),
+      header.valueSource === "session" ? (sessionId ?? "") : header.value,
+    ]);
+  }
+  return Object.fromEntries(entries);
+}
+
+function isBlankCustomHeader(header: RichPostAiCustomHeader): boolean {
+  return !header.name.trim() && !header.value.trim();
+}
+
+function hasIllegalHeaderControlChar(value: string): boolean {
+  for (const char of value) {
+    const code = char.codePointAt(0) ?? 0;
+    if (code === 0x7f) return true;
+    if (code < 0x20 && code !== 0x09) return true;
+  }
+  return false;
+}
+
+// Header values are ByteStrings: code points above U+00FF make fetch throw
+// before any network activity, so reject them during field validation.
+function hasNonLatin1HeaderChar(value: string): boolean {
+  for (const char of value) {
+    if ((char.codePointAt(0) ?? 0) > 0xff) return true;
+  }
+  return false;
+}
+
+function isUnsupportedHeaderValue(value: string): boolean {
+  return hasIllegalHeaderControlChar(value) || hasNonLatin1HeaderChar(value);
+}
+
+function normalizeRichPostSessionId(value: string | null): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > RICH_POST_CUSTOM_HEADER_LIMITS.maxSessionIdLength) {
+    return null;
+  }
+  return trimmed;
+}
+
+function utf8ByteLength(value: string): number {
+  return new TextEncoder().encode(value).length;
+}
+
 export function assertApprovedRichPostEndpoint(
   baseUrl: string,
   approvedEndpoint: string | null,
@@ -126,6 +343,8 @@ export function parseRichPostElectronRewriteInput(
     baseUrl: readBoundedString(value, "baseUrl", IPC_STRING_LIMITS.baseUrl),
     model: readBoundedString(value, "model", IPC_STRING_LIMITS.model),
     prompt: readBoundedString(value, "prompt", IPC_STRING_LIMITS.prompt),
+    customHeaders: readCustomHeaders(value),
+    sessionId: readSessionId(value),
     title: readBoundedString(value, "title", IPC_STRING_LIMITS.title),
     markdown: readBoundedString(value, "markdown", IPC_STRING_LIMITS.markdown),
   };
@@ -137,6 +356,8 @@ export function parseRichPostElectronProbeInput(
   return {
     baseUrl: readBoundedString(value, "baseUrl", IPC_STRING_LIMITS.baseUrl),
     model: readBoundedString(value, "model", IPC_STRING_LIMITS.model),
+    customHeaders: readCustomHeaders(value),
+    sessionId: readSessionId(value),
   };
 }
 
@@ -199,6 +420,11 @@ export async function requestRichPostRewrite(
   options: RichPostRewriteRequestOptions = {},
 ): Promise<RichPostRewriteResult> {
   validateRewriteInput(input);
+  const headers = buildRichPostRequestHeaders({
+    apiKey: input.apiKey,
+    customHeaders: input.customHeaders,
+    sessionId: input.sessionId,
+  });
   const controller = new AbortController();
   const timeout = setTimeout(
     () => controller.abort(),
@@ -210,10 +436,7 @@ export async function requestRichPostRewrite(
       normalizeChatCompletionsUrl(input.baseUrl),
       {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${input.apiKey.trim()}`,
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           model: input.model.trim(),
           stream: false,
@@ -249,12 +472,20 @@ export async function requestRichPostRewrite(
 }
 
 export async function probeRichPostAi(
-  input: Pick<RichPostRewriteInput, "baseUrl" | "model" | "apiKey">,
+  input: Pick<
+    RichPostRewriteInput,
+    "baseUrl" | "model" | "apiKey" | "customHeaders" | "sessionId"
+  >,
   options: RichPostRewriteRequestOptions = {},
 ): Promise<void> {
   normalizeChatCompletionsUrl(input.baseUrl);
   if (!input.apiKey.trim()) throw new Error("请输入 API Key");
   if (!input.model.trim()) throw new Error("请输入模型名");
+  const headers = buildRichPostRequestHeaders({
+    apiKey: input.apiKey,
+    customHeaders: input.customHeaders,
+    sessionId: input.sessionId,
+  });
 
   const controller = new AbortController();
   const timeout = setTimeout(
@@ -266,10 +497,7 @@ export async function probeRichPostAi(
       normalizeChatCompletionsUrl(input.baseUrl),
       {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${input.apiKey.trim()}`,
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           model: input.model.trim(),
           stream: false,
@@ -355,4 +583,60 @@ function readBoundedString(
     throw new Error("AI 请求内容过长，请缩短后重试");
   }
   return field;
+}
+
+function readCustomHeaders(value: unknown): RichPostAiCustomHeader[] {
+  if (!isRecord(value)) return [];
+  const source = value.customHeaders;
+  if (source === undefined || source === null) return [];
+  if (!Array.isArray(source)) throw new Error("AI 请求参数格式不正确");
+  if (source.length > RICH_POST_CUSTOM_HEADER_LIMITS.maxRows) {
+    throw new Error(
+      `自定义请求头最多 ${RICH_POST_CUSTOM_HEADER_LIMITS.maxRows} 行`,
+    );
+  }
+  return source.map(parseCustomHeaderItem);
+}
+
+function parseCustomHeaderItem(item: unknown): RichPostAiCustomHeader {
+  if (!isRecord(item)) throw new Error("AI 请求参数格式不正确");
+  const name = item.name;
+  const headerValue = item.value;
+  const valueSource = item.valueSource;
+  const enabled = item.enabled;
+  if (
+    typeof name !== "string" ||
+    name.length > RICH_POST_CUSTOM_HEADER_LIMITS.maxNameLength ||
+    typeof headerValue !== "string" ||
+    headerValue.length > RICH_POST_CUSTOM_HEADER_LIMITS.maxValueLength ||
+    (valueSource !== "literal" && valueSource !== "session") ||
+    typeof enabled !== "boolean"
+  ) {
+    throw new Error("AI 请求参数格式不正确");
+  }
+  return {
+    name,
+    value: valueSource === "session" ? "" : headerValue,
+    valueSource,
+    enabled,
+    remember: typeof item.remember === "boolean" ? item.remember : true,
+  };
+}
+
+function readSessionId(value: unknown): string | null {
+  if (!isRecord(value)) return null;
+  const sessionId = value.sessionId;
+  if (sessionId === undefined || sessionId === null) return null;
+  if (typeof sessionId !== "string") {
+    throw new Error("AI 请求参数格式不正确");
+  }
+  const trimmed = sessionId.trim();
+  if (
+    !trimmed ||
+    trimmed.length > RICH_POST_CUSTOM_HEADER_LIMITS.maxSessionIdLength ||
+    isUnsupportedHeaderValue(trimmed)
+  ) {
+    throw new Error("AI 请求参数格式不正确");
+  }
+  return trimmed;
 }

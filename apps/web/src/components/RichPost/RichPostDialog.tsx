@@ -14,8 +14,11 @@ import { Modal } from "../common";
 import { RichPostAiSettings } from "../Settings/RichPostAiSettings";
 import { useEditorStore } from "../../store/editorStore";
 import {
+  collectRichPostCustomHeaderErrors,
+  createRichPostSessionId,
   getRichPostAiErrorMessage,
   loadRichPostAiSettings,
+  normalizeChatCompletionsUrl,
   probeRichPostAiInBrowser,
   rewriteRichPostInBrowser,
   saveRichPostAiSettings,
@@ -95,6 +98,27 @@ export function RichPostDialog({
 
   const electronAi = window.electron?.ai;
   const isEmpty = markdown.trim().length === 0;
+  const [sessionId, setSessionId] = useState<string>(createRichPostSessionId);
+  const normalizedBaseUrl = useMemo(() => {
+    try {
+      return normalizeChatCompletionsUrl(aiSettings.baseUrl);
+    } catch {
+      return null;
+    }
+  }, [aiSettings.baseUrl]);
+  const customHeaderErrors = useMemo(
+    () =>
+      collectRichPostCustomHeaderErrors(aiSettings.customHeaders, sessionId),
+    [aiSettings.customHeaders, sessionId],
+  );
+  const customHeadersInvalid =
+    customHeaderErrors.error !== null ||
+    customHeaderErrors.rowErrors.some((message) => message !== null);
+
+  useEffect(() => {
+    if (!open) return;
+    setSessionId(createRichPostSessionId());
+  }, [open, currentFilePath, normalizedBaseUrl]);
 
   useEffect(() => {
     saveRichPostAiSettings(aiSettings);
@@ -230,12 +254,15 @@ export function RichPostDialog({
         const response = await electronAi.probe({
           baseUrl: aiSettings.baseUrl,
           model: aiSettings.model,
+          customHeaders: aiSettings.customHeaders,
+          sessionId,
         });
         if (!response.success) throw new Error(response.error);
       } else {
         await probeRichPostAiInBrowser({
           settings: aiSettings,
           apiKey,
+          sessionId,
         });
       }
       toast.success("AI 配置连通正常");
@@ -268,6 +295,7 @@ export function RichPostDialog({
         if (!keyReady) throw new Error("请先安全保存 API Key");
         const response = await electronAi.rewrite({
           ...aiSettings,
+          sessionId,
           title: sourceTitle,
           markdown,
         });
@@ -277,6 +305,7 @@ export function RichPostDialog({
         result = await rewriteRichPostInBrowser({
           settings: aiSettings,
           apiKey,
+          sessionId,
           title: sourceTitle,
           markdown,
         });
@@ -372,7 +401,7 @@ export function RichPostDialog({
             <button
               type="button"
               className="btn-primary"
-              disabled={isEmpty || rewriting}
+              disabled={isEmpty || rewriting || customHeadersInvalid}
               onClick={() => void rewrite()}
             >
               {rewriting ? (
@@ -398,6 +427,7 @@ export function RichPostDialog({
               settings={aiSettings}
               apiKey={apiKey}
               hasElectronKey={hasElectronKey}
+              sessionId={sessionId}
               onSettingsChange={setAiSettings}
               onApiKeyChange={setApiKey}
               onProbe={() => void probeAiConfiguration()}
