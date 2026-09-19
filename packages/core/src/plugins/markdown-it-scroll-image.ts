@@ -7,22 +7,42 @@ const DEFAULT_HEIGHT = 320;
 const MIN_HEIGHT = 160;
 const MAX_HEIGHT = 800;
 
+export type ScrollImageDirection = "vertical" | "horizontal";
+
 interface ScrollImageMeta {
   valid: boolean;
   height?: number;
+  direction?: ScrollImageDirection;
   src?: string;
   alt?: string;
   title?: string;
 }
 
-const parseHeight = (info: string): number | null => {
+const parseParams = (
+  info: string,
+): { height: number; direction: ScrollImageDirection } | null => {
   const parts = info.trim().split(/\s+/);
-  if (parts[0] !== "scroll-image" || parts.length > 2) return null;
-  if (parts.length === 1) return DEFAULT_HEIGHT;
+  if (parts[0] !== "scroll-image" || parts.length > 3) return null;
+  if (parts.length === 1) {
+    return { height: DEFAULT_HEIGHT, direction: "vertical" };
+  }
   if (!/^-?\d+$/.test(parts[1])) return null;
+  if (
+    parts.length === 3 &&
+    parts[2] !== "horizontal" &&
+    parts[2] !== "vertical"
+  ) {
+    return null;
+  }
 
   const height = Number(parts[1]);
-  return Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, height));
+  return {
+    height: Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, height)),
+    direction:
+      parts.length === 3 && parts[2] === "horizontal"
+        ? "horizontal"
+        : "vertical",
+  };
 };
 
 const findClosingToken = (tokens: Token[], start: number): number => {
@@ -72,13 +92,29 @@ const scrollImagePlugin = (md: MarkdownIt) => {
 
       const escape = md.utils.escapeHtml;
       const title = meta.title ? ` title="${escape(meta.title)}"` : "";
+      const isHorizontal = meta.direction === "horizontal";
+      const rootClass = isHorizontal
+        ? "scroll-image scroll-image-horizontal"
+        : "scroll-image";
+      const viewportStyle = isHorizontal
+        ? `display:block;width:100%;height:${meta.height}px;overflow-y:hidden;overflow-x:auto;box-sizing:border-box;scrollbar-gutter:auto;touch-action:auto;-webkit-overflow-scrolling:touch;`
+        : `display:block;width:100%;height:${meta.height}px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;scrollbar-gutter:stable;touch-action:pan-y;-webkit-overflow-scrolling:touch;`;
+      const viewportLabel = isHorizontal
+        ? "可左右滚动查看完整图片"
+        : "可上下滚动查看完整图片";
+      const imgStyle = isHorizontal
+        ? "display:block;width:auto;max-width:none;height:100%;max-height:none;margin:0;border:0;"
+        : "display:block;width:100%;max-width:100%;height:auto;margin:0;border:0;";
+      const caption = isHorizontal
+        ? "↔ 左右滑动查看完整图片"
+        : "↕ 上下滑动查看完整图片";
 
       return (
-        '<section class="scroll-image" style="display:block;width:100%;box-sizing:border-box;margin:1em 0 0.5em;">' +
-        `<section class="scroll-image-viewport" tabindex="0" role="region" aria-label="可上下滚动查看完整图片" style="display:block;width:100%;height:${meta.height}px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;scrollbar-gutter:stable;touch-action:pan-y;-webkit-overflow-scrolling:touch;">` +
-        `<img class="scroll-image-img" src="${escape(meta.src ?? "")}" alt="${escape(meta.alt ?? "")}"${title} style="display:block;width:100%;max-width:100%;height:auto;margin:0;border:0;" />` +
+        `<section class="${rootClass}" style="display:block;width:100%;box-sizing:border-box;margin:1em 0 0.5em;">` +
+        `<section class="scroll-image-viewport" tabindex="0" role="region" aria-label="${viewportLabel}" style="${viewportStyle}">` +
+        `<img class="scroll-image-img" src="${escape(meta.src ?? "")}" alt="${escape(meta.alt ?? "")}"${title} style="${imgStyle}" />` +
         "</section>" +
-        '<p class="scroll-image-caption" style="display:block;margin:6px 0 0;padding:0;text-align:center;color:#888;font-size:13px;line-height:1.5;">↕ 上下滑动查看完整图片</p>' +
+        `<p class="scroll-image-caption" style="display:block;margin:6px 0 0;padding:0;text-align:center;color:#888;font-size:13px;line-height:1.5;">${caption}</p>` +
         "</section>\n"
       );
     },
@@ -92,9 +128,9 @@ const scrollImagePlugin = (md: MarkdownIt) => {
       const closeIndex = findClosingToken(state.tokens, index);
       if (closeIndex === -1) continue;
 
-      const height = parseHeight(openToken.info);
+      const params = parseParams(openToken.info);
       const image = getSingleImage(state, index, closeIndex);
-      if (height === null || image === null) {
+      if (params === null || image === null) {
         openToken.meta = { valid: false } satisfies ScrollImageMeta;
         state.tokens[closeIndex].meta = {
           valid: false,
@@ -104,7 +140,8 @@ const scrollImagePlugin = (md: MarkdownIt) => {
 
       const meta: ScrollImageMeta = {
         valid: true,
-        height,
+        height: params.height,
+        direction: params.direction,
         src: image.attrGet("src") ?? "",
         alt: state.md.renderer.renderInlineAsText(
           image.children ?? [],

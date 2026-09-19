@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Toolbar } from "../../components/Editor/Toolbar";
@@ -114,6 +120,139 @@ describe("Toolbar scroll image", () => {
     );
   });
 
+  it("横向模式保留高度、更新提示与方向参数", async () => {
+    vi.mocked(uploadEditorImage).mockResolvedValue(uploadResult);
+    const onInsertText = vi.fn();
+    render(<Toolbar onInsert={vi.fn()} onInsertText={onInsertText} />);
+    selectScrollImage();
+
+    expect(
+      screen.getByRole("radio", { name: "纵向（上下滑动）" }),
+    ).toBeChecked();
+
+    fireEvent.change(screen.getByRole("spinbutton"), {
+      target: { value: "512" },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "横向（左右滑动）" }));
+
+    expect(
+      screen.getByRole("radio", { name: "横向（左右滑动）" }),
+    ).toBeChecked();
+    expect(screen.getByLabelText("滚动长图预览，可左右滚动")).toHaveStyle({
+      height: "512px",
+    });
+    expect(screen.getByText("↔ 左右滑动查看完整图片")).toBeInTheDocument();
+    expect(screen.getByText(/左右滑动查看完整内容/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "上传并插入" }));
+
+    await waitFor(() =>
+      expect(onInsertText).toHaveBeenCalledWith(
+        "\n::: scroll-image 512 horizontal\n![long\\]image](<https://example.com/uploaded_(long).png?x=1&y=2>)\n:::\n",
+      ),
+    );
+  });
+
+  it("切换方向保留高度并把预览滚动位置重置到起点", () => {
+    render(<Toolbar onInsert={vi.fn()} onInsertText={vi.fn()} />);
+    selectScrollImage();
+    const preview = screen.getByLabelText("滚动长图预览，可上下滚动");
+    Object.defineProperty(preview, "scrollTop", {
+      value: 120,
+      writable: true,
+      configurable: true,
+    });
+    Object.defineProperty(preview, "scrollLeft", {
+      value: 80,
+      writable: true,
+      configurable: true,
+    });
+
+    fireEvent.change(screen.getByRole("spinbutton"), {
+      target: { value: "420" },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "横向（左右滑动）" }));
+
+    expect(preview.scrollTop).toBe(0);
+    expect(preview.scrollLeft).toBe(0);
+    expect(screen.getByLabelText("滚动长图预览，可左右滚动")).toHaveStyle({
+      height: "420px",
+    });
+  });
+
+  it("上传过程中方向与高度均不可编辑", async () => {
+    let resolveUpload!: (value: typeof uploadResult) => void;
+    vi.mocked(uploadEditorImage).mockReturnValue(
+      new Promise((resolve) => {
+        resolveUpload = resolve;
+      }),
+    );
+    render(<Toolbar onInsert={vi.fn()} onInsertText={vi.fn()} />);
+    selectScrollImage();
+
+    fireEvent.click(screen.getByRole("button", { name: "上传并插入" }));
+    await waitFor(() => expect(uploadEditorImage).toHaveBeenCalledTimes(1));
+
+    expect(
+      screen.getByRole("radio", { name: "纵向（上下滑动）" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("radio", { name: "横向（左右滑动）" }),
+    ).toBeDisabled();
+    expect(screen.getByRole("spinbutton")).toBeDisabled();
+
+    await act(async () => {
+      resolveUpload(uploadResult);
+    });
+  });
+
+  it("上传失败保留横向方向，重试仍插入横向语法", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.mocked(uploadEditorImage)
+      .mockRejectedValueOnce(new Error("网络暂时不可用"))
+      .mockResolvedValueOnce(uploadResult);
+    const onInsertText = vi.fn();
+    render(<Toolbar onInsert={vi.fn()} onInsertText={onInsertText} />);
+    selectScrollImage();
+
+    fireEvent.click(screen.getByRole("radio", { name: "横向（左右滑动）" }));
+    fireEvent.click(screen.getByRole("button", { name: "上传并插入" }));
+    await waitFor(() => expect(uploadEditorImage).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "上传并插入" })).toBeEnabled(),
+    );
+    expect(
+      screen.getByRole("radio", { name: "横向（左右滑动）" }),
+    ).toBeChecked();
+
+    fireEvent.click(screen.getByRole("button", { name: "上传并插入" }));
+    await waitFor(() =>
+      expect(onInsertText).toHaveBeenCalledWith(
+        "\n::: scroll-image 320 horizontal\n![long\\]image](<https://example.com/uploaded_(long).png?x=1&y=2>)\n:::\n",
+      ),
+    );
+  });
+
+  it("重新选择文件后方向与高度重置", () => {
+    render(<Toolbar onInsert={vi.fn()} onInsertText={vi.fn()} />);
+    selectScrollImage();
+
+    fireEvent.click(screen.getByRole("radio", { name: "横向（左右滑动）" }));
+    fireEvent.change(screen.getByRole("spinbutton"), {
+      target: { value: "512" },
+    });
+
+    const nextFile = new File(["image2"], "next.png", { type: "image/png" });
+    fireEvent.change(screen.getByLabelText("选择滚动长图文件"), {
+      target: { files: [nextFile] },
+    });
+
+    expect(
+      screen.getByRole("radio", { name: "纵向（上下滑动）" }),
+    ).toBeChecked();
+    expect(screen.getByRole("spinbutton")).toHaveValue(320);
+  });
+
   it("上传失败保留文件和设置，允许原地重试", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     vi.mocked(uploadEditorImage)
@@ -170,6 +309,12 @@ describe("Toolbar scroll image", () => {
     expect(screen.getByText("::: scroll-image 320")).toBeInTheDocument();
     expect(
       screen.getByText("滚动长图", { selector: "span" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("::: scroll-image 320 horizontal"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("横向滚动长图", { selector: "span" }),
     ).toBeInTheDocument();
   });
 });

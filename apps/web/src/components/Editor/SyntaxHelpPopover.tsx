@@ -16,6 +16,7 @@ const syntaxItems = [
   { syntax: "> [!NOTE]", desc: "提示块" },
   { syntax: "- [ ] 任务", desc: "任务列表" },
   { syntax: "::: scroll-image 320", desc: "滚动长图" },
+  { syntax: "::: scroll-image 320 horizontal", desc: "横向滚动长图" },
 ];
 
 export function SyntaxHelpPopover() {

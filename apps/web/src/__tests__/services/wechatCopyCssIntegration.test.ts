@@ -687,6 +687,68 @@ describe("wechat copy css integration", () => {
     expect(hint?.textContent).toBe("↕ 上下滑动查看完整图片");
   });
 
+  it.each([
+    ["designer", generateCSS(defaultVariables)],
+    ["basic", basicTheme],
+    ["sunset", sunsetFilmTheme],
+  ])(
+    "keeps the horizontal scroll image contract through full serialization (%s)",
+    (_name, css) => {
+      const html = createMarkdownParser().render(
+        "::: scroll-image 320 horizontal\n![全景图](https://example.com/panorama.png)\n:::",
+      );
+      const resolved = resolveInlineStyleVariablesForCopy(
+        processHtml(html, css, true, true),
+      );
+      // jsdom 的 CSSOM 不支持 touch-action，normalize 的样式重写会丢弃该属性；
+      // 真实浏览器保留它（微信实测已确认 touch panning），故在字符串阶段断言。
+      expect(resolved).toContain("touch-action:auto");
+      const container = document.createElement("div");
+      container.innerHTML = resolved;
+
+      normalizeCopyContainer(container);
+      const beforeCopy = container.innerHTML;
+      const snapshot = document.createElement("div");
+      snapshot.innerHTML = serializeWechatCopyHtml(container);
+
+      const component = snapshot.querySelector<HTMLElement>(
+        ".scroll-image-horizontal",
+      );
+      const viewport = snapshot.querySelector<HTMLElement>(
+        ".scroll-image-horizontal .scroll-image-viewport",
+      );
+      const image = snapshot.querySelector<HTMLImageElement>(
+        ".scroll-image-horizontal .scroll-image-img",
+      );
+      const hint = snapshot.querySelector<HTMLElement>(
+        ".scroll-image-horizontal .scroll-image-caption",
+      );
+
+      expect(component).not.toBeNull();
+      expect(viewport).not.toBeNull();
+      expect(image).not.toBeNull();
+      expect(viewport?.style.height).toBe("320px");
+      expect(viewport?.style.overflowX).toBe("auto");
+      expect(viewport?.style.overflowY).toBe("hidden");
+      expect(viewport?.getAttribute("tabindex")).toBe("0");
+      expect(viewport?.getAttribute("role")).toBe("region");
+      expect(viewport?.getAttribute("aria-label")).toBe(
+        "可左右滚动查看完整图片",
+      );
+      expect(image?.getAttribute("src")).toBe(
+        "https://example.com/panorama.png",
+      );
+      expect(image?.style.width).toBe("auto");
+      expect(image?.style.maxWidth).toBe("none");
+      expect(image?.style.height).toBe("100%");
+      expect(image?.style.maxHeight).toBe("none");
+      expect(image?.style.margin).toBe("0px");
+      expect(hint?.textContent).toBe("↔ 左右滑动查看完整图片");
+      expect(snapshot.querySelectorAll("img")).toHaveLength(1);
+      expect(container.innerHTML).toBe(beforeCopy);
+    },
+  );
+
   it("preserves all added built-in components through the WeChat copy pipeline", () => {
     const parser = createMarkdownParser();
     const html = parser.render(

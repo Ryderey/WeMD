@@ -99,6 +99,81 @@ describe("MarkdownParser scroll image", () => {
     expect(html).not.toContain("↕ 上下滑动查看完整图片");
   });
 
+  it("横向模式输出左右滚动容器与等比高度图片", () => {
+    const html = render(
+      "::: scroll-image 320 horizontal\n![全景图](https://example.com/panorama.png)\n:::",
+    );
+
+    expect(html).toContain('class="scroll-image scroll-image-horizontal"');
+    expect(html).toContain("height:320px");
+    expect(html).toContain("overflow-x:auto");
+    expect(html).toContain("overflow-y:hidden");
+    expect(html).toContain("touch-action:auto");
+    expect(html).toContain("scrollbar-gutter:auto");
+    expect(html).toContain('aria-label="可左右滚动查看完整图片"');
+    expect(html).toContain("↔ 左右滑动查看完整图片");
+    expect(html).toContain(
+      'style="display:block;width:auto;max-width:none;height:100%;max-height:none;margin:0;border:0;"',
+    );
+    expect(html).not.toContain("↕ 上下滑动查看完整图片");
+  });
+
+  it("显式纵向与省略方向、默认高度输出完全一致", () => {
+    const image = "![长图](https://example.com/long.png)";
+    const explicitVertical = render(
+      `::: scroll-image 320 vertical\n${image}\n:::`,
+    );
+    const implicitVertical = render(`::: scroll-image 320\n${image}\n:::`);
+    const bare = render(`::: scroll-image\n${image}\n:::`);
+
+    expect(explicitVertical).toBe(implicitVertical);
+    expect(bare).toBe(implicitVertical);
+    expect(explicitVertical).not.toContain("scroll-image-horizontal");
+    expect(explicitVertical).toContain("overflow-y:auto");
+  });
+
+  it.each([
+    ["80", 160],
+    ["999", 800],
+  ])("横向模式同样钳制高度 %s", (input, expected) => {
+    const html = render(
+      `::: scroll-image ${input} horizontal\n![长图](https://example.com/long.png)\n:::`,
+    );
+
+    expect(html).toContain(`height:${expected}px`);
+    expect(html).toContain('class="scroll-image scroll-image-horizontal"');
+  });
+
+  it("横向模式保留复杂地址、转义文本和标题", () => {
+    const html = render(
+      '::: scroll-image 420 horizontal\n![A & B](<https://example.com/a_(1).png?x=1&y=2> "标题 & 说明")\n:::',
+    );
+
+    expect(html).toContain('src="https://example.com/a_(1).png?x=1&amp;y=2"');
+    expect(html).toContain('alt="A &amp; B"');
+    expect(html).toContain('title="标题 &amp; 说明"');
+    expect(html).toContain('class="scroll-image scroll-image-horizontal"');
+  });
+
+  it.each([
+    "::: scroll-image horizontal\n![A](https://example.com/a.png)\n:::",
+    "::: scroll-image 320 Horizontal\n![A](https://example.com/a.png)\n:::",
+    "::: scroll-image 320 HORIZONTAL\n![A](https://example.com/a.png)\n:::",
+    "::: scroll-image 320 Vertical\n![A](https://example.com/a.png)\n:::",
+    "::: scroll-image horizontal 320\n![A](https://example.com/a.png)\n:::",
+    "::: scroll-image vertical 320\n![A](https://example.com/a.png)\n:::",
+    "::: scroll-image 320 horizontal extra\n![A](https://example.com/a.png)\n:::",
+    "::: scroll-image 320.5 horizontal\n![A](https://example.com/a.png)\n:::",
+    "::: scroll-image 320 horizontal vertical\n![A](https://example.com/a.png)\n:::",
+  ])("非法方向参数回退为普通容器且正文保留", (markdown) => {
+    const html = render(markdown);
+
+    expect(html).not.toContain('class="scroll-image-viewport"');
+    expect(html).not.toContain("↔ 左右滑动查看完整图片");
+    expect(html).not.toContain("↕ 上下滑动查看完整图片");
+    expect(html).toContain('src="https://example.com/a.png"');
+  });
+
   it("不影响现有横向图片流", () => {
     const html = render(
       "<![A](https://example.com/a.png),![B](https://example.com/b.png)>",

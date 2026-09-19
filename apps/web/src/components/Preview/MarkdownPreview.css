@@ -79,6 +79,14 @@
   margin: 10px auto;
 }
 
+/* 滚动长图横向模式：按视口高度等比展示，允许左右滚动 */
+#wemd .scroll-image-horizontal .scroll-image-img {
+  width: auto !important;
+  max-width: none !important;
+  height: 100% !important;
+  max-height: none !important;
+}
+
 /* 针对整个预览容器启用字体合成 */
 #wemd {
   font-synthesis: style weight;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -15,6 +15,8 @@ const DEFAULT_HEIGHT = 320;
 const MIN_HEIGHT = 160;
 const MAX_HEIGHT = 800;
 const HEIGHT_PRESETS = [240, 320, 420];
+
+type ScrollImageDirection = "vertical" | "horizontal";
 
 interface ScrollImageDialogProps {
   file: File;
@@ -33,6 +35,7 @@ const buildScrollImageMarkdown = (
   fileName: string,
   url: string,
   height: number,
+  direction: ScrollImageDirection,
 ) => {
   const alt = fileName
     .replace(/\.[^/.]+$/, "")
@@ -43,8 +46,9 @@ const buildScrollImageMarkdown = (
     .replace(/</g, "%3C")
     .replace(/>/g, "%3E")
     .replace(/\s/g, (character) => encodeURIComponent(character));
+  const directionSuffix = direction === "horizontal" ? " horizontal" : "";
 
-  return `\n::: scroll-image ${height}\n![${alt}](<${destination}>)\n:::\n`;
+  return `\n::: scroll-image ${height}${directionSuffix}\n![${alt}](<${destination}>)\n:::\n`;
 };
 
 export function ScrollImageDialog({
@@ -54,13 +58,25 @@ export function ScrollImageDialog({
   onInsert,
 }: ScrollImageDialogProps) {
   const [heightInput, setHeightInput] = useState(String(DEFAULT_HEIGHT));
+  const [direction, setDirection] = useState<ScrollImageDirection>("vertical");
   const [uploading, setUploading] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
   const height = parseHeight(heightInput);
+  const isHorizontal = direction === "horizontal";
 
   useEffect(() => {
     setHeightInput(String(DEFAULT_HEIGHT));
+    setDirection("vertical");
     setUploading(false);
   }, [file]);
+
+  const handleDirectionChange = (nextDirection: ScrollImageDirection) => {
+    setDirection(nextDirection);
+    if (previewRef.current) {
+      previewRef.current.scrollTop = 0;
+      previewRef.current.scrollLeft = 0;
+    }
+  };
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -88,7 +104,9 @@ export function ScrollImageDialog({
       const result = await uploadEditorImage(file, {
         compressionOptions: { maxSizeBytes: WECHAT_IMAGE_MAX_SIZE_BYTES },
       });
-      onInsert(buildScrollImageMarkdown(file.name, result.url, height));
+      onInsert(
+        buildScrollImageMarkdown(file.name, result.url, height, direction),
+      );
 
       const successMessage = result.compressed
         ? `滚动长图上传成功（已自动压缩 ${formatImageSize(
@@ -119,18 +137,56 @@ export function ScrollImageDialog({
         aria-label="滚动长图设置"
       >
         <p className="scroll-image-dialog-description">
-          图片将在固定高度区域中展示，读者可上下滑动查看完整内容。
+          {isHorizontal
+            ? "图片将按展示高度等比缩放，读者可左右滑动查看完整内容。"
+            : "图片将在固定高度区域中展示，读者可上下滑动查看完整内容。"}
         </p>
 
+        <fieldset
+          className="scroll-image-direction-fieldset"
+          disabled={uploading}
+        >
+          <legend>滚动方向</legend>
+          <div className="scroll-image-direction-options">
+            <label>
+              <input
+                type="radio"
+                name="scroll-image-direction"
+                value="vertical"
+                checked={direction === "vertical"}
+                onChange={() => handleDirectionChange("vertical")}
+              />
+              纵向（上下滑动）
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="scroll-image-direction"
+                value="horizontal"
+                checked={direction === "horizontal"}
+                onChange={() => handleDirectionChange("horizontal")}
+              />
+              横向（左右滑动）
+            </label>
+          </div>
+        </fieldset>
+
         <div
-          className="scroll-image-dialog-preview"
+          ref={previewRef}
+          className={`scroll-image-dialog-preview${isHorizontal ? " is-horizontal" : ""}`}
           style={{ height: height ?? DEFAULT_HEIGHT }}
           tabIndex={0}
-          aria-label="滚动长图预览，可上下滚动"
+          aria-label={
+            isHorizontal
+              ? "滚动长图预览，可左右滚动"
+              : "滚动长图预览，可上下滚动"
+          }
         >
           <img src={previewUrl} alt={`${file.name} 预览`} />
         </div>
-        <p className="scroll-image-dialog-hint">↕ 上下滑动查看完整图片</p>
+        <p className="scroll-image-dialog-hint">
+          {isHorizontal ? "↔ 左右滑动查看完整图片" : "↕ 上下滑动查看完整图片"}
+        </p>
 
         <fieldset className="scroll-image-height-fieldset" disabled={uploading}>
           <legend>展示高度</legend>
