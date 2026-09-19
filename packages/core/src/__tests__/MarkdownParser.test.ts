@@ -74,6 +74,21 @@ describe("MarkdownParser scroll image", () => {
     expect(html).toContain(`height:${expected}px`);
   });
 
+  it("单图纵向输出与既有单图实现逐字节一致", () => {
+    const html = render(
+      '::: scroll-image 420\n![A & B](<https://example.com/a_(1).png?x=1&y=2> "标题 & 说明")\n:::',
+    );
+
+    expect(html).toBe(
+      '<section class="scroll-image" style="display:block;width:100%;box-sizing:border-box;margin:1em 0 0.5em;">' +
+        '<section class="scroll-image-viewport" tabindex="0" role="region" aria-label="可上下滚动查看完整图片" style="display:block;width:100%;height:420px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;scrollbar-gutter:stable;touch-action:pan-y;-webkit-overflow-scrolling:touch;">' +
+        '<img class="scroll-image-img" src="https://example.com/a_(1).png?x=1&amp;y=2" alt="A &amp; B" title="标题 &amp; 说明" style="display:block;width:100%;max-width:100%;height:auto;margin:0;border:0;" />' +
+        "</section>" +
+        '<p class="scroll-image-caption" style="display:block;margin:6px 0 0;padding:0;text-align:center;color:#888;font-size:13px;line-height:1.5;">↕ 上下滑动查看完整图片</p>' +
+        "</section>\n",
+    );
+  });
+
   it("由 MarkdownIt 解析复杂地址、转义文本和标题", () => {
     const html = render(
       '::: scroll-image 420\n![A & B](<https://example.com/a_(1).png?x=1&y=2> "标题 & 说明")\n:::',
@@ -91,12 +106,104 @@ describe("MarkdownParser scroll image", () => {
     "::: scroll-image tall\n![长图](https://example.com/a.png)\n:::",
     "::: scroll-image 320 extra\n![长图](https://example.com/a.png)\n:::",
     "::: scroll-image 320\n普通文本\n:::",
-    "::: scroll-image 320\n![A](https://example.com/a.png) ![B](https://example.com/b.png)\n:::",
-  ])("非法或非单图内容不转换", (markdown) => {
+    "::: scroll-image 320\n![A](https://example.com/a.png) 说明\n:::",
+    "::: scroll-image 320\n![A](https://example.com/a.png)\n\n正文\n\n![B](https://example.com/b.png)\n:::",
+  ])("非法参数或含文字内容不转换", (markdown) => {
     const html = render(markdown);
 
     expect(html).not.toContain('class="scroll-image-viewport"');
     expect(html).not.toContain("↕ 上下滑动查看完整图片");
+  });
+
+  it("多图按文档顺序渲染进同一滚动视口", () => {
+    const html = render(
+      "::: scroll-image 320\n![A](https://example.com/a.png)\n\n![B](https://example.com/b.png)\n\n![C](https://example.com/c.png)\n:::",
+    );
+
+    expect(html).toContain('class="scroll-image-viewport"');
+    expect(html).not.toContain("scroll-image-horizontal");
+    expect(html).not.toContain("scroll-image-track");
+    const sources = Array.from(
+      html.matchAll(/scroll-image-img" src="([^"]+)"/g),
+      (match) => match[1],
+    );
+    expect(sources).toEqual([
+      "https://example.com/a.png",
+      "https://example.com/b.png",
+      "https://example.com/c.png",
+    ]);
+  });
+
+  it("空行分隔、每行一张与同一行空格分隔的多图写法等价", () => {
+    const blank = render(
+      "::: scroll-image 320\n![A](https://example.com/a.png)\n\n![B](https://example.com/b.png)\n:::",
+    );
+    const tight = render(
+      "::: scroll-image 320\n![A](https://example.com/a.png)\n![B](https://example.com/b.png)\n:::",
+    );
+    const inline = render(
+      "::: scroll-image 320\n![A](https://example.com/a.png) ![B](https://example.com/b.png)\n:::",
+    );
+
+    expect(tight).toBe(blank);
+    expect(inline).toBe(blank);
+    expect(blank.match(/scroll-image-img/g)).toHaveLength(2);
+  });
+
+  it("多图逐张保留地址、转义文本与标题", () => {
+    const html = render(
+      '::: scroll-image 420\n![A & B](<https://example.com/a_(1).png?x=1&y=2> "标题 & 说明")\n\n![C](https://example.com/c.png)\n:::',
+    );
+
+    expect(html).toContain('src="https://example.com/a_(1).png?x=1&amp;y=2"');
+    expect(html).toContain('alt="A &amp; B"');
+    expect(html).toContain('title="标题 &amp; 说明"');
+    expect(html).toContain('src="https://example.com/c.png"');
+    expect(html.match(/scroll-image-img/g)).toHaveLength(2);
+  });
+
+  const buildImages = (count: number) =>
+    Array.from(
+      { length: count },
+      (_, index) => `![图${index}](https://example.com/${index}.png)`,
+    ).join("\n\n");
+
+  it("支持 1..20 张图片并保持输入顺序", () => {
+    const html = render(`::: scroll-image 320\n${buildImages(20)}\n:::`);
+    const sources = Array.from(
+      html.matchAll(/scroll-image-img" src="([^"]+)"/g),
+      (match) => match[1],
+    );
+
+    expect(sources).toHaveLength(20);
+    expect(sources[0]).toBe("https://example.com/0.png");
+    expect(sources[19]).toBe("https://example.com/19.png");
+  });
+
+  it("超过 20 张按非法处理并保留全部正文图片", () => {
+    const html = render(`::: scroll-image 320\n${buildImages(21)}\n:::`);
+
+    expect(html).not.toContain('class="scroll-image-viewport"');
+    expect(html.match(/<img /g)).toHaveLength(21);
+  });
+
+  it("横向多图在视口内输出并排轨道", () => {
+    const html = render(
+      "::: scroll-image 320 horizontal\n![A](https://example.com/a.png)\n\n![B](https://example.com/b.png)\n:::",
+    );
+
+    expect(html).toContain('class="scroll-image scroll-image-horizontal"');
+    expect(html).toContain("width:max-content");
+    expect(html).toContain("white-space:nowrap");
+    expect(html).toContain(
+      'style="display:inline-block;vertical-align:top;height:100%;width:auto;max-width:none;max-height:none;margin:0;border:0;"',
+    );
+    const trackStart = html.indexOf('class="scroll-image-track"');
+    const trackEnd = html.indexOf("</section>", trackStart);
+    const trackHtml = html.slice(trackStart, trackEnd);
+    expect(trackHtml).toContain("a.png");
+    expect(trackHtml).toContain("b.png");
+    expect(html.slice(trackEnd)).toContain("↔ 左右滑动查看完整图片");
   });
 
   it("横向模式输出左右滚动容器与等比高度图片", () => {
@@ -112,8 +219,9 @@ describe("MarkdownParser scroll image", () => {
     expect(html).toContain("scrollbar-gutter:auto");
     expect(html).toContain('aria-label="可左右滚动查看完整图片"');
     expect(html).toContain("↔ 左右滑动查看完整图片");
+    expect(html).toContain('class="scroll-image-track"');
     expect(html).toContain(
-      'style="display:block;width:auto;max-width:none;height:100%;max-height:none;margin:0;border:0;"',
+      'style="display:inline-block;vertical-align:top;height:100%;width:auto;max-width:none;max-height:none;margin:0;border:0;"',
     );
     expect(html).not.toContain("↕ 上下滑动查看完整图片");
   });
