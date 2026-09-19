@@ -646,3 +646,72 @@ const apiKey = await window.electron.ai.getApiKey();
 const { hasKey } = await window.electron.ai.getStatus();
 const result = await window.electron.ai.rewrite(inputWithoutApiKey);
 ```
+
+## Scenario: Custom AI request headers and session IDs
+
+### 1. Scope / Trigger
+
+- Trigger: a user-configured custom header (e.g. `x-opencode-session`) must accompany the AI probe/rewrite requests.
+- The header value may come from a literal string or from a per-session runtime UUID.
+
+### 2. Signatures
+
+```ts
+interface RichPostAiCustomHeader {
+  name: string;
+  value: string;
+  valueSource: "literal" | "session";
+  enabled: boolean;
+  remember: boolean;
+}
+// ai:probe / ai:rewrite payloads carry customHeaders plus the renderer-generated
+// sessionId (string | null). The matching request builders live beside the
+// request functions in each package's richPostAi module.
+buildRichPostRequestHeaders({ apiKey, customHeaders, sessionId }): Record<string, string>
+```
+
+### 3. Contracts
+
+- The renderer generates one session UUID per export dialog context (new ID after close/reopen, article switch, or endpoint change) and sends it with every probe/rewrite; the ID is never persisted and never returned by the main process.
+- The main process re-parses `customHeaders`/`sessionId` from unknown IPC input and re-runs the same header validation before building headers — renderer validation is never trusted.
+- Persist only rows with `remember: true` in localStorage; never persist values produced by `valueSource: "session"` or API keys.
+
+### 4. Validation & Error Matrix
+
+| Condition                                              | Required result                                                                                                                                     |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Duplicate names (case-insensitive) among enabled rows  | Reject before fetch; never silently overwrite                                                                                                       |
+| Invalid field-name chars / CR-LF / control chars       | Reject with a field-level message                                                                                                                   |
+| Value or session ID outside ISO-8859-1                 | Reject during field validation; ByteString conversion makes `fetch` throw `TypeError` (misclassified as a network/CORS failure) if it slips through |
+| Blank placeholder rows (name and value empty)          | Skip silently; not sent                                                                                                                             |
+| `Authorization` / `Content-Type` (any case variant)    | Reject; system-managed                                                                                                                              |
+| `Host`, `Content-Length`, `Cookie`, `Proxy-*`, `Sec-*` | Reject as browser/transport restricted                                                                                                              |
+| `session` row without a session ID                     | Reject with "会话 ID 未就绪"; no request sent                                                                                                       |
+| More than 20 enabled rows or >16 KB encoded total      | Reject (UI and IPC share the same limits)                                                                                                           |
+
+### 5. Good / Base / Bad Cases
+
+- Good: enable the OpenCode preset row, probe and rewrite from the Electron app — headers carry the same session ID within one dialog context.
+- Base: delete/disable the row; requests fall back to Authorization + Content-Type only.
+- Bad: building headers inline in the fetch call, trusting renderer validation, or storing header secrets automatically.
+
+### 6. Tests Required
+
+- Request tests must assert the actual fetch `headers` (session value resolved, disabled rows absent).
+- Rejection tests must prove `fetch` is not called for invalid rows, including via raw IPC payloads.
+- Session lifecycle tests: stable across probe/rewrite/re-generate and content edits; new ID after dialog reopen, article switch, or endpoint change.
+- Persistence tests: only remembered rows survive a save/load round-trip; generated session values never reach storage.
+
+### 7. Wrong vs Correct
+
+```ts
+// Wrong: validation errors thrown after fetch() start get swept into the
+// TypeError/CORS branch and mislead the user.
+// Correct: validate and build headers before fetch; plain Error messages
+// surface as field-level or operational errors, never as "Key invalid".
+const headers = buildRichPostRequestHeaders({
+  apiKey,
+  customHeaders,
+  sessionId,
+});
+```
