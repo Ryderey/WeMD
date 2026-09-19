@@ -87,6 +87,22 @@
   max-height: none !important;
 }
 
+/* 横向多图轨道：并排承载图片，宽度由内容决定 */
+#wemd .scroll-image-horizontal .scroll-image-track {
+  display: inline-block !important;
+  width: max-content !important;
+  height: 100% !important;
+  white-space: nowrap !important;
+  vertical-align: top !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+}
+
+/* 视口内图片不继承全局 10px 自动边距，避免多图之间出现缝隙 */
+#wemd .scroll-image-viewport img {
+  margin: 0 !important;
+}
+
 /* 针对整个预览容器启用字体合成 */
 #wemd {
   font-synthesis: style weight;

@@ -15,8 +15,11 @@ const syntaxItems = [
   { syntax: "X^2^", desc: "上标" },
   { syntax: "> [!NOTE]", desc: "提示块" },
   { syntax: "- [ ] 任务", desc: "任务列表" },
-  { syntax: "::: scroll-image 320", desc: "滚动长图" },
-  { syntax: "::: scroll-image 320 horizontal", desc: "横向滚动长图" },
+  { syntax: "::: scroll-image 320", desc: "滚动长图（容器内可放 1–20 张）" },
+  {
+    syntax: "::: scroll-image 320 horizontal",
+    desc: "横向滚动长图（容器内可放 1–20 张）",
+  },
 ];
 
 export function SyntaxHelpPopover() {

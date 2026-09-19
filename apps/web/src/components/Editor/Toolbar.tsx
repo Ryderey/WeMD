@@ -12,12 +12,20 @@ import {
   GalleryVerticalEnd,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { SCROLL_IMAGE_MAX_IMAGES } from "@wemd/core";
 
 import {
   WECHAT_IMAGE_MAX_SIZE_BYTES,
   formatImageSize,
 } from "../../services/image/autoCompressImage";
-import { uploadEditorImage } from "../../services/image/imageUploadFlow";
+import {
+  getStoredImageHostConfig,
+  uploadEditorImage,
+} from "../../services/image/imageUploadFlow";
+import {
+  isAllowedImageUploadType,
+  resolveImageUploadLimit,
+} from "../../services/image/imageUploadLimits";
 import {
   blockTools,
   headingOptions,
@@ -30,6 +38,10 @@ import { setLinkToFootnoteEnabled } from "./ToolbarState";
 import { EmojiPicker } from "./EmojiPicker";
 import { SyntaxHelpPopover } from "./SyntaxHelpPopover";
 import { ScrollImageDialog } from "./ScrollImageDialog";
+import {
+  scrollImageFileKey,
+  type ScrollImageSelection,
+} from "./scrollImageSelection";
 import "./Toolbar.css";
 
 interface ToolbarProps {
@@ -41,10 +53,9 @@ export function Toolbar({ onInsert, onInsertText }: ToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollImageInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
-  const [scrollImageFile, setScrollImageFile] = useState<File | null>(null);
-  const [scrollImagePreviewUrl, setScrollImagePreviewUrl] = useState<
-    string | null
-  >(null);
+  const [scrollImageItems, setScrollImageItems] = useState<
+    ScrollImageSelection[]
+  >([]);
   const [showMermaidMenu, setShowMermaidMenu] = useState(false);
   const [showMermaidMore, setShowMermaidMore] = useState(false);
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
@@ -178,30 +189,89 @@ export function Toolbar({ onInsert, onInsertText }: ToolbarProps) {
     fileInputRef.current?.click();
   };
 
-  useEffect(() => {
-    if (!scrollImagePreviewUrl) return;
-    return () => URL.revokeObjectURL(scrollImagePreviewUrl);
-  }, [scrollImagePreviewUrl]);
+  const releaseScrollImageItems = (items: ScrollImageSelection[]) => {
+    items.forEach((item) => URL.revokeObjectURL(item.url));
+  };
 
   const resetScrollImage = () => {
-    setScrollImageFile(null);
-    setScrollImagePreviewUrl(null);
+    releaseScrollImageItems(scrollImageItems);
+    setScrollImageItems([]);
     if (scrollImageInputRef.current) scrollImageInputRef.current.value = "";
+  };
+
+  const removeScrollImageItem = (index: number) => {
+    const target = scrollImageItems[index];
+    if (!target) return;
+    URL.revokeObjectURL(target.url);
+    setScrollImageItems((prev) =>
+      prev.filter((_, itemIndex) => itemIndex !== index),
+    );
+  };
+
+  const moveScrollImageItem = (index: number, delta: number) => {
+    setScrollImageItems((prev) => {
+      const target = prev[index + delta];
+      if (!target) return prev;
+      const next = [...prev];
+      next[index + delta] = prev[index];
+      next[index] = target;
+      return next;
+    });
   };
 
   const handleScrollImageChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("请选择图片文件");
-      event.target.value = "";
+    const incoming = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (incoming.length === 0) return;
+
+    const limit = resolveImageUploadLimit(getStoredImageHostConfig());
+    const images = incoming.filter((file) => file.type.startsWith("image/"));
+    const allowed = images.filter((file) =>
+      isAllowedImageUploadType(file, limit),
+    );
+    if (allowed.length < incoming.length) {
+      const rejected = incoming.length - allowed.length;
+      toast.error(
+        limit.allowedTypes === null
+          ? `已过滤 ${rejected} 个非图片文件`
+          : `已过滤 ${rejected} 个不支持的文件（当前图床仅支持 JPG/PNG）`,
+      );
+    }
+    if (allowed.length === 0) return;
+
+    const remaining = SCROLL_IMAGE_MAX_IMAGES - scrollImageItems.length;
+    if (remaining <= 0) {
+      toast.error(`滚动长图最多选择 ${SCROLL_IMAGE_MAX_IMAGES} 张图片`);
       return;
     }
 
-    setScrollImageFile(file);
-    setScrollImagePreviewUrl(URL.createObjectURL(file));
+    const keys = new Set(
+      scrollImageItems.map((item) => scrollImageFileKey(item.file)),
+    );
+    const additions: ScrollImageSelection[] = [];
+    let duplicated = 0;
+    for (const file of allowed) {
+      const key = scrollImageFileKey(file);
+      if (keys.has(key)) {
+        duplicated += 1;
+        continue;
+      }
+      keys.add(key);
+      if (additions.length >= remaining) {
+        duplicated += 1;
+        continue;
+      }
+      additions.push({ file, url: URL.createObjectURL(file) });
+    }
+    if (duplicated > 0) {
+      toast.error(
+        `已忽略 ${duplicated} 个重复或超出 ${SCROLL_IMAGE_MAX_IMAGES} 张上限的文件`,
+      );
+    }
+
+    setScrollImageItems((prev) => [...prev, ...additions]);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -484,15 +554,18 @@ export function Toolbar({ onInsert, onInsertText }: ToolbarProps) {
         ref={scrollImageInputRef}
         type="file"
         accept="image/*"
+        multiple
         onChange={handleScrollImageChange}
         aria-label="选择滚动长图文件"
         style={{ display: "none" }}
       />
 
-      {scrollImageFile && scrollImagePreviewUrl && (
+      {scrollImageItems.length > 0 && (
         <ScrollImageDialog
-          file={scrollImageFile}
-          previewUrl={scrollImagePreviewUrl}
+          items={scrollImageItems}
+          onAddFiles={() => scrollImageInputRef.current?.click()}
+          onRemove={removeScrollImageItem}
+          onMove={moveScrollImageItem}
           onCancel={resetScrollImage}
           onInsert={(markdown) => {
             onInsertText(markdown);
