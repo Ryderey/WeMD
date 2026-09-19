@@ -27,6 +27,8 @@
 | [css-design.md](./css-design.md)                                               | CSS organization and design tokens              | Reference     |
 | [quality.md](./quality.md)                                                     | Code quality and performance standards          | Reference     |
 | [wechat-copy-pitfalls.md](./wechat-copy-pitfalls.md)                           | WeChat copy symptoms and correct patterns       | **Must Read** |
+| [scroll-image-block.md](./scroll-image-block.md)                               | `::: scroll-image` syntax, DOM, inline styles   | Reference     |
+| [image-upload-limits.md](./image-upload-limits.md)                             | Per-host upload size thresholds and compression | Reference     |
 
 ---
 
@@ -49,6 +51,8 @@
 | Build UI components      | [components.md](./components.md)                     |
 | Ensure type safety       | [type-safety.md](./type-safety.md)                   |
 | Change copy/theme output | [wechat-copy-pitfalls.md](./wechat-copy-pitfalls.md) |
+| Touch scroll-image block | [scroll-image-block.md](./scroll-image-block.md)     |
+| Add/alter upload limits  | [image-upload-limits.md](./image-upload-limits.md)   |
 
 ### Before Committing
 
