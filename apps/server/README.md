@@ -79,7 +79,7 @@ Invoke-RestMethod `
 { "ok": true }
 ```
 
-再使用一张严格小于 1 MiB 的真实 JPEG/PNG 文件验证上传。Windows PowerShell 中可用
+再使用一张严格小于 1,000,000 字节的真实 JPEG/PNG 文件验证上传。Windows PowerShell 中可用
 `curl.exe`，避免 PowerShell 的 `curl` 别名：
 
 ```powershell
@@ -103,8 +103,8 @@ Nest 提供：
 - `GET /api/proxy/image?url=<图片URL>`：导出图片专用的公开图片代理，无需鉴权。
 
 前两个接口都要求请求头 `Authorization: Bearer <WECHAT_UPLOAD_KEY>`。上传接口只接受
-MIME 和文件内容均为 JPEG/PNG、且严格小于 1 MiB 的原始文件；服务不会压缩、转换或
-修复图片。
+MIME 和文件内容均为 JPEG/PNG、且严格小于 1,000,000 字节（微信按十进制 1 MB 判定）的
+原始文件；服务不会压缩、转换或修复图片。
 
 图片代理接口用于“导出图片”功能：外部图床（如 `img.wemd.app`）不返回
 CORS 头，前端无法直接 fetch 内联图片，改由服务端代为抓取后回传字节。该接口

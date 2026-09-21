@@ -37,7 +37,7 @@ Nest 使用微信官方稳定版凭据接口
 内存缓存、临近到期才刷新 access token，不运行后台定时刷新。完整的 `.env`、本地
 启动、前端连接及 IP 白名单配置步骤见上述服务端 README；官方说明见[获取稳定版接口调用凭据](https://developers.weixin.qq.com/doc/subscription/api/base/api_getstableaccesstoken.html)。
 
-公众号图床只上传严格小于 1 MiB 的原始 JPEG/PNG。WebP、GIF、超限文件、MIME 与
+公众号图床只上传严格小于 1,000,000 字节（微信按十进制 1 MB 判定）的原始 JPEG/PNG。WebP、GIF、超限文件、MIME 与
 内容不一致或无法识别的图片会直接拒绝；不会调用现有自动压缩，也不会转换或修复。
 微信接口返回的 URL 会原样写入 Markdown，不转换 HTTP/HTTPS。该 URL 没有删除、
 寿命及通用外链保证。

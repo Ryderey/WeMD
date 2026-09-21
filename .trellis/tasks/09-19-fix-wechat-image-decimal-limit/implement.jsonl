@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/server/backend/error-handling.md", "reason": "上游错误归因模式（40164 场景）：40009 分支按同一契约实现，不拼接 errmsg 原文"}
+{"file": ".trellis/spec/web/frontend/image-upload-limits.md", "reason": "门槛与文案规则：外层 cap 与 950,000 门槛的关系、错误文案必须打字节数"}
+{"file": ".trellis/tasks/09-19-fix-wechat-image-decimal-limit/research/boundary-probe.md", "reason": "本任务边界证据与未实测声明：改前基线结果、补跑方式"}
