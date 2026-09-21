@@ -188,6 +188,8 @@ export function createRichPostCoverElement(
     paddingBlock: isBurst ? "0.12em" : "0",
     boxSizing: "border-box",
     transform: isBurst ? "translateY(-50%)" : "none",
+    // 放射黑底是居中海报式构图：标题框本身居中，但文字不居中会整块偏左
+    textAlign: isBurst ? "center" : "left",
     textWrap: isBurst ? "balance" : "wrap",
     overflow: "hidden",
     color: preset.textColor,

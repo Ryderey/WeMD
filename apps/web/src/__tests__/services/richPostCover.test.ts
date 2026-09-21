@@ -170,6 +170,38 @@ describe("richPostCover", () => {
     ).toBe("rgb(244, 101, 80)");
   });
 
+  it("centers the burst title and keeps the other templates left-aligned", () => {
+    const burst = createRichPostCoverElement({
+      title: "欢迎使用 WeMD",
+      highlightTerms: [],
+      settings: {
+        templateId: "burst-black",
+        backgroundColor: "#1c1c1c",
+        accentColor: "#f46550",
+      },
+    });
+    expect(
+      burst.querySelector<HTMLElement>("[data-rich-post-title]")?.style
+        .textAlign,
+    ).toBe("center");
+
+    for (const templateId of ["warm-quote", "cool-underline"] as const) {
+      const cover = createRichPostCoverElement({
+        title: "欢迎使用 WeMD",
+        highlightTerms: [],
+        settings: {
+          templateId,
+          backgroundColor: "#ffffff",
+          accentColor: "#f7bf00",
+        },
+      });
+      expect(
+        cover.querySelector<HTMLElement>("[data-rich-post-title]")?.style
+          .textAlign,
+      ).toBe("left");
+    }
+  });
+
   it("shrinks the title and reports overflow at the minimum size", () => {
     const cover = createRichPostCoverElement({
       title: "较长标题",
