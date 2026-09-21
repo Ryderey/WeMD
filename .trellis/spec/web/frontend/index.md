@@ -28,6 +28,7 @@
 | [quality.md](./quality.md)                                                     | Code quality and performance standards          | Reference     |
 | [wechat-copy-pitfalls.md](./wechat-copy-pitfalls.md)                           | WeChat copy symptoms and correct patterns       | **Must Read** |
 | [scroll-image-block.md](./scroll-image-block.md)                               | `::: scroll-image` syntax, DOM, inline styles   | Reference     |
+| [rich-post-cover.md](./rich-post-cover.md)                                     | 导出图文封面：画布/字号/引号定位契约            | Reference     |
 | [image-upload-limits.md](./image-upload-limits.md)                             | Per-host upload size thresholds and compression | Reference     |
 
 ---
@@ -52,6 +53,7 @@
 | Ensure type safety       | [type-safety.md](./type-safety.md)                   |
 | Change copy/theme output | [wechat-copy-pitfalls.md](./wechat-copy-pitfalls.md) |
 | Touch scroll-image block | [scroll-image-block.md](./scroll-image-block.md)     |
+| Change cover templates   | [rich-post-cover.md](./rich-post-cover.md)           |
 | Add/alter upload limits  | [image-upload-limits.md](./image-upload-limits.md)   |
 
 ### Before Committing
