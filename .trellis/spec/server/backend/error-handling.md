@@ -105,6 +105,45 @@ return new BadGatewayException(
 
 ---
 
+## Scenario: WeChat size rejection (40009)
+
+### 1. Scope / Trigger
+
+`WechatImageService.upload` gets WeChat error code `40009` even though our own
+byte checks passed. The caller must be able to tell "rejected by this service"
+from "rejected upstream" without reading raw WeChat codes.
+
+### 2. Signatures
+
+- Upstream response: `{ errcode: 40009, errmsg: string }`
+- Backend response: `502` with
+  `微信图片上传失败 (40009)：微信判定图片尺寸或大小超限`
+
+### 3. Contracts
+
+- Local size rejection stays `413` with
+  `微信公众号图片必须小于 1,000,000 字节`（byte count in the message；decimal
+  WeChat limit, see `WECHAT_IMAGE_MAX_BYTES`）。
+- On the multipart HTTP path multer rejects `fileSize >= WECHAT_IMAGE_MAX_BYTES`
+  first (busboy emits `limit` when the size equals the limit), so the service's
+  own `validateFile` size check is a defense layer — do not assume its message
+  is reachable over HTTP.
+- Never append the raw upstream `errmsg`.
+
+### 4. Validation & Error Matrix
+
+| Condition   | Returned message                       |
+| ----------- | -------------------------------------- |
+| `40009`     | Include the fixed size guidance suffix |
+| Other codes | Keep the code-only message (unchanged) |
+
+### 6. Tests Required
+
+The `WechatImageService` spec must assert the `40009` message and that the
+upstream `errmsg` is not included.
+
+---
+
 ## Common Mistakes
 
 <!-- Error handling mistakes your team has made -->
