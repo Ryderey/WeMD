@@ -40,3 +40,6 @@ custom.css
 .trellis/*.tmp
 .trellis/*.new
 .trellis/.backup-*
+
+# 本地样例/草稿文章
+example/
