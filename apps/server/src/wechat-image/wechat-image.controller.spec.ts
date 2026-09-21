@@ -4,10 +4,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { WechatImageController } from './wechat-image.controller';
-import {
-  WechatImageService,
-  WECHAT_IMAGE_MAX_BYTES,
-} from './wechat-image.service';
+import { WechatImageService } from './wechat-image.service';
 import { WechatUploadGuard } from './wechat-upload.guard';
 
 const UPLOAD_KEY = '0123456789abcdef0123456789abcdef';
@@ -96,15 +93,18 @@ describe('WechatImageController', () => {
     expect(upload).not.toHaveBeenCalled();
   });
 
-  it('returns 413 before the handler for files over one MiB', async () => {
-    await request(app.getHttpServer())
-      .post('/api/wechat-images')
-      .set('Authorization', `Bearer ${UPLOAD_KEY}`)
-      .attach('file', Buffer.alloc(WECHAT_IMAGE_MAX_BYTES + 1), {
-        filename: 'large.jpg',
-        contentType: 'image/jpeg',
-      })
-      .expect(413);
-    expect(upload).not.toHaveBeenCalled();
-  });
+  it.each([1_000_000, 1_000_001])(
+    'returns 413 before the handler for %i bytes',
+    async (size) => {
+      await request(app.getHttpServer())
+        .post('/api/wechat-images')
+        .set('Authorization', `Bearer ${UPLOAD_KEY}`)
+        .attach('file', Buffer.alloc(size), {
+          filename: 'large.jpg',
+          contentType: 'image/jpeg',
+        })
+        .expect(413);
+      expect(upload).not.toHaveBeenCalled();
+    },
+  );
 });

@@ -1,6 +1,8 @@
 import type { ImageUploader } from "../ImageUploader";
 
-export const WECHAT_IMAGE_MAX_BYTES = 1024 * 1024;
+// 镜像服务端 wechat-image.service.ts 的 WECHAT_IMAGE_MAX_BYTES：微信 uploadimg 的
+// "小于 1M"按十进制 1,000,000 字节判定；改这里必须同步改服务端（有 tripwire 测试兜底）
+export const WECHAT_IMAGE_MAX_BYTES = 1_000_000;
 
 interface WechatConfig {
   apiBaseUrl?: string;
@@ -79,7 +81,7 @@ export class WechatUploader implements ImageUploader {
 
   private async validateFile(file: File): Promise<void> {
     if (file.size >= WECHAT_IMAGE_MAX_BYTES) {
-      throw new Error("微信公众号图片必须小于 1 MiB");
+      throw new Error("微信公众号图片必须小于 1,000,000 字节");
     }
     const isJpeg = file.type === "image/jpeg";
     const isPng = file.type === "image/png";

@@ -202,8 +202,9 @@ export const WechatPanel = ({
       </div>
       <div className="config-field">
         <small>
-          仅接受严格小于 1 MiB 的 JPG/PNG 原图，不会压缩、转换或修复。微信返回的
-          URL 没有删除、寿命及通用外链保证。
+          仅接受严格小于 1,000,000 字节的 JPG/PNG
+          原图，不会压缩、转换或修复。微信返回的 URL
+          没有删除、寿命及通用外链保证。
         </small>
       </div>
       <div className="config-footer">

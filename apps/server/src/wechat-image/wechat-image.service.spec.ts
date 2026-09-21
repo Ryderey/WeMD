@@ -1,4 +1,6 @@
 import { ConfigService } from '@nestjs/config';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { Readable } from 'stream';
 import {
   WECHAT_IMAGE_MAX_BYTES,
@@ -35,6 +37,22 @@ function imageFile(
 
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0x11, 0x22]);
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+const WEB_WECHAT_UPLOADER_PATH = resolve(
+  __dirname,
+  '../../../../apps/web/src/services/image/uploaders/WechatUploader.ts',
+);
+
+function readExportedMaxBytes(sourcePath: string): number {
+  const source = readFileSync(sourcePath, 'utf8');
+  const match = source.match(
+    /export const WECHAT_IMAGE_MAX_BYTES\s*=\s*([0-9_]+)\s*;/,
+  );
+  if (!match) {
+    throw new Error(`未在 ${sourcePath} 找到 WECHAT_IMAGE_MAX_BYTES 的值`);
+  }
+  return Number(match[1].replace(/_/g, ''));
+}
 
 describe('WechatImageService', () => {
   let fetchMock: jest.MockedFunction<typeof fetch>;
@@ -118,15 +136,39 @@ describe('WechatImageService', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('rejects files at the one MiB boundary', async () => {
-    const oversized = Buffer.alloc(WECHAT_IMAGE_MAX_BYTES);
-    oversized.set(JPEG);
-
-    await expect(service.upload(imageFile(oversized))).rejects.toThrow(
-      '必须小于 1 MiB',
-    );
-    expect(fetchMock).not.toHaveBeenCalled();
+  it('uses 1,000,000 bytes as the decimal WeChat size limit', () => {
+    expect(WECHAT_IMAGE_MAX_BYTES).toBe(1_000_000);
   });
+
+  it('accepts 999,999 bytes and uploads them to WeChat', async () => {
+    const allowed = Buffer.alloc(999_999);
+    allowed.set(JPEG);
+    fetchMock
+      .mockResolvedValueOnce(
+        response({ access_token: 'upload-token', expires_in: 7200 }),
+      )
+      .mockResolvedValueOnce(
+        response({ errcode: 0, errmsg: 'ok', url: 'https://mmbiz.qpic.cn/ok' }),
+      );
+
+    await expect(service.upload(imageFile(allowed))).resolves.toBe(
+      'https://mmbiz.qpic.cn/ok',
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it.each([1_000_000, 1_000_001, 1_048_575])(
+    'rejects %i bytes without calling WeChat',
+    async (size) => {
+      const oversized = Buffer.alloc(size);
+      oversized.set(JPEG);
+
+      await expect(service.upload(imageFile(oversized))).rejects.toThrow(
+        '必须小于 1,000,000 字节',
+      );
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
 
   it('force-refreshes once when WeChat rejects the cached token', async () => {
     fetchMock
@@ -239,6 +281,34 @@ describe('WechatImageService', () => {
     await expect(service.checkConnection()).rejects.toMatchObject({
       message: '获取微信 access token 失败 (45009)',
     });
+  });
+
+  it('explains WeChat size rejections beyond the bare error code', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        response({ access_token: 'upload-token', expires_in: 7200 }),
+      )
+      .mockResolvedValueOnce(
+        response({ errcode: 40009, errmsg: 'invalid media size' }),
+      );
+
+    let message = '';
+    try {
+      await service.upload(imageFile(PNG, 'image/png', 'test.png'));
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+
+    expect(message).toBe(
+      '微信图片上传失败 (40009)：微信判定图片尺寸或大小超限',
+    );
+    expect(message).not.toContain('invalid media size');
+  });
+
+  it('keeps the web uploader limit in sync with the server', () => {
+    expect(readExportedMaxBytes(WEB_WECHAT_UPLOADER_PATH)).toBe(
+      WECHAT_IMAGE_MAX_BYTES,
+    );
   });
 
   it('maps upstream network errors to a credential-free gateway error', async () => {

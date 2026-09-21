@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   WECHAT_IMAGE_MAX_BYTES,
@@ -108,13 +110,25 @@ describe("WechatUploader", () => {
     expect((init.body as FormData).get("file")).toBe(file);
   });
 
-  it("拒绝等于 1 MiB 的文件", async () => {
+  it("接受 999,999 字节并上传", async () => {
+    const file = jpegFile(999_999);
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(response({ url: "https://mmbiz.qpic.cn/edge" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(new WechatUploader(config).upload(file)).resolves.toBe(
+      "https://mmbiz.qpic.cn/edge",
+    );
+  });
+
+  it.each([1_000_000, 1_000_001])("拒绝 %i 字节的文件", async (size) => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(
-      new WechatUploader(config).upload(jpegFile(WECHAT_IMAGE_MAX_BYTES)),
-    ).rejects.toThrow("必须小于 1 MiB");
+      new WechatUploader(config).upload(jpegFile(size)),
+    ).rejects.toThrow("必须小于 1,000,000 字节");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -160,7 +174,26 @@ describe("WechatUploader", () => {
     const manager = new ImageHostManager({ type: "wechat", config });
 
     await expect(manager.upload(jpegFile(11 * 1024 * 1024))).rejects.toThrow(
-      "必须小于 1 MiB",
+      "必须小于 1,000,000 字节",
     );
+  });
+});
+
+describe("微信上限常量一致性（tripwire）", () => {
+  it("与服务端 wechat-image.service.ts 的导出保持一致", () => {
+    // vitest 的工作目录是 apps/web，服务端源码在仓库根的 apps/server 下
+    const serverSource = readFileSync(
+      resolve(
+        process.cwd(),
+        "../server/src/wechat-image/wechat-image.service.ts",
+      ),
+      "utf8",
+    );
+    const match = serverSource.match(
+      /export const WECHAT_IMAGE_MAX_BYTES\s*=\s*([0-9_]+)\s*;/,
+    );
+
+    expect(match?.[1]).toBeDefined();
+    expect(Number(match?.[1]?.replace(/_/g, ""))).toBe(WECHAT_IMAGE_MAX_BYTES);
   });
 });

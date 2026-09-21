@@ -11,7 +11,8 @@ const STABLE_TOKEN_URL = 'https://api.weixin.qq.com/cgi-bin/stable_token';
 const UPLOAD_IMAGE_URL = 'https://api.weixin.qq.com/cgi-bin/media/uploadimg';
 const TOKEN_REFRESH_MARGIN_MS = 5 * 60 * 1000;
 const FORCE_REFRESH_MIN_INTERVAL_MS = 30 * 1000;
-export const WECHAT_IMAGE_MAX_BYTES = 1024 * 1024;
+// 微信 uploadimg 的"小于 1M"按十进制 1,000,000 字节判定，不是 1 MiB
+export const WECHAT_IMAGE_MAX_BYTES = 1_000_000;
 const RETRYABLE_TOKEN_ERROR_CODES = new Set([40001, 40014, 42001]);
 
 interface CachedToken {
@@ -64,7 +65,9 @@ export class WechatImageService {
 
   private validateFile(file: Express.Multer.File): void {
     if (file.buffer.length >= WECHAT_IMAGE_MAX_BYTES) {
-      throw new PayloadTooLargeException('微信公众号图片必须小于 1 MiB');
+      throw new PayloadTooLargeException(
+        '微信公众号图片必须小于 1,000,000 字节',
+      );
     }
 
     const isJpeg = file.mimetype === 'image/jpeg';
@@ -234,7 +237,10 @@ export class WechatImageService {
     const ip =
       errcode === 40164 ? this.ipv4Address(response.errmsg) : undefined;
     const whitelistFailure = ip ? `：服务器出口 IP ${ip} 未加入白名单` : '';
-    return new BadGatewayException(`${prefix}${code}${whitelistFailure}`);
+    const sizeFailure = errcode === 40009 ? '：微信判定图片尺寸或大小超限' : '';
+    return new BadGatewayException(
+      `${prefix}${code}${whitelistFailure}${sizeFailure}`,
+    );
   }
 
   private ipv4Address(value: unknown): string | undefined {
