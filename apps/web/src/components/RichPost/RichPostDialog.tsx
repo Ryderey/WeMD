@@ -32,6 +32,7 @@ import {
   ensureRichPostCoverFonts,
   fitRichPostCoverTitle,
   normalizeHighlightTerms,
+  positionRichPostCoverClosingQuote,
   resolveRichPostTitle,
   type RichPostCoverSettings,
   type RichPostCoverTemplateId,
@@ -182,6 +183,7 @@ export function RichPostDialog({
         if (fitRichPostCoverTitle(cover) === null) {
           setCoverError("标题过长，请缩短封面专用标题");
         }
+        positionRichPostCoverClosingQuote(cover);
       })
       .catch((fontError: unknown) => {
         if (!cancelled) setCoverError(getRichPostAiErrorMessage(fontError));

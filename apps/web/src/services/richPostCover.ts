@@ -4,6 +4,11 @@ import { domToBlob } from "modern-screenshot";
 export const RICH_POST_COVER_WIDTH = 1080;
 export const RICH_POST_COVER_HEIGHT = 1440;
 
+// 闭引号跟随最后一个字的偏移（em）。写死坐标只在标题恰好排满时成立，
+// 短标题会把引号留在画布下半部（见任务 09-21-fix-warm-quote-close-position）。
+const CLOSE_QUOTE_GAP_EM = 0.08;
+const CLOSE_QUOTE_DROP_EM = -0.62;
+
 export type RichPostCoverTemplateId =
   | "warm-quote"
   | "cool-underline"
@@ -217,9 +222,14 @@ export function createRichPostCoverElement(
     root.appendChild(
       createQuote("“", "116px", "222px", input.settings.accentColor),
     );
-    root.appendChild(
-      createQuote("”", "880px", "1070px", input.settings.accentColor),
+    const closeQuote = createQuote(
+      "”",
+      "880px",
+      "1070px",
+      input.settings.accentColor,
     );
+    closeQuote.dataset.richPostQuote = "close";
+    root.appendChild(closeQuote);
   }
 
   return root;
@@ -259,6 +269,32 @@ export function fitRichPostCoverTitle(root: HTMLElement): number | null {
   return null;
 }
 
+// 闭引号必须跟在最后一个字的右下：写死坐标只在标题排满整块时成立。
+export function positionRichPostCoverClosingQuote(root: HTMLElement): void {
+  const quote = root.querySelector<HTMLElement>(
+    '[data-rich-post-quote="close"]',
+  );
+  const title = root.querySelector<HTMLElement>("[data-rich-post-title]");
+  if (!quote || !title) return;
+
+  const fontSize = Number.parseFloat(title.style.fontSize);
+  if (!Number.isFinite(fontSize) || fontSize <= 0) return;
+
+  const character = lastCharacterRect(title);
+  if (!character) return;
+
+  const canvas = root.getBoundingClientRect();
+  const scale = canvas.width > 0 ? canvas.width / RICH_POST_COVER_WIDTH : 1;
+  if (scale <= 0) return;
+
+  const left =
+    (character.right - canvas.left) / scale + fontSize * CLOSE_QUOTE_GAP_EM;
+  const top =
+    (character.bottom - canvas.top) / scale + fontSize * CLOSE_QUOTE_DROP_EM;
+  quote.style.left = `${left}px`;
+  quote.style.top = `${top}px`;
+}
+
 export async function ensureRichPostCoverFonts(): Promise<void> {
   if (!document.fonts) throw new Error("当前环境不支持加载封面字体");
   const loadedFonts = await Promise.all([
@@ -293,6 +329,7 @@ export async function captureRichPostCover(
     if (fitRichPostCoverTitle(cover) === null) {
       throw new RichPostCoverOverflowError();
     }
+    positionRichPostCoverClosingQuote(cover);
     return await domToBlob(cover, {
       width: RICH_POST_COVER_WIDTH,
       height: RICH_POST_COVER_HEIGHT,
@@ -396,6 +433,32 @@ function createQuote(
     lineHeight: "1",
   });
   return quote;
+}
+
+// 无布局环境（如 jsdom）测得零矩形时返回 null，调用方保留兜底坐标。
+function lastCharacterRect(element: HTMLElement): DOMRect | null {
+  const text = lastTextNode(element);
+  if (!text || text.data.length === 0) return null;
+  if (typeof document.createRange !== "function") return null;
+
+  const range = document.createRange();
+  range.setStart(text, text.data.length - 1);
+  range.setEnd(text, text.data.length);
+  if (typeof range.getBoundingClientRect !== "function") return null;
+
+  const rect = range.getBoundingClientRect();
+  return rect.width === 0 && rect.height === 0 ? null : rect;
+}
+
+function lastTextNode(element: HTMLElement): Text | null {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  let last: Text | null = null;
+  let node = walker.nextNode();
+  while (node) {
+    if (node.nodeValue?.trim()) last = node as Text;
+    node = walker.nextNode();
+  }
+  return last;
 }
 
 function setStyles(

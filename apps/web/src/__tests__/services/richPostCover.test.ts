@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { domToBlobMock } = vi.hoisted(() => ({
   domToBlobMock: vi.fn(async () =>
@@ -19,8 +19,55 @@ import {
   createRichPostCoverElement,
   fitRichPostCoverTitle,
   normalizeHighlightTerms,
+  positionRichPostCoverClosingQuote,
   resolveRichPostTitle,
 } from "../../services/richPostCover";
+
+function domRect(
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+): DOMRect {
+  return {
+    left,
+    top,
+    right: left + width,
+    bottom: top + height,
+    width,
+    height,
+    x: left,
+    y: top,
+    toJSON: () => ({}),
+  } as DOMRect;
+}
+
+// jsdom 没有实现 Range#getBoundingClientRect，测试里补上再还原。
+function stubRangeRect(rect: DOMRect): void {
+  Object.defineProperty(Range.prototype, "getBoundingClientRect", {
+    configurable: true,
+    writable: true,
+    value: () => rect,
+  });
+}
+
+function buildWarmCover(): {
+  cover: HTMLElement;
+  quote: HTMLElement;
+} {
+  const cover = createRichPostCoverElement({
+    title: "登录就能领会员",
+    highlightTerms: ["会员"],
+    settings: DEFAULT_RICH_POST_COVER_SETTINGS,
+  });
+  const title = cover.querySelector<HTMLElement>("[data-rich-post-title]");
+  const quote = cover.querySelector<HTMLElement>(
+    '[data-rich-post-quote="close"]',
+  );
+  if (!title || !quote) throw new Error("Missing cover elements");
+  title.style.fontSize = "116px";
+  return { cover, quote };
+}
 
 describe("richPostCover", () => {
   beforeEach(() => {
@@ -68,6 +115,10 @@ describe("richPostCover", () => {
         "登录",
       ]),
     ).toEqual(["会员", "一个月"]);
+  });
+
+  afterEach(() => {
+    Reflect.deleteProperty(Range.prototype, "getBoundingClientRect");
   });
 
   it("renders both visual templates with text-safe highlights", () => {
@@ -165,6 +216,41 @@ describe("richPostCover", () => {
       scrollWidth: { value: 792 },
     });
     expect(fitRichPostCoverTitle(cover)).toBe(188);
+  });
+
+  it("places the warm closing quote right after the last character", () => {
+    const { cover, quote } = buildWarmCover();
+    vi.spyOn(cover, "getBoundingClientRect").mockReturnValue(
+      domRect(0, 0, 1080, 1440),
+    );
+    stubRangeRect(domRect(500, 700, 116, 155));
+
+    positionRichPostCoverClosingQuote(cover);
+
+    expect(quote.style.left).toBe("625.28px");
+    expect(quote.style.top).toBe("783.08px");
+  });
+
+  it("maps scaled preview measurements back to canvas pixels", () => {
+    const { cover, quote } = buildWarmCover();
+    vi.spyOn(cover, "getBoundingClientRect").mockReturnValue(
+      domRect(0, 0, 270, 360),
+    );
+    stubRangeRect(domRect(125, 175, 29, 38.75));
+
+    positionRichPostCoverClosingQuote(cover);
+
+    expect(quote.style.left).toBe("625.28px");
+    expect(quote.style.top).toBe("783.08px");
+  });
+
+  it("keeps the fallback position without layout measurements", () => {
+    const { cover, quote } = buildWarmCover();
+
+    positionRichPostCoverClosingQuote(cover);
+
+    expect(quote.style.left).toBe("880px");
+    expect(quote.style.top).toBe("1070px");
   });
 
   it("captures an exact 1080 by 1440 PNG after loading fonts", async () => {
