@@ -7,6 +7,7 @@
 - 单一固定画布 `1080×1440`（`RICH_POST_COVER_WIDTH/HEIGHT`），`position: relative; overflow: hidden`，通过 `modern-screenshot` 的 `domToBlob` 导出 PNG。
 - 三个模板：`warm-quote`（暖白引语）、`cool-underline`（冷白手写）、`burst-black`（放射黑底）。预设（字体、颜色、字号上下限）在 `RICH_POST_COVER_PRESETS`。
 - 标题是绝对定位的固定框（warm-quote：left 176 / top 288 / 728×864，`line-height 1.34`，`letter-spacing -2px`），字号由 `fitRichPostCoverTitle` 从预设上限向下以 4px 步进收缩，直到不溢出；到下限仍溢出返回 `null` → `RichPostCoverOverflowError`（对话框显示"标题过长"）。
+- 文字对齐按模板分工：`burst-black` 是居中海报构图（标题框本身居中于画布，且 `text-align: center`），`warm-quote` / `cool-underline` 保持左对齐（引语、手写构图）。三个模板共用同一段 `setStyles`，改对齐必须按模板区分，不要把某个模板的对齐套到全部模板上。
 
 ## 引号定位（warm-quote）
 
