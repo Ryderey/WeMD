@@ -105,3 +105,32 @@ pnpm --filter @wemd/web run build
 5. **`img` 去掉圆角**：源 `image` 块无圆角。
 6. **自造块**（源模板未定义）：`h1` 24px/600 左对齐 + 1px 细线；`h5/h6` 14px/700 ink；`mark` 底 `#E4EDE6`；callout 五变体配色（note=accent、tip=muted、important=ink、warning=`#C98A4B`、caution=`#B0574B`）。链接下划线用 `text-decoration` 而非 `border-bottom`。
 7. **未复现**：`headingNumber` 双行编号、`quoteMark` 引号字符、`sectionLabel` 章节标签——都依赖对方 renderer 产出的额外 span。其中标题标签按用户决定**另开分支**用「作者显式标注」方案实现，不在本分支。
+
+## 第二批复刻：阅读版式系列收敛为工厂（同日）
+
+上游 `reading-editions.ts` 的 5 款本就是「共享 base + 逐块 overrides」，因此把单文件的青岚改造成工厂 + 版本参数，而不是复制 5 份近重复 CSS：
+
+| 文件                                           | 说明                                                                                                                                                                                                             |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/core/src/themes/reading-editions.ts` | 新增。`ReadingPalette`（accent/ink/muted/surface/rule/rhythm/gap/markBg/tagline）+ `ReadingDeltas`（heading2 / quote / divider / tableTop / tableHeader / code / calloutBg，均可缺省）+ `createReadingEdition()` |
+| `packages/core/src/themes/jade-notes.ts`       | 删除，导出改由工厂提供                                                                                                                                                                                           |
+
+导出 5 款主题：`plainPaperTheme`「素笺」、`inkJournalTheme`「墨刊」、`jadeNotesTheme`「青岚」、`blueprintTheme`「蓝图」、`cinnabarTheme`「朱砂」。
+
+**无回归证明**：改造前后分别抓取 `jadeNotesTheme` 字符串做逐行比对 —— 541 行、全部 CSS 声明逐字节一致，唯一差异是一行注释文案（"引用：浅青底…" → "引用：悬挂缩进，不用投影"）。过程中确实抓出并修掉一处真实差异：青岚的提示块底色当初写的是引用同色 `#F4F8F5`，工厂里一度统一成 surface `#F4F7F4`，已通过 `calloutBg` 参数还原。
+
+各款差异（相对基座）：
+
+| 版本 | 标题                          | 引用                                           | 分隔线                           | 表格                             | 代码                         |
+| ---- | ----------------------------- | ---------------------------------------------- | -------------------------------- | -------------------------------- | ---------------------------- |
+| 素笺 | 21px / 1.55 / 字距 0.5 / 居中 | 去左竖线，上下 1px 细线，12/16/12/32，1.86     | 28px 宽，#C8BFB2，36px auto 14px | 上边线 #CFC5B7                   | 底 #FAF9F6                   |
+| 墨刊 | 衬线 22px / 1.55 / #272727    | 衬线 17px / 1.85，1px 左竖线 #B6B6B2，6/0/6/24 | #464644                          | 表头白底 #303030，下边线 #B7B7B2 | 底 #F8F8F6，仅左竖线 #CFCFCB |
+| 青岚 | 20px，accent                  | 去左竖线，底 #F4F8F5，14/16/14/32，1.9         | #DDE7DF                          | 上边线 #B6CCC1                   | 底 #F3F7F4，字 #3B5548       |
+| 蓝图 | 20px / 1.55 / #2F3540         | 2px 左竖线 #ABC0E5，1.85                       | 32px auto 16px                   | 上边线 #B4C7E7                   | 底 #F6F8FC                   |
+| 朱砂 | 21px / 1.55                   | 去左竖线，底 #FCF8F5，14/16/14/32              | 28px 宽，#BB796F，36px 0 16px    | 上边线 #EBE1DB                   | 底 #FBF8F5                   |
+
+段间距：素笺 24 / 墨刊 24 / 青岚 25 / 蓝图 22 / 朱砂 24；行高：1.90 / 1.84 / 1.92 / 1.84 / 1.88。
+
+上游的 `headingNumber`、`headingText`、`headingNumbered`、`quoteMark` 四个 overrides 依赖其 renderer 产出的额外 span，本系列一律不渲染（与青岚同一决策）。
+
+**验证**：改动后 `build` 通过、434 tests 全绿、lint 0 error；4 款新版的差异项以断言生成文本的方式逐条校验（6 组全过）；实机预览确认主题库 17 项含 5 款阅读版式，并选中「墨刊」端到端核对：h2 衬线 22px #272727、引用衬线 17px 白底 1px 左竖线 padding-left 24px、代码底 #F8F8F6 且上边框 0 / 左边框 1px、表头白底 #303030、分隔线 #464644、正文 margin 24px 行高 29.44px（16×1.84）。
