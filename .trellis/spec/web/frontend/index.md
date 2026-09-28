@@ -27,6 +27,7 @@
 | [css-design.md](./css-design.md)                                               | CSS organization and design tokens              | Reference     |
 | [quality.md](./quality.md)                                                     | Code quality and performance standards          | Reference     |
 | [wechat-copy-pitfalls.md](./wechat-copy-pitfalls.md)                           | WeChat copy symptoms and correct patterns       | **Must Read** |
+| [theme-designer.md](./theme-designer.md)                                       | Designer variable → CSS contract, bold accent   | **Must Read** |
 | [scroll-image-block.md](./scroll-image-block.md)                               | `::: scroll-image` syntax, DOM, inline styles   | Reference     |
 | [rich-post-cover.md](./rich-post-cover.md)                                     | 导出图文封面：画布/字号/引号定位契约            | Reference     |
 | [image-upload-limits.md](./image-upload-limits.md)                             | Per-host upload size thresholds and compression | Reference     |
@@ -52,6 +53,7 @@
 | Build UI components      | [components.md](./components.md)                     |
 | Ensure type safety       | [type-safety.md](./type-safety.md)                   |
 | Change copy/theme output | [wechat-copy-pitfalls.md](./wechat-copy-pitfalls.md) |
+| Add a designer variable  | [theme-designer.md](./theme-designer.md)             |
 | Touch scroll-image block | [scroll-image-block.md](./scroll-image-block.md)     |
 | Change cover templates   | [rich-post-cover.md](./rich-post-cover.md)           |
 | Add/alter upload limits  | [image-upload-limits.md](./image-upload-limits.md)   |
