@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/web/frontend/wechat-copy-pitfalls.md", "reason": "border shorthand/inline-value rules apply to the new underline and highlighter CSS"}
+{"file": ".trellis/spec/web/frontend/css-design.md", "reason": "CSS variable naming and token conventions for the new --wemd-strong-accent-* vars"}
+{"file": ".trellis/spec/web/frontend/type-safety.md", "reason": "optional field typing and import conventions in DesignerVariables"}
+{"file": ".trellis/spec/guides/code-reuse-thinking-guide.md", "reason": "justify the single shared accent resolver instead of duplicating color parsing"}
