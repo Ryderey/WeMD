@@ -20,6 +20,9 @@
 | `--wemd-primary-gradient-20`        | 渐变主题色（透明度 12%）         | `linear-gradient(135deg, rgba(65, 88, 208, 0.12), rgba(200, 80, 192, 0.12))` |
 | `--wemd-primary-gradient-line`      | 渐变横线绘制色                   | `linear-gradient(to right, transparent, #1e6bb880, transparent)`             |
 | `--wemd-primary-gradient-highlight` | 渐变高亮背景色                   | `linear-gradient(to right, rgba(30, 107, 184, 0.12), transparent)`           |
+| `--wemd-strong-accent-color`        | 加粗配色（未自定义时为主题色）   | `#FA5151`                                                                    |
+| `--wemd-strong-accent-color-12`     | 加粗配色（透明度 12%）           | `rgba(250, 81, 81, 0.12)`                                                    |
+| `--wemd-strong-accent-color-18`     | 加粗配色（透明度 18%）           | `rgba(250, 81, 81, 0.18)`                                                    |
 | `--wemd-letter-spacing`             | 全局字间距                       | `0px`                                                                        |
 | `--wemd-underline-style`            | 下划线样式                       | `solid`                                                                      |
 | `--wemd-underline-color`            | 下划线颜色                       | `currentColor`                                                               |
@@ -111,3 +114,13 @@
 | `--wemd-list-spacing`         | 列表项间距       |
 | `--wemd-list-marker-color`    | 列表符号颜色     |
 | `--wemd-list-marker-color-l2` | 二级列表符号颜色 |
+
+## 加粗配色说明
+
+`--wemd-strong-accent-*` 只被 `#wemd strong` 引用，用于把加粗的颜色与主题色分开设置。
+
+- 在设计器里选择「加粗配色 → 跟随主题」时，三个变量的值回退为主题色 `--wemd-primary-color` 及其 12% / 18% 透明色，因此旧主题的表现不变。
+- 选择自定义纯色后，`-12` 用于荧光笔背景，`-18` 用于底部涂抹，主变量用于彩色加粗文字、下划线和着重号。
+- 「加粗文字颜色」（`strongColor`）仍然是文字覆盖色：设置后文字用它，装饰继续用加粗配色。
+- 标题、链接、引用、列表标记等仍使用 `--wemd-primary-*`，不受这三个变量影响。
+- 历史变量 `--wemd-primary-color-20` / `-30` 与 `--wemd-primary-gradient-20` 的后缀与实际透明度（12% / 18%）并不对应，为兼容保留原名；新增变量按真实取值命名。

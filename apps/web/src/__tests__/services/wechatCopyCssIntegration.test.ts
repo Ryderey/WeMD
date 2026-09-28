@@ -877,3 +877,73 @@ describe("wechat copy css integration", () => {
     expect(snapshot.querySelector("[data-wemd-component]")).toBeNull();
   });
 });
+
+describe("independent strong accent colors survive the copy pipeline", () => {
+  const copyStrong = (
+    overrides: Partial<Parameters<typeof generateCSS>[0]>,
+  ) => {
+    const container = document.createElement("div");
+    container.innerHTML = resolveInlineStyleVariablesForCopy(
+      processHtml(
+        createMarkdownParser().render("这是 **加粗** 文本。"),
+        generateCSS({ ...defaultVariables, ...overrides }),
+        true,
+        true,
+      ),
+    );
+    normalizeCopyContainer(container);
+    const snapshot = document.createElement("div");
+    snapshot.innerHTML = serializeWechatCopyHtml(container);
+    return snapshot.querySelector<HTMLElement>("strong");
+  };
+
+  it("inlines the accent text color and bottom swipe paint", () => {
+    const strong = copyStrong({
+      primaryColor: "#722ED1",
+      strongStyle: "highlighter-bottom",
+      strongAccentColor: "#FA5151",
+    });
+
+    expect(strong?.style.color).toBe("rgb(250, 81, 81)");
+    expect(strong?.getAttribute("style")).toContain("rgba(250, 81, 81, 0.18)");
+    expect(strong?.getAttribute("style")).not.toContain("var(");
+    expect(strong?.getAttribute("style")).not.toContain("114, 46, 209");
+  });
+
+  it("inlines the accent underline as a literal border color", () => {
+    const strong = copyStrong({
+      primaryColor: "#722ED1",
+      strongStyle: "underline",
+      strongAccentColor: "#FA5151",
+    });
+
+    expect(strong?.style.borderBottomWidth).toBe("2px");
+    expect(strong?.style.borderBottomStyle).toBe("solid");
+    expect(strong?.style.borderBottomColor).toBe("rgb(250, 81, 81)");
+    expect(strong?.getAttribute("style")).not.toContain("var(");
+  });
+
+  it("keeps black text on an orange swipe when the override is set", () => {
+    const strong = copyStrong({
+      primaryColor: "#722ED1",
+      strongStyle: "highlighter-bottom",
+      strongAccentColor: "#FA5151",
+      strongColor: "#000000",
+    });
+
+    expect(strong?.style.color).toBe("rgb(0, 0, 0)");
+    expect(strong?.getAttribute("style")).toContain("rgba(250, 81, 81, 0.18)");
+  });
+
+  it("still falls back to the theme color when no accent is configured", () => {
+    const strong = copyStrong({
+      primaryColor: "#722ED1",
+      strongStyle: "highlighter-bottom",
+      strongAccentColor: "",
+    });
+
+    expect(strong?.style.color).toBe("rgb(114, 46, 209)");
+    expect(strong?.getAttribute("style")).toContain("rgba(114, 46, 209, 0.18)");
+    expect(strong?.getAttribute("style")).not.toContain("var(");
+  });
+});

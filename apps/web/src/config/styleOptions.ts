@@ -118,7 +118,7 @@ export const headingStylePresets: StylePresetOption[] = [
 
 export const boldStyleOptions = [
   { id: "none", label: "基础加粗" },
-  { id: "color", label: "随主题色" },
+  { id: "color", label: "彩色加粗" },
   { id: "highlighter", label: "荧光笔" },
   { id: "highlighter-bottom", label: "底部涂抹" },
   { id: "underline", label: "下划线" },

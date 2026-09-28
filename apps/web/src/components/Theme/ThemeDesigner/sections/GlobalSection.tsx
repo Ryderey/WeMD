@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import type { GlobalSectionProps } from "../types";
 import { ColorSelector } from "../../ColorSelector";
 import { SliderInput } from "../SliderInput";
+import { resolveStrongAccentColor } from "../generators/strongAccent";
 import {
   fontFamilyOptions,
   fontSizeOptions,
@@ -34,6 +35,7 @@ export function GlobalSection({
   );
   const [showCustomGradient, setShowCustomGradient] = useState(false);
   const customGradient = `linear-gradient(135deg, ${gradientStart} 0%, ${gradientEnd} 100%)`;
+  const strongAccentColor = resolveStrongAccentColor(variables);
 
   useEffect(() => {
     const [start, end] = getGradientColors(variables.primaryGradient);
@@ -220,7 +222,7 @@ export function GlobalSection({
           </div>
         )}
         <p className="designer-field-hint">
-          应用于渐变横线、背景块、渐变高亮、标题胶囊，以及“随主题色”加粗和荧光笔；链接、边框、列表标记等仍使用上方主题色。
+          应用于渐变横线、背景块、渐变高亮、标题胶囊，以及加粗配色选择“跟随主题”时的彩色加粗和荧光笔；链接、边框、列表标记等仍使用上方主题色。
         </p>
       </div>
 
@@ -237,6 +239,60 @@ export function GlobalSection({
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="designer-field">
+        <label>加粗配色</label>
+        <div
+          className="designer-options"
+          role="group"
+          aria-label="加粗配色来源"
+        >
+          <button
+            className={`option-btn ${strongAccentColor ? "" : "active"}`}
+            aria-pressed={!strongAccentColor}
+            onClick={() => updateVariable("strongAccentColor", "")}
+          >
+            跟随主题
+          </button>
+          <button
+            className={`option-btn ${strongAccentColor ? "active" : ""}`}
+            aria-pressed={Boolean(strongAccentColor)}
+            onClick={() =>
+              updateVariable(
+                "strongAccentColor",
+                resolveStrongAccentColor({
+                  strongAccentColor: variables.primaryColor,
+                }) ?? primaryColorOptions[0].value,
+              )
+            }
+          >
+            自定义
+          </button>
+        </div>
+        {strongAccentColor && (
+          <ColorSelector
+            value={strongAccentColor}
+            presets={primaryColorOptions}
+            onChange={(color) => updateVariable("strongAccentColor", color)}
+          />
+        )}
+        <p className="designer-field-hint">
+          加粗配色控制文字默认颜色及装饰颜色；单独设置文字颜色可覆盖文字部分。
+        </p>
+      </div>
+
+      <div className="designer-field">
+        <label>加粗文字颜色</label>
+        <ColorSelector
+          value={variables.strongColor || "inherit"}
+          presets={[
+            { label: "自动", value: "inherit" },
+            variables.primaryColor,
+            "#333",
+          ]}
+          onChange={(color) => updateVariable("strongColor", color)}
+        />
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import type { DesignerVariables } from "../types";
+import { resolveStrongAccentColor } from "./strongAccent";
 
 const toAlphaColor = (color: string, alpha: number): string => {
   const trimmed = color.trim();
@@ -67,6 +68,7 @@ export function generateVariables(
     : `linear-gradient(to right, ${primaryColor20}, transparent)`;
   const underlineStyle = v.underlineStyle || "solid";
   const underlineColor = v.underlineColor || "currentColor";
+  const strongAccentColor = resolveStrongAccentColor(v) ?? v.primaryColor;
   const pageBackgroundColor = v.pageBackgroundColor?.trim();
   const pageBackgroundDeclaration =
     pageBackgroundColor && pageBackgroundColor.toLowerCase() !== "transparent"
@@ -89,6 +91,9 @@ export function generateVariables(
   --wemd-primary-gradient-20: ${primaryGradient20};
   --wemd-primary-gradient-line: ${primaryGradientLine};
   --wemd-primary-gradient-highlight: ${primaryGradientHighlight};
+  --wemd-strong-accent-color: ${strongAccentColor};
+  --wemd-strong-accent-color-12: ${toAlphaColor(strongAccentColor, 0.12)};
+  --wemd-strong-accent-color-18: ${toAlphaColor(strongAccentColor, 0.18)};
   --wemd-letter-spacing: ${v.baseLetterSpacing || 0}px;
   --wemd-underline-style: ${underlineStyle};
   --wemd-underline-color: ${underlineColor};

@@ -83,6 +83,11 @@ export interface DesignerVariables {
   underlineColor: string;
   strongStyle: string;
   strongColor: string;
+  /**
+   * 独立加粗配色（纯色）。空 / 缺失 / 无效 = 加粗颜色跟随主题色；
+   * 有效纯色 = 同时作为加粗的默认文字色与装饰色，`strongColor` 仍只覆盖文字色。
+   */
+  strongAccentColor?: string;
 
   // 表格
   tableHeaderBackground: string;

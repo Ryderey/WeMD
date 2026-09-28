@@ -108,6 +108,7 @@ export const defaultVariables: DesignerVariables = {
   underlineColor: "currentColor",
   strongStyle: "color",
   strongColor: "inherit",
+  strongAccentColor: "",
 
   // 表格
   tableHeaderBackground: "#f8f8f8",
