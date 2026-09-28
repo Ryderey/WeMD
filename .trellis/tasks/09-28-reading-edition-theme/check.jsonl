@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/web/frontend/wechat-copy-pitfalls.md", "reason": "verify literal values and border longhands in copied output"}
+{"file": ".trellis/spec/web/frontend/quality.md", "reason": "lint and type-check gates"}

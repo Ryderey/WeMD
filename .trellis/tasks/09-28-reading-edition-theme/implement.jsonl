@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/web/frontend/wechat-copy-pitfalls.md", "reason": "theme CSS must survive the WeChat copy pipeline"}
+{"file": ".trellis/spec/web/frontend/theme-designer.md", "reason": "theme CSS generation contract and legacy-stability rules"}
