@@ -17,6 +17,7 @@ import {
   receiptTheme,
   sunsetFilmTheme,
   templateTheme,
+  jadeNotesTheme,
 } from "@wemd/core";
 
 // 从 ThemeDesigner 导入共享类型（解决类型重复定义问题）
@@ -147,6 +148,14 @@ export const builtInThemes: CustomTheme[] = [
     id: "template",
     name: "主题模板",
     css: basicTheme + "\n" + templateTheme + "\n" + codeGithubTheme,
+    isBuiltIn: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "jade-notes",
+    name: "青岚",
+    css: basicTheme + "\n" + jadeNotesTheme + "\n" + codeGithubTheme,
     isBuiltIn: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
