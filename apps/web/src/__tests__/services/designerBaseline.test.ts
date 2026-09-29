@@ -12,39 +12,14 @@ import type { DesignerVariables } from "../../components/Theme/ThemeDesigner/typ
 /**
  * 设计器旧输出基线。
  *
- * fixtures 由改动前的代码生成并冻结（pinned commit 记录在 _manifest.json）。
- * 任何生成器改动都必须让这些断言保持通过；确需改变旧输出时，必须人工审核后用
+ * fixtures 记录经审核的设计器输出。2026-09-29 为让新主题默认覆盖 Markdown <s>
+ * 的删除线颜色，全部 54 个配置增加了 #wemd s 规则并显式重冻。
+ * 任何生成器改动都必须让这些断言保持通过；确需改变输出时，必须人工审核后用
  *   FREEZE_DESIGNER_BASELINE=1 pnpm --filter @wemd/web exec vitest run src/__tests__/services/designerBaseline.test.ts
  * 重新冻结，并在任务记录里说明为什么。禁止把它当成快照随手 -u 更新。
  *
- * 唯一的例外写在 reviewedChanges 里：冻结时是死字段、后来才接通的配置，基线保留原样，
- * 断言改为「旧输出逐字不变 + 尾部恰好多出生效规则」，并把多出来的内容逐字钉住。
+ * 旧的 calloutStyle-primary 例外已随本次整批重冻写入 fixture。
  */
-const reviewedChanges: Record<string, { reason: string; delta: string }> = {
-  "calloutStyle-primary": {
-    reason:
-      "冻结时 calloutStyle 是死字段（生成器未读取），切片 2.7 才让它生效；无 UI，只有 JSON 导入能设。",
-    delta: `
-
-
-#wemd .callout {
-  background-color: var(--wemd-primary-color-20);
-}
-#wemd .callout-title {
-  color: var(--wemd-primary-color);
-}
-#wemd .callout-note,
-#wemd .callout-tip,
-#wemd .callout-important,
-#wemd .callout-warning,
-#wemd .callout-caution {
-  border-left-width: 4px;
-  border-left-style: solid;
-  border-left-color: var(--wemd-primary-color);
-}
-`,
-  },
-};
 const fixturePath = (name: string) =>
   new URL(`../fixtures/designer-baseline/${name}.css`, import.meta.url);
 const readFixture = (name: string) => readFileSync(fixturePath(name), "utf8");
@@ -154,14 +129,7 @@ describe("designer legacy output baseline", () => {
         true,
       );
       const output = generateCSS(variables);
-      const reviewed = reviewedChanges[name];
-      if (!reviewed) {
-        expect(output).toBe(readFixture(name));
-        return;
-      }
-      expect(output, `${name} 偏离基线只允许是审核过的追加内容`).toBe(
-        readFixture(name) + reviewed.delta,
-      );
+      expect(output).toBe(readFixture(name));
     },
   );
 });

@@ -510,3 +510,28 @@
   margin: 0;
   padding: 0;
 }
+
+
+
+#wemd s {
+  text-decoration: line-through;
+  text-decoration-color: var(--wemd-del-color);
+  color: var(--wemd-del-color);
+  font-style: normal;
+}
+
+#wemd .callout {
+  background-color: var(--wemd-primary-color-20);
+}
+#wemd .callout-title {
+  color: var(--wemd-primary-color);
+}
+#wemd .callout-note,
+#wemd .callout-tip,
+#wemd .callout-important,
+#wemd .callout-warning,
+#wemd .callout-caution {
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-left-color: var(--wemd-primary-color);
+}

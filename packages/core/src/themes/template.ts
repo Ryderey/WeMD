@@ -293,6 +293,7 @@ export const templateTheme = `/*
 }
 
 /* 删除线 */
+#wemd s,
 #wemd del {
     text-decoration: line-through;
     color: #999;

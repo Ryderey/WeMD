@@ -13,8 +13,60 @@ import { normalizeCopyContainer } from "../../services/wechatCopyService";
 import { serializeWechatCopyHtml } from "../../services/wechatCopyNormalizer";
 import { defaultVariables } from "../../components/Theme/ThemeDesigner/defaults";
 import { generateCSS } from "../../components/Theme/ThemeDesigner/generateCSS";
+import { buildCopyCss } from "../../services/export/renderContainer";
+import { builtInThemes } from "../../store/themes/builtInThemes";
+
+const copyStrikethrough = (css: string) => {
+  const container = document.createElement("div");
+  container.innerHTML = resolveInlineStyleVariablesForCopy(
+    processHtml(
+      createMarkdownParser().render("正文 ~~删除线~~ 与 <del>手写del</del>。"),
+      buildCopyCss(css),
+      true,
+      true,
+    ),
+  );
+  normalizeCopyContainer(container);
+  const snapshot = document.createElement("div");
+  snapshot.innerHTML = serializeWechatCopyHtml(container);
+  const s = snapshot.querySelector<HTMLElement>("s");
+  const del = snapshot.querySelector<HTMLElement>("del");
+  expect(s).not.toBeNull();
+  expect(del).not.toBeNull();
+  expect(snapshot.innerHTML).not.toContain("var(--wemd-");
+  return { s, del };
+};
 
 describe("wechat copy css integration", () => {
+  it.each([
+    { name: "basic", css: basicTheme },
+    ...builtInThemes.filter((theme) => !theme.designerVariables),
+  ])(
+    "copies Markdown <s> with the same deletion styling as <del> in $name",
+    ({ css }) => {
+      const { s, del } = copyStrikethrough(css);
+      expect(s?.getAttribute("style")).toBe(del?.getAttribute("style"));
+    },
+  );
+
+  it("uses the designer's deletion color for new themes and preserves the old opt-out", () => {
+    const { s: defaultS } = copyStrikethrough(generateCSS(defaultVariables));
+    expect(defaultS?.style.color).toBe("rgb(153, 153, 153)");
+    expect(defaultS?.style.textDecorationColor).toBe("#999");
+
+    const { s: coloredS } = copyStrikethrough(
+      generateCSS({ ...defaultVariables, delColor: "#27675C" }),
+    );
+    expect(coloredS?.style.color).toBe("rgb(39, 103, 92)");
+    expect(coloredS?.style.textDecorationColor).toBe("#27675C");
+
+    const { s: legacyS } = copyStrikethrough(
+      generateCSS({ ...defaultVariables, delCoversStrikethrough: false }),
+    );
+    expect(legacyS?.style.color).toBe("rgb(51, 51, 51)");
+    expect(legacyS?.style.textDecorationColor).toBe("");
+  });
+
   it.each(["transparent", "#f5f3ef"])(
     "starts with article content without blank boundary paragraphs (%s)",
     (pageBackgroundColor) => {

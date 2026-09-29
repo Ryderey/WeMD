@@ -102,6 +102,7 @@ export const defaultVariables: DesignerVariables = {
   linkUnderline: true,
   italicColor: "inherit",
   delColor: "#999",
+  delCoversStrikethrough: true,
   markBackground: "#fff5b1",
   markColor: "inherit",
   underlineStyle: "solid",

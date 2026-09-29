@@ -265,6 +265,7 @@ export const auroraGlassTheme = `/* 极光玻璃风格 */
 }
 
 /* 删除线 - 渐变色 */
+#wemd s,
 #wemd del {
     text-decoration: line-through;
     color: #999;

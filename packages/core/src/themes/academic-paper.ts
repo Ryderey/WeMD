@@ -197,6 +197,7 @@ export const academicPaperTheme = `/* 学术论文风格 */
 }
 
 /* 删除线 */
+#wemd s,
 #wemd del {
     text-decoration: line-through;
     color: #666;

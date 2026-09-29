@@ -221,6 +221,7 @@ export const morandiForestTheme = `/* 莫兰迪森林风格 */
 }
 
 /* 删除线 */
+#wemd s,
 #wemd del {
   text-decoration: line-through;
   color: #889E8B;

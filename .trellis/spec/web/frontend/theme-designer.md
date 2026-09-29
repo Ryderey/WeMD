@@ -53,51 +53,32 @@ Two ways an edit breaks byte-identity without changing any declaration:
 
 Some fields exist in `DesignerVariables` and in `defaults.ts` but are read by no generator and have no control — they were pure decoration. The baseline sweep includes such a branch (`calloutStyle-primary` did), so wiring the field up legitimately changes that one config's output while every other config must stay byte-identical.
 
-Do not re-freeze in that case. Keep the fixture as evidence of the old output and register the config in `reviewedChanges` in `designerBaseline.test.ts`: the assertion becomes `output === frozen + <pinned delta>`, so the only permitted difference is the appended rule, spelled out verbatim next to the reason.
+For a single affected configuration, keep the fixture as evidence of the old output and record a reviewed, pinned delta in `designerBaseline.test.ts`. A later deliberate full re-freeze may fold that delta into the fixture. The `calloutStyle-primary` delta was folded into the 2026-09-29 re-freeze.
 
 **Consequence for users**: a theme that carried the dead value (only reachable through imported or hand-edited JSON, since there was no control) now renders what it always claimed to. Say so in the commit message.
 
-## Known defect: the strikethrough color control misses `<s>`
+## Strikethrough color and `<s>` compatibility
 
-Markdown-it renders `~~text~~` as `<s>`, but the designer's `删除线颜色` (`delColor`) only emits
-`#wemd del { ... }`. The control therefore has no effect on strikethrough produced from
-markdown text — it only affects hand-written `<del>` in the source.
+Markdown-it renders `~~text~~` as `<s>`. The designer's `delColor` originally styled only
+`#wemd del`; `delCoversStrikethrough` already supplied an opt-in `#wemd s` mirror. On
+2026-09-29 the new-theme default became `true`. The 54 designer baselines were explicitly
+re-frozen for that intended rule. The five reading templates already set the flag explicitly.
 
-Status (2026-09-29): **not fixed by default.** `delCoversStrikethrough` adds a mirroring
-`#wemd s` rule, but it stays opt-in because turning it on by default would change the
-output of every existing visual theme, which the frozen baselines forbid. Flipping the
-default requires an explicit decision plus a re-frozen baseline.
+Stored older visual themes without the field still generate their old CSS because the generator
+requires `=== true`. `ThemePanel.normalizeDesignerVariables` maps a missing field to `false`,
+so opening and saving an old theme also preserves its appearance. A user can enable the control.
 
-Measured through the real copy sequence (`buildCopyCss` → `processHtml(…, true, true)` →
-`resolveInlineStyleVariablesForCopy`), with `正文 **加粗** ~~删除线~~ 与 <del>手写del</del>。`:
+The 12 CSS-mode built-in themes need both the `basic.ts` rule and their own theme-specific
+`#wemd del` rules to target `#wemd s` as well. Changing only `basic.ts` would give `<s>` the
+basic black italic appearance while `<del>` still gets the theme's own color and decoration.
+The 12 specific theme rules and `basic.ts` now share each rule between `s` and `del`.
 
-- opt-in off: `<s>` → **bare `<s>`, no inline style at all**; `<del>` → `color: #999`.
-- opt-in on: `<s style="text-decoration: line-through; text-decoration-color: #999; color: #999; font-style: normal;">`.
+Copy validation must include the final steps: `buildCopyCss` → `processHtml` →
+`resolveInlineStyleVariablesForCopy` → `normalizeCopyContainer` → `serializeWechatCopyHtml`.
+Before normalization, an old-theme `<s>` has no inline style. The normalizer adds the inherited
+body color to text nodes, so the final payload is **not** a bare `<s>`; its deletion-specific
+color still does not apply. New visual themes inline the configured text and line colors, with
+no remaining `var(--wemd-*)` references. Verify an actual paste into WeChat separately.
 
-So with the default the line is drawn by WeChat's own styling and the theme's strikethrough
-color silently does not apply.
-
-**The same gap exists one layer down**: `packages/core/src/themes/basic.ts` styles only
-`#wemd del`, so all ~13 composed CSS built-ins (`basic + X + codeGithub`) share it. Across the
-whole `packages/core/src/themes/` tree the only file that covers `#wemd s` is
-`reading-editions.ts` — which no longer has any consumer since the five editions became
-variable-generated templates (keep the file: it is the fidelity reference for those seeds).
-
-Fixing it therefore has two independent halves:
-
-| Layer                    | Change                                                      | Cost                                                                                                      |
-| ------------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| CSS-mode built-ins       | add an `#wemd s` rule to `basic.ts`                         | one file; no designer baselines involved; every composed built-in changes appearance (the intended fix)   |
-| Visual themes (designer) | default `delCoversStrikethrough` to `true` in `defaults.ts` | all 54 frozen fixtures gain the block → full `FREEZE_DESIGNER_BASELINE=1` re-freeze with a written reason |
-
-Two consequences to plan for when flipping the designer default:
-
-- Stored themes are regenerated from their stored variables, so they stay unchanged — but opening
-  an old theme in the panel and saving it (even without touching this control) merges the new
-  default through `normalizeDesignerVariables` and adds the rule.
-- The WeChat payload for `~~text~~` changes from a bare tag to one carrying inline styles, so the
-  manual paste check has to be repeated.
-
-Do not "fix" it by making the parser emit `<del>` instead of `<s>`: that would change the DOM
-contract for every theme at once (`themeSampleDomCoverage.test.ts` requires `s`), and user-written
-CSS themes that target `s` would silently stop applying.
+Keep the parser's `<s>` output: `themeSampleDomCoverage.test.ts` requires it, and user CSS may
+target that tag.

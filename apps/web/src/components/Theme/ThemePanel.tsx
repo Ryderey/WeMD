@@ -24,6 +24,8 @@ const normalizeDesignerVariables = (
 ): DesignerVariables => ({
   ...defaultVariables,
   ...variables,
+  // 旧主题缺少此字段时沿用原外观；新建主题由 defaultVariables 开启。
+  delCoversStrikethrough: variables?.delCoversStrikethrough === true,
   h1: { ...defaultVariables.h1, ...variables?.h1 },
   h2: { ...defaultVariables.h2, ...variables?.h2 },
   h3: { ...defaultVariables.h3, ...variables?.h3 },

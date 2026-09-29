@@ -263,6 +263,7 @@ export const sunsetFilmTheme = `/* 落日胶片风格 */
 }
 
 /* 删除线 */
+#wemd s,
 #wemd del {
     text-decoration: line-through;
     color: #8D5B4C;

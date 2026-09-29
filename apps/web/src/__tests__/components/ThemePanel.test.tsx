@@ -6,6 +6,8 @@ import { useEditorStore } from "../../store/editorStore";
 import { useHistoryStore } from "../../store/historyStore";
 import { useUITheme } from "../../hooks/useUITheme";
 import type { CustomTheme } from "../../store/themes/builtInThemes";
+import { defaultVariables as actualDefaultVariables } from "../../components/Theme/ThemeDesigner/defaults";
+import type { DesignerVariables } from "../../components/Theme/ThemeDesigner/types";
 
 // Mock stores and hooks
 vi.mock("../../store/themeStore");
@@ -20,7 +22,19 @@ vi.mock("../../lib/platformAdapter", () => ({
 
 // Mock ThemeDesigner to avoid complex dependencies
 vi.mock("../../components/Theme/ThemeDesigner", () => ({
-  ThemeDesigner: () => <div data-testid="theme-designer">Theme Designer</div>,
+  ThemeDesigner: ({
+    initialVariables,
+    onVariablesChange,
+  }: {
+    initialVariables?: DesignerVariables;
+    onVariablesChange?: (variables: DesignerVariables) => void;
+  }) => (
+    <button
+      onClick={() => initialVariables && onVariablesChange?.(initialVariables)}
+    >
+      模拟设计器更新
+    </button>
+  ),
   defaultVariables: {},
   generateCSS: () => "",
 }));
@@ -167,6 +181,41 @@ describe("ThemePanel", () => {
 
     const nameInput = screen.getByPlaceholderText("输入主题名称...");
     expect(nameInput).toHaveValue("自定义主题");
+  });
+
+  it("keeps an old visual theme's strikethrough setting off when saving", () => {
+    const legacyVariables = { ...actualDefaultVariables };
+    delete legacyVariables.delCoversStrikethrough;
+    const legacyTheme: CustomTheme = {
+      id: "legacy-visual",
+      name: "旧主题",
+      css: "#wemd{}",
+      isBuiltIn: false,
+      editorMode: "visual",
+      designerVariables: legacyVariables,
+      createdAt: "2025-01-01",
+      updatedAt: "2025-01-01",
+    };
+    mockThemes.push(legacyTheme);
+    try {
+      render(<ThemePanel open={true} onClose={() => {}} />);
+      fireEvent.click(screen.getByRole("button", { name: "旧主题" }));
+      fireEvent.click(screen.getByRole("button", { name: "模拟设计器更新" }));
+      fireEvent.change(screen.getByPlaceholderText("输入主题名称..."), {
+        target: { value: "旧主题改名" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /保存修改/ }));
+      expect(mockUpdateTheme).toHaveBeenCalledWith(
+        "legacy-visual",
+        expect.objectContaining({
+          designerVariables: expect.objectContaining({
+            delCoversStrikethrough: false,
+          }),
+        }),
+      );
+    } finally {
+      mockThemes.pop();
+    }
   });
 
   it("enters creation mode when new theme button clicked", () => {

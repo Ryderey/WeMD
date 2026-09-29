@@ -229,6 +229,7 @@ export const cyberpunkNeonTheme = `/* 赛博朋克风格 */
 }
 
 /* 删除线 - 发光线 */
+#wemd s,
 #wemd del {
     text-decoration: line-through;
     text-decoration-color: #FF00C1;

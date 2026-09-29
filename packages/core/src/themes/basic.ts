@@ -183,6 +183,7 @@ export const basicTheme = `/* 默认样式，最佳实践 */
 }
 
 /* 删除线 */
+#wemd s,
 #wemd del {
   font-style: italic;
   color: #000000;

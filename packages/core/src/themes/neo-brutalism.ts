@@ -288,6 +288,7 @@ export const neoBrutalismTheme = `/* 新粗野主义风格 */
 }
 
 /* 删除线 - 粗线 */
+#wemd s,
 #wemd del {
     text-decoration: line-through;
     text-decoration-thickness: 3px;

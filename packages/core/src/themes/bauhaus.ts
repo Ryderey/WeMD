@@ -216,6 +216,7 @@ export const bauhausTheme = `/* 包豪斯风格 */
 }
 
 /* 删除线 - 粗红线 */
+#wemd s,
 #wemd del {
     text-decoration: line-through;
     text-decoration-thickness: 2px;

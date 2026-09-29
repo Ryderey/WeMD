@@ -12,6 +12,7 @@ const frozenDefault = readFileSync(
 
 const v = (overrides: Partial<DesignerVariables>) =>
   generateCSS({ ...defaultVariables, ...overrides });
+const legacyStrikethrough = v({ delCoversStrikethrough: false });
 
 describe("link underline mode", () => {
   it("switches to text-decoration and drops the border", () => {
@@ -47,6 +48,11 @@ describe("link underline mode", () => {
 });
 
 describe("strikethrough coverage", () => {
+  it("covers Markdown strikethrough by default", () => {
+    expect(v({})).toContain("#wemd s {");
+    expect(legacyStrikethrough).not.toContain("#wemd s {");
+  });
+
   it("mirrors the del styling onto the <s> element Markdown produces", () => {
     const css = v({ delCoversStrikethrough: true });
     const start = css.indexOf("#wemd s {");
@@ -68,12 +74,11 @@ describe("strikethrough coverage", () => {
     ["数字", 1],
     ["对象", {}],
     ["null", null],
-  ])(
-    "非布尔的 delCoversStrikethrough（%s）逐字回退到冻结基线",
-    (unused, value) => {
-      expect(v({ delCoversStrikethrough: value as never })).toBe(frozenDefault);
-    },
-  );
+  ])("非布尔的 delCoversStrikethrough（%s）沿用旧主题输出", (unused, value) => {
+    expect(v({ delCoversStrikethrough: value as never })).toBe(
+      legacyStrikethrough,
+    );
+  });
 });
 
 describe("hanging footnote layout", () => {
@@ -174,12 +179,13 @@ describe("link underline switch", () => {
 });
 
 describe("overrides are appended, never interleaved", () => {
-  it("the frozen default CSS is a prefix of a fully overridden theme", () => {
+  it("keeps the frozen base CSS before optional overrides", () => {
     const css = v({
       linkUnderlineMode: "text",
       delCoversStrikethrough: true,
       footnoteLayout: "hanging",
     });
-    expect(css.startsWith(frozenDefault.trimEnd())).toBe(true);
+    const basePrefix = frozenDefault.split("#wemd s {")[0].trimEnd();
+    expect(css.startsWith(basePrefix)).toBe(true);
   });
 });

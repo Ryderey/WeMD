@@ -507,3 +507,12 @@
   margin: 0;
   padding: 0;
 }
+
+
+
+#wemd s {
+  text-decoration: line-through;
+  text-decoration-color: var(--wemd-del-color);
+  color: var(--wemd-del-color);
+  font-style: normal;
+}

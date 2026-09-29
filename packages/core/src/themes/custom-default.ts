@@ -277,6 +277,7 @@ export const customDefaultTheme = `/* 自定义样式,实时生效,浏览器实�
 }
 
 /* 删除线 */
+#wemd s,
 #wemd del {
   text-decoration: line-through;
   color: #94a3b8;
