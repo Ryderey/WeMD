@@ -5,6 +5,7 @@ import {
   headingSizePresets,
   marginPresets,
   headingStylePresets,
+  fontFamilyOptions,
 } from "../../../../config/styleOptions";
 
 const headingTabs: { id: HeadingLevel; label: string }[] = [
@@ -149,6 +150,95 @@ export function HeadingSection({
           step={marginPresets.step}
         />
       </div>
+
+      <details className="designer-advanced">
+        <summary>标题高级选项</summary>
+        <div className="designer-field">
+          <label>行高</label>
+          <SliderInput
+            value={Number(
+              variables[activeHeading].lineHeight ?? variables.lineHeight,
+            )}
+            onChange={(val) =>
+              updateHeading(activeHeading, { lineHeight: val })
+            }
+            min={0.8}
+            max={4}
+            step={0.01}
+          />
+        </div>
+        <div className="designer-field">
+          <label>字体</label>
+          <div className="designer-options">
+            <button
+              className={`option-btn ${!variables[activeHeading].fontFamily ? "active" : ""}`}
+              onClick={() =>
+                updateHeading(activeHeading, { fontFamily: undefined })
+              }
+            >
+              跟随全局
+            </button>
+            {fontFamilyOptions.map((opt) => (
+              <button
+                key={opt.value}
+                className={`option-btn ${variables[activeHeading].fontFamily === opt.value ? "active" : ""}`}
+                onClick={() =>
+                  updateHeading(activeHeading, { fontFamily: opt.value })
+                }
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="designer-field">
+          <label>下方细线宽度</label>
+          <SliderInput
+            value={variables[activeHeading].ruleBelowWidth ?? 0}
+            onChange={(val) =>
+              updateHeading(activeHeading, { ruleBelowWidth: val })
+            }
+            min={0}
+            max={8}
+            step={0.5}
+          />
+        </div>
+        <div className="designer-field">
+          <label>细线颜色</label>
+          <ColorSelector
+            value={
+              variables[activeHeading].ruleBelowColor ??
+              variables[activeHeading].color
+            }
+            presets={[
+              variables.primaryColor,
+              "#DDE7DF",
+              "#E6E0D7",
+              "#DFE6F1",
+              "#EBE1DB",
+              "#ddd",
+            ]}
+            onChange={(color) =>
+              updateHeading(activeHeading, { ruleBelowColor: color })
+            }
+          />
+        </div>
+        <div className="designer-field">
+          <label>细线与文字距离</label>
+          <SliderInput
+            value={variables[activeHeading].ruleBelowGap ?? 0}
+            onChange={(val) =>
+              updateHeading(activeHeading, { ruleBelowGap: val })
+            }
+            min={0}
+            max={40}
+            step={1}
+          />
+        </div>
+        <p className="designer-field-hint">
+          细线宽度设为 0 表示不显示；细线跟随标题文字宽度，不是整行通栏。
+        </p>
+      </details>
     </div>
   );
 }

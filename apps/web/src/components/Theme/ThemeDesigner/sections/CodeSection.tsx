@@ -90,6 +90,132 @@ export function CodeSection({
         </label>
       </div>
 
+      <details className="designer-advanced">
+        <summary>代码块高级选项</summary>
+        <div className="designer-field">
+          <label>外框</label>
+          <div className="designer-options mini">
+            {[
+              { id: "none", label: "无边框" },
+              { id: "full", label: "全框" },
+              { id: "left", label: "仅左线" },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                className={`option-btn ${
+                  (variables.codeBlockBorder ?? "none") === opt.id
+                    ? "active"
+                    : ""
+                }`}
+                aria-pressed={(variables.codeBlockBorder ?? "none") === opt.id}
+                onClick={() =>
+                  updateVariable(
+                    "codeBlockBorder",
+                    opt.id as DesignerVariables["codeBlockBorder"],
+                  )
+                }
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="designer-field">
+          <label>边框颜色</label>
+          <ColorSelector
+            value={variables.codeBlockBorderColor ?? "#DDE7DF"}
+            presets={["#DDE7DF", "#E6E0D7", "#DFE6F1", "#EBE1DB", "#CFCFCB"]}
+            onChange={(color) => updateVariable("codeBlockBorderColor", color)}
+          />
+        </div>
+        <div className="designer-field">
+          <label>边框宽度</label>
+          <SliderInput
+            value={variables.codeBlockBorderWidth ?? 1}
+            onChange={(val) => updateVariable("codeBlockBorderWidth", val)}
+            min={1}
+            max={8}
+            step={0.5}
+          />
+        </div>
+        <div className="designer-field">
+          <label>圆角</label>
+          <SliderInput
+            value={variables.codeBlockRadius ?? 8}
+            onChange={(val) => updateVariable("codeBlockRadius", val)}
+            min={0}
+            max={24}
+            step={1}
+          />
+        </div>
+        <div className="designer-field">
+          <label>内距（横向）</label>
+          <SliderInput
+            value={variables.codeBlockPaddingX ?? 16}
+            onChange={(val) => updateVariable("codeBlockPaddingX", val)}
+            min={0}
+            max={40}
+            step={1}
+          />
+        </div>
+        <div className="designer-field">
+          <label>内距（纵向）</label>
+          <SliderInput
+            value={variables.codeBlockPaddingY ?? 14}
+            onChange={(val) => updateVariable("codeBlockPaddingY", val)}
+            min={0}
+            max={40}
+            step={1}
+          />
+        </div>
+        <div className="designer-field">
+          <label>代码行高</label>
+          <SliderInput
+            value={Number(variables.codeBlockLineHeight ?? 1.75)}
+            onChange={(val) => updateVariable("codeBlockLineHeight", val)}
+            min={1}
+            max={3}
+            step={0.01}
+          />
+        </div>
+        <div className="designer-field-row">
+          <span>长行在框内滚动</span>
+          <label className="designer-switch">
+            <input
+              type="checkbox"
+              checked={variables.codeBlockContainWidth === true}
+              onChange={(e) =>
+                updateVariable("codeBlockContainWidth", e.target.checked)
+              }
+            />
+            <span className="switch-slider"></span>
+          </label>
+        </div>
+        <div className="designer-field">
+          <label>行内代码字号</label>
+          <SliderInput
+            value={variables.inlineCodeFontSize ?? 13}
+            onChange={(val) => updateVariable("inlineCodeFontSize", val)}
+            min={8}
+            max={32}
+            step={0.5}
+          />
+        </div>
+        <div className="designer-field">
+          <label>行内代码边框</label>
+          <SliderInput
+            value={variables.inlineCodeBorderWidth ?? 1}
+            onChange={(val) => updateVariable("inlineCodeBorderWidth", val)}
+            min={0}
+            max={4}
+            step={0.5}
+          />
+        </div>
+        <p className="designer-field-hint">
+          开启「长行在框内滚动」后，超长代码行不会把代码块撑破正文宽度。
+        </p>
+      </details>
+
       <div className="designer-field">
         <label>高亮主题</label>
         <div className="designer-options col-2">

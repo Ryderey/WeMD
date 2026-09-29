@@ -22,10 +22,13 @@ interface ThemePanelViewProps {
   onClose: () => void;
   fileInputRef: MutableRefObject<HTMLInputElement | null>;
   builtInThemes: CustomTheme[];
+  templateThemes: CustomTheme[];
+  templateTaglines: Record<string, string>;
   customThemes: CustomTheme[];
   selectedTheme: CustomTheme | undefined;
   selectedThemeId: string;
   isCustomTheme: boolean;
+  isTemplateTheme: boolean;
   isCreating: boolean;
   creationStep: "select-mode" | "editing";
   editorMode: "visual" | "css";
@@ -66,10 +69,13 @@ export function ThemePanelView({
   onClose,
   fileInputRef,
   builtInThemes,
+  templateThemes,
+  templateTaglines,
   customThemes,
   selectedTheme,
   selectedThemeId,
   isCustomTheme,
+  isTemplateTheme,
   isCreating,
   creationStep,
   editorMode,
@@ -142,10 +148,31 @@ export function ThemePanelView({
             />
 
             <div className="theme-list-scroll">
-              {customThemes.length > 0 && (
-                <div className="theme-group">
-                  <div className="theme-group-title">自定义主题</div>
-                  {customThemes.map((item) => (
+              <div className="theme-group">
+                <div className="theme-group-title">模板 · 复制后编辑</div>
+                {templateThemes.map((item) => (
+                  <button
+                    key={item.id}
+                    className={`theme-item ${item.id === selectedThemeId ? "active" : ""}`}
+                    onClick={() => onSelectTheme(item.id)}
+                  >
+                    {item.name}
+                    <span className="theme-item-tag">[模板]</span>
+                  </button>
+                ))}
+                <p className="theme-group-hint">
+                  模板不可修改，复制后可进行可视化微调
+                </p>
+              </div>
+
+              <div className="theme-group">
+                <div className="theme-group-title">我的主题</div>
+                {customThemes.length === 0 ? (
+                  <p className="theme-group-empty">
+                    还没有自己的主题，从模板复制一份开始
+                  </p>
+                ) : (
+                  customThemes.map((item) => (
                     <button
                       key={item.id}
                       className={`theme-item ${item.id === selectedThemeId ? "active" : ""}`}
@@ -153,9 +180,9 @@ export function ThemePanelView({
                     >
                       {item.name}
                     </button>
-                  ))}
-                </div>
-              )}
+                  ))
+                )}
+              </div>
 
               <div className="theme-group">
                 <div className="theme-group-title">内置主题</div>
@@ -282,6 +309,7 @@ export function ThemePanelView({
                         selectedTheme?.editorMode === "visual")) && (
                       <div className="visual-designer-container">
                         <ThemeDesigner
+                          key={isCreating ? "new" : selectedTheme?.id}
                           onCSSChange={onVisualCssChange}
                           onVariablesChange={onVariablesChange}
                           initialVariables={
@@ -308,10 +336,20 @@ export function ThemePanelView({
                       </>
                     )}
 
-                    {!isCreating && !isCustomTheme && (
+                    {isTemplateTheme ? (
                       <p className="info-hint">
-                        💡内置主题不可编辑，点击"复制"按钮可以基于此主题创建自定义主题
+                        模板不可修改，复制后可进行可视化微调
+                        {templateTaglines[selectedTheme?.id ?? ""]
+                          ? ` · ${templateTaglines[selectedTheme?.id ?? ""]}`
+                          : ""}
                       </p>
+                    ) : (
+                      !isCreating &&
+                      !isCustomTheme && (
+                        <p className="info-hint">
+                          💡内置主题不可编辑，点击"复制"按钮可以基于此主题创建自定义主题
+                        </p>
+                      )
                     )}
                   </div>
                 </>
@@ -330,6 +368,19 @@ export function ThemePanelView({
                     disabled={!canSave}
                   >
                     保存为新主题
+                  </button>
+                </>
+              ) : isTemplateTheme ? (
+                <>
+                  <button className="btn-icon-text" onClick={onDuplicate}>
+                    <Copy size={16} /> 复制并微调
+                  </button>
+                  <div className="flex-spacer"></div>
+                  <button className="btn-secondary" onClick={onClose}>
+                    取消
+                  </button>
+                  <button className="btn-primary" onClick={onApply}>
+                    应用主题
                   </button>
                 </>
               ) : isCustomTheme ? (

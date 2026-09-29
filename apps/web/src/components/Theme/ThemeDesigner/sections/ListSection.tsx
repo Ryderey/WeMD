@@ -34,6 +34,33 @@ export function ListSection({ variables, updateVariable }: SectionProps) {
         </div>
       </div>
 
+      <details className="designer-advanced">
+        <summary>列表高级选项</summary>
+        <div className="designer-field">
+          <label>形态</label>
+          <div className="designer-options mini">
+            {[
+              { id: "default", label: "默认" },
+              { id: "reading", label: "阅读式" },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                className={`option-btn ${(variables.listLayout ?? "default") === opt.id ? "active" : ""}`}
+                aria-pressed={(variables.listLayout ?? "default") === opt.id}
+                onClick={() =>
+                  updateVariable("listLayout", opt.id as "default" | "reading")
+                }
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="designer-field-hint">
+          阅读式把缩进、容器距与条目距分开，并统一列表正文的字号与行高。
+        </p>
+      </details>
+
       <div className="designer-field">
         <label>列表项间距</label>
         <SliderInput

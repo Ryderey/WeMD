@@ -1,0 +1,2 @@
+# 设计器旧输出基线必须与生成器逐字节相同，不能被格式化
+apps/web/src/__tests__/fixtures/designer-baseline/

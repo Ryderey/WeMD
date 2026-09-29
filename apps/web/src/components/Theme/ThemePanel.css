@@ -199,6 +199,21 @@
   padding-bottom: 6px;
 }
 
+/* 模板条目的文字标识；与「我的主题」共用 .theme-item，只有这里多一个角标 */
+.theme-item-tag {
+  float: right;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.theme-group-hint,
+.theme-group-empty {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+  padding: 4px 2px 0;
+}
+
 .theme-item {
   width: 100%;
   text-align: left;

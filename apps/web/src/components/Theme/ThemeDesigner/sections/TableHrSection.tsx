@@ -28,6 +28,33 @@ export function TableHrSection({ variables, updateVariable }: SectionProps) {
           />
         </div>
       </div>
+      <details className="designer-advanced">
+        <summary>表格高级选项</summary>
+        <div className="designer-field">
+          <label>形态</label>
+          <div className="designer-options mini">
+            {[
+              { id: "grid", label: "网格线" },
+              { id: "rules", label: "横线式" },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                className={`option-btn ${(variables.tableStyle ?? "grid") === opt.id ? "active" : ""}`}
+                aria-pressed={(variables.tableStyle ?? "grid") === opt.id}
+                onClick={() =>
+                  updateVariable("tableStyle", opt.id as "grid" | "rules")
+                }
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="designer-field-hint">
+          横线式只画横向分隔线，表格按固定布局排布并使用等宽数字。
+        </p>
+      </details>
+
       <div className="designer-field">
         <label>边框颜色</label>
         <ColorSelector

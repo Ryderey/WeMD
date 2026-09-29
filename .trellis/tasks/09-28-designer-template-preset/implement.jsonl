@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/web/frontend/theme-designer.md", "reason": "generator fallback contract: missing fields must keep old output"}
+{"file": ".trellis/spec/web/frontend/wechat-copy-pitfalls.md", "reason": "new borders need width/style/color longhands for the copy pipeline"}

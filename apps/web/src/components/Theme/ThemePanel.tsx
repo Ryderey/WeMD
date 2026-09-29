@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { useEditorStore } from "../../store/editorStore";
 import { useThemeStore } from "../../store/themeStore";
@@ -6,6 +6,11 @@ import { useHistoryStore } from "../../store/historyStore";
 import { platformActions } from "../../lib/platformAdapter";
 import { type DesignerVariables, defaultVariables } from "./ThemeDesigner";
 import { generateCSS } from "./ThemeDesigner/generateCSS";
+import {
+  designerTemplateIds,
+  type CustomTheme,
+} from "../../store/themes/builtInThemes";
+import { designerPresets } from "../../store/themes/designerPresets";
 import { ThemePanelView } from "./ThemePanelView";
 import "./ThemePanel.css";
 
@@ -84,6 +89,47 @@ export function ThemePanel({ open, onClose }: ThemePanelProps) {
 
   const selectedTheme = allThemes.find((item) => item.id === selectedThemeId);
   const isCustomTheme = selectedTheme && !selectedTheme.isBuiltIn;
+  const isTemplateTheme = Boolean(
+    selectedTheme?.isBuiltIn && designerTemplateIds.has(selectedTheme.id),
+  );
+
+  /** 按 id 取主题一律查当前 store 状态，避免用到渲染期快照（复制/新建后立刻选中时会拿到旧列表） */
+  const resolveTheme = (id: string): CustomTheme | undefined =>
+    useThemeStore
+      .getState()
+      .getAllThemes()
+      .find((item) => item.id === id);
+
+  /** 面板状态一律由主题对象初始化，新建/复制/普通点击走同一条路 */
+  const applyThemeToPanel = useCallback((target: CustomTheme | undefined) => {
+    if (!target) {
+      setSelectedThemeId("");
+      setNameInput("");
+      setCssInput("");
+      setVisualCss("");
+      setEditorMode("css");
+      setDesignerVariables(undefined);
+      setOriginalDesignerVariables(undefined);
+      setOriginalName("");
+      setOriginalCss("");
+      return;
+    }
+
+    const nextDesignerVariables =
+      target.editorMode === "visual"
+        ? normalizeDesignerVariables(target.designerVariables)
+        : undefined;
+
+    setSelectedThemeId(target.id);
+    setNameInput(target.name);
+    setCssInput(target.css);
+    setVisualCss(target.css);
+    setEditorMode(target.editorMode || "css");
+    setDesignerVariables(nextDesignerVariables);
+    setOriginalDesignerVariables(nextDesignerVariables);
+    setOriginalName(target.name);
+    setOriginalCss(target.css);
+  }, []);
 
   useEffect(() => {
     setExportMenuOpen(false);
@@ -112,67 +158,24 @@ export function ThemePanel({ open, onClose }: ThemePanelProps) {
     prevOpenRef.current = open;
 
     if (open && !wasOpen) {
-      const currentTheme = allThemes.find((item) => item.id === theme);
-      if (currentTheme) {
-        setSelectedThemeId(currentTheme.id);
-        setNameInput(currentTheme.name);
-        setCssInput(currentTheme.css);
-        setEditorMode(currentTheme.editorMode || "css");
-        const nextDesignerVariables =
-          currentTheme.editorMode === "visual"
-            ? normalizeDesignerVariables(currentTheme.designerVariables)
-            : undefined;
-        setDesignerVariables(nextDesignerVariables);
-        setOriginalDesignerVariables(nextDesignerVariables);
-        setOriginalName(currentTheme.name);
-        setOriginalCss(currentTheme.css);
-      } else {
-        setEditorMode("css");
-        setDesignerVariables(undefined);
-        setOriginalDesignerVariables(undefined);
-        setOriginalName("");
-        setOriginalCss("");
-      }
+      applyThemeToPanel(resolveTheme(theme));
       setIsCreating(false);
       setCreationStep("select-mode");
       setShowDeleteConfirm(false);
-      setVisualCss("");
     }
-  }, [open, theme, allThemes]);
+  }, [open, theme, applyThemeToPanel]);
 
   const handleSelectTheme = (themeId: string) => {
-    const target = allThemes.find((item) => item.id === themeId);
-    if (!target) return;
-
-    setSelectedThemeId(themeId);
-    setNameInput(target.name);
-    setCssInput(target.css);
-    setEditorMode(target.editorMode || "css");
-    setVisualCss("");
-
-    const nextDesignerVariables =
-      target.editorMode === "visual"
-        ? normalizeDesignerVariables(target.designerVariables)
-        : undefined;
-    setDesignerVariables(nextDesignerVariables);
-    setOriginalDesignerVariables(nextDesignerVariables);
-
-    setOriginalName(target.name);
-    setOriginalCss(target.css);
+    applyThemeToPanel(resolveTheme(themeId));
     setIsCreating(false);
     setCreationStep("select-mode");
     setShowDeleteConfirm(false);
   };
 
   const handleCreateNew = () => {
+    applyThemeToPanel(undefined);
     setIsCreating(true);
     setCreationStep("select-mode");
-    setSelectedThemeId("");
-    setNameInput("");
-    setCssInput("");
-    setVisualCss("");
-    setDesignerVariables(undefined);
-    setOriginalDesignerVariables(undefined);
     setShowDeleteConfirm(false);
   };
 
@@ -313,7 +316,9 @@ export function ThemePanel({ open, onClose }: ThemePanelProps) {
       }
 
       setOriginalName(nameInput.trim() || "未命名主题");
-      setOriginalCss(cssInput);
+      setCssInput(cssToSave);
+      setVisualCss(isVisualMode ? cssToSave : "");
+      setOriginalCss(cssToSave);
       setOriginalDesignerVariables(
         isVisualMode ? designerVariables : undefined,
       );
@@ -341,7 +346,8 @@ export function ThemePanel({ open, onClose }: ThemePanelProps) {
       selectedThemeId,
       `${selectedTheme.name} (副本)`,
     );
-    handleSelectTheme(duplicated.id);
+    // 直接用返回的副本对象初始化面板，避免再从可能滞后的列表里查一次
+    applyThemeToPanel(duplicated);
     toast.success("主题已复制");
   };
 
@@ -361,8 +367,20 @@ export function ThemePanel({ open, onClose }: ThemePanelProps) {
     }
   };
 
-  const builtInThemes = allThemes.filter((item) => item.isBuiltIn);
+  const templateThemes = allThemes.filter(
+    (item) => item.isBuiltIn && designerTemplateIds.has(item.id),
+  );
+  const builtInThemes = allThemes.filter(
+    (item) => item.isBuiltIn && !designerTemplateIds.has(item.id),
+  );
   const customThemes = allThemes.filter((item) => !item.isBuiltIn);
+  const templateTaglines = useMemo(
+    () =>
+      Object.fromEntries(
+        designerPresets.map((preset) => [preset.id, preset.tagline]),
+      ),
+    [],
+  );
   const isVisualEditing =
     (isCreating && editorMode === "visual") ||
     (!isCreating && isCustomTheme && selectedTheme?.editorMode === "visual");
@@ -380,10 +398,13 @@ export function ThemePanel({ open, onClose }: ThemePanelProps) {
       onClose={onClose}
       fileInputRef={fileInputRef}
       builtInThemes={builtInThemes}
+      templateThemes={templateThemes}
+      templateTaglines={templateTaglines}
       customThemes={customThemes}
       selectedTheme={selectedTheme}
       selectedThemeId={selectedThemeId}
       isCustomTheme={Boolean(isCustomTheme)}
+      isTemplateTheme={isTemplateTheme}
       isCreating={isCreating}
       creationStep={creationStep}
       editorMode={editorMode}
