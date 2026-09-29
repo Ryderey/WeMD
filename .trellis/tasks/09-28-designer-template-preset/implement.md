@@ -97,3 +97,13 @@ pnpm --filter @wemd/web run build
 ## 回退
 
 未发布：撤回入口与五款种子登记。已发布：可隐藏模板入口，但必须保留新增字段的读取与生成能力，避免已有副本刷新或导入时变样；不得清理用户主题数据。
+
+### 2.2 完成记录（2026-09-29）
+
+- `HeadingStyle` 新增可选 `lineHeight`、`fontFamily`、`ruleBelowWidth`、`ruleBelowColor`、`ruleBelowGap`；`DesignerVariables` 新增可选 `h5` / `h6`。缺省时生成器不多输出任何一行，55 条旧输出基线仍全绿。
+- 校验统一到新模块 `generators/safeCssValue.ts`（`optionalLength` 从 `optionalLength.ts` 迁入并删除旧文件，另加 `optionalUnitless` / `optionalHexColor` / `optionalFontStack`）：字体栈只允许名称字符且拒绝 `;` `}` `<`，双引号归一为单引号；`fontWeight` 走白名单，非法值退回 `bold` 而不注入。
+- 细线只在「宽度与颜色都合法」时输出，并同时输出 `display: inline-block`，使细线跟随文字宽度而非通栏。
+- h5/h6 只在配置了该层级时输出，且一并隐藏 `.prefix/.suffix`；h5 字号非法则整块不输出。
+- 测试：`themeDesignerHeadingDecor.test.ts` 28 条（含 5 组字体栈注入、4 组颜色、4 组宽度、5 组行高必须**逐字等于冻结 default**）；`themeDesignerAdvancedControls.test.tsx` 增至 6 条（只展开不写字段、写入落在当前层级、`跟随全局` 写 `undefined`）。
+- 全量：549 tests / 56 files 通过、lint 0 errors、build 通过。
+- 遗留：h5/h6 无控件（方案允许）；标题高级控件尚未做「跟随全局」以外的字体校验提示（生成侧已拒绝，UI 侧只从 `fontFamilyOptions` 取值，不产生非法值）。
