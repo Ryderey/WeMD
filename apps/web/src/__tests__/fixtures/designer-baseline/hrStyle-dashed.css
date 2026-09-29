@@ -11,30 +11,21 @@
   --wemd-paragraph-margin: 16px;
   --wemd-paragraph-padding: 0px;
   --wemd-text-color: #333;
-  --wemd-primary-color: #07c160;
+  --wemd-primary-color: #07C160;
   --wemd-primary-color-20: rgba(7, 193, 96, 0.12);
   --wemd-primary-color-30: rgba(7, 193, 96, 0.18);
   --wemd-primary-color-50: rgba(7, 193, 96, 0.5);
-  --wemd-primary-gradient: #07c160;
+  --wemd-primary-gradient: #07C160;
   --wemd-primary-gradient-20: rgba(7, 193, 96, 0.12);
-  --wemd-primary-gradient-line: linear-gradient(
-    to right,
-    transparent,
-    rgba(7, 193, 96, 0.5),
-    transparent
-  );
-  --wemd-primary-gradient-highlight: linear-gradient(
-    to right,
-    rgba(7, 193, 96, 0.12),
-    transparent
-  );
-  --wemd-strong-accent-color: #07c160;
+  --wemd-primary-gradient-line: linear-gradient(to right, transparent, rgba(7, 193, 96, 0.5), transparent);
+  --wemd-primary-gradient-highlight: linear-gradient(to right, rgba(7, 193, 96, 0.12), transparent);
+  --wemd-strong-accent-color: #07C160;
   --wemd-strong-accent-color-12: rgba(7, 193, 96, 0.12);
   --wemd-strong-accent-color-18: rgba(7, 193, 96, 0.18);
   --wemd-letter-spacing: 0px;
   --wemd-underline-style: solid;
   --wemd-underline-color: currentColor;
-
+  
   /* 标题 */
   --wemd-h1-font-size: 24px;
   --wemd-h1-color: #000;
@@ -52,13 +43,13 @@
   --wemd-h4-color: #666;
   --wemd-h4-margin-top: 20px;
   --wemd-h4-margin-bottom: 10px;
-
+  
   /* 代码 */
   --wemd-code-background: #f5f5f5;
   --wemd-code-font-size: 13px;
   --wemd-inline-code-color: #c7254e;
   --wemd-inline-code-background: #f9f2f4;
-
+  
   /* 引用 */
   --wemd-quote-background: #f5f5f5;
   --wemd-quote-border-color: #ddd;
@@ -69,7 +60,7 @@
   --wemd-quote-line-height: 1.6;
   --wemd-quote-padding-x: 16px;
   --wemd-quote-padding-y: 12px;
-
+  
   /* 图片 */
   --wemd-image-margin: 20px;
   --wemd-image-border-radius: 4px;
@@ -77,32 +68,30 @@
   --wemd-image-caption-color: #999;
   --wemd-image-caption-font-size: 14px;
   --wemd-image-caption-align: center;
-
+  
   /* 链接与文本 */
-  --wemd-link-color: #07c160;
+  --wemd-link-color: #07C160;
   --wemd-italic-color: inherit;
   --wemd-del-color: #999;
   --wemd-mark-background: #fff5b1;
   --wemd-mark-color: inherit;
-
+  
   /* 表格 */
   --wemd-table-header-background: #f8f8f8;
   --wemd-table-header-color: inherit;
   --wemd-table-border-color: #dfe2e5;
-
+  
   /* 分割线 */
   --wemd-hr-color: #eee;
   --wemd-hr-height: 1px;
   --wemd-hr-margin: 20px;
-
+  
   /* 列表 */
   --wemd-list-spacing: 4px;
-  --wemd-list-marker-color: #07c160;
-  --wemd-list-marker-color-l2: #07c160;
+  --wemd-list-marker-color: #07C160;
+  --wemd-list-marker-color-l2: #07C160;
 
-  font-family:
-    -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   padding: 0 var(--wemd-page-padding);
   color: var(--wemd-text-color);
   overflow-wrap: break-word;
@@ -116,28 +105,28 @@
   line-height: var(--wemd-line-height);
 }
 
-#wemd strong {
+#wemd strong { 
   font-weight: bold;
   color: var(--wemd-primary-color);
+  
+  
+  
+  
 }
 
 #wemd p {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: var(--wemd-font-size);
   line-height: var(--wemd-line-height);
   margin: var(--wemd-paragraph-margin) 0;
   padding: var(--wemd-paragraph-padding) 0;
   letter-spacing: var(--wemd-letter-spacing);
-
+  
   text-align: justify;
 }
 
 #wemd li {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   margin: var(--wemd-list-spacing) 0;
   line-height: var(--wemd-line-height);
   letter-spacing: var(--wemd-letter-spacing);
@@ -148,93 +137,75 @@
   color: var(--wemd-h1-color);
   font-weight: bold;
   letter-spacing: 0px;
+  
 }
-#wemd h1 {
-  margin: var(--wemd-h1-margin-top) 0 var(--wemd-h1-margin-bottom);
-}
+#wemd h1 { margin: var(--wemd-h1-margin-top) 0 var(--wemd-h1-margin-bottom);  }
 
 #wemd h2 .content {
   font-size: var(--wemd-h2-font-size);
   color: var(--wemd-h2-color);
   font-weight: bold;
   letter-spacing: 0px;
+  
 }
-#wemd h2 {
-  margin: var(--wemd-h2-margin-top) 0 var(--wemd-h2-margin-bottom);
-}
+#wemd h2 { margin: var(--wemd-h2-margin-top) 0 var(--wemd-h2-margin-bottom);  }
 
 #wemd h3 .content {
   font-size: var(--wemd-h3-font-size);
   color: var(--wemd-h3-color);
   font-weight: bold;
   letter-spacing: 0px;
+  
 }
-#wemd h3 {
-  margin: var(--wemd-h3-margin-top) 0 var(--wemd-h3-margin-bottom);
-}
+#wemd h3 { margin: var(--wemd-h3-margin-top) 0 var(--wemd-h3-margin-bottom);  }
 
 #wemd h4 .content {
   font-size: var(--wemd-h4-font-size);
   color: var(--wemd-h4-color);
   font-weight: bold;
   letter-spacing: 0px;
+  
 }
-#wemd h4 {
-  margin: var(--wemd-h4-margin-top) 0 var(--wemd-h4-margin-bottom);
-}
+#wemd h4 { margin: var(--wemd-h4-margin-top) 0 var(--wemd-h4-margin-bottom);  }
 
-#wemd ul {
-  list-style-type: disc;
-  padding-left: 20px;
-  margin: var(--wemd-paragraph-margin) 0;
-  font-size: var(--wemd-font-size);
-}
-#wemd ul ul {
-  list-style-type: circle;
-  margin: 4px 0;
-}
-#wemd ol {
-  list-style-type: decimal;
-  padding-left: 20px;
-  margin: var(--wemd-paragraph-margin) 0;
-  font-size: var(--wemd-font-size);
-}
-#wemd ol ol {
-  list-style-type: lower-alpha;
-  margin: 4px 0;
-}
+#wemd ul { list-style-type: disc; padding-left: 20px; margin: var(--wemd-paragraph-margin) 0; font-size: var(--wemd-font-size); }
+#wemd ul ul { list-style-type: circle; margin: 4px 0; }
+#wemd ol { list-style-type: decimal; padding-left: 20px; margin: var(--wemd-paragraph-margin) 0; font-size: var(--wemd-font-size); }
+#wemd ol ol { list-style-type: lower-alpha; margin: 4px 0; }
 /* 列表符号颜色 */
 #wemd ul li::marker,
-#wemd ol li::marker {
+  #wemd ol li::marker {
   color: var(--wemd-list-marker-color);
 }
 #wemd ul ul li::marker,
-#wemd ol ol li::marker,
-#wemd ul ol li::marker,
-#wemd ol ul li::marker {
+  #wemd ol ol li::marker,
+    #wemd ul ol li::marker,
+      #wemd ol ul li::marker {
   color: var(--wemd-list-marker-color-l2);
 }
 
-#wemd blockquote,
-#wemd .multiquote-1,
-#wemd .multiquote-2,
+#wemd blockquote, 
+#wemd .multiquote-1, 
+#wemd .multiquote-2, 
 #wemd .multiquote-3 {
   margin: var(--wemd-paragraph-margin) 0 !important;
   padding: var(--wemd-quote-padding-y) var(--wemd-quote-padding-x);
-
-  background: var(--wemd-quote-background);
-  border-left-style: var(--wemd-quote-border-style);
-  border-left-width: var(--wemd-quote-border-width);
-  border-left-color: var(--wemd-quote-border-color);
+  
+            background: var(--wemd-quote-background);
+            border-left-style: var(--wemd-quote-border-style);
+            border-left-width: var(--wemd-quote-border-width);
+            border-left-color: var(--wemd-quote-border-color);
+        
 }
 #wemd blockquote p,
 #wemd .multiquote-1 p,
 #wemd .multiquote-2 p,
-#wemd .multiquote-3 p {
-  color: var(--wemd-quote-text-color);
+#wemd .multiquote-3 p { 
+  color: var(--wemd-quote-text-color); 
   margin: 0 !important;
   font-size: var(--wemd-quote-font-size);
   line-height: var(--wemd-quote-line-height);
+  
 }
 
 #wemd pre {
@@ -273,39 +244,15 @@
   line-height: 0;
 }
 
-#wemd .hljs-comment,
-#wemd .hljs-quote {
-  color: #998;
-  font-style: italic;
-}
-#wemd .hljs-keyword,
-#wemd .hljs-selector-tag,
-#wemd .hljs-subst {
-  color: #333;
-  font-weight: bold;
-}
-#wemd .hljs-string,
-#wemd .hljs-doctag {
-  color: #d14;
-}
-#wemd .hljs-title,
-#wemd .hljs-section,
-#wemd .hljs-selector-id {
-  color: #900;
-  font-weight: bold;
-}
-#wemd .hljs-type,
-#wemd .hljs-class .hljs-title {
-  color: #458;
-  font-weight: bold;
-}
-#wemd .hljs-variable,
-#wemd .hljs-template-variable {
-  color: #008080;
-}
-#wemd .hljs-attr {
-  color: #000080;
-}
+
+            #wemd .hljs-comment, #wemd .hljs-quote { color: #998; font-style: italic; }
+            #wemd .hljs-keyword, #wemd .hljs-selector-tag, #wemd .hljs-subst { color: #333; font-weight: bold; }
+            #wemd .hljs-string, #wemd .hljs-doctag { color: #d14; }
+            #wemd .hljs-title, #wemd .hljs-section, #wemd .hljs-selector-id { color: #900; font-weight: bold; }
+            #wemd .hljs-type, #wemd .hljs-class .hljs-title { color: #458; font-weight: bold; }
+            #wemd .hljs-variable, #wemd .hljs-template-variable { color: #008080; }
+            #wemd .hljs-attr { color: #000080; }
+        
 
 #wemd code {
   color: var(--wemd-inline-code-color);
@@ -316,6 +263,8 @@
   font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
   white-space: normal;
   letter-spacing: 0;
+  
+  
 }
 
 /* 代码块样式需要更高优先级覆盖行内代码样式 */
@@ -362,8 +311,9 @@
 #wemd hr {
   margin: var(--wemd-hr-margin) 0;
   border: 0;
-
-  border-top: var(--wemd-hr-height) dashed var(--wemd-hr-color);
+  
+    border-top: var(--wemd-hr-height) dashed var(--wemd-hr-color);
+    
 }
 #wemd table {
   width: 100%;
@@ -377,12 +327,12 @@
   font-weight: bold;
 }
 
-#wemd th,
-#wemd td {
+#wemd th, #wemd td {
   border: 1px solid var(--wemd-table-border-color);
   padding: 8px 12px;
   text-align: left;
 }
+
 
 #wemd tr:nth-child(even) {
   background: #fcfcfc;
@@ -397,20 +347,23 @@
   box-shadow: var(--wemd-image-shadow);
 }
 
+
+
+
 #wemd .footnote-word {
-  color: #07c160;
+  color: #07C160;
   font-weight: bold;
 }
 
 #wemd .footnote-ref {
-  color: #07c160;
+  color: #07C160;
   font-weight: bold;
 }
 
 #wemd .footnote-ref a {
-  color: #07c160 !important;
+  color: #07C160 !important;
   text-decoration: none;
-  border-bottom: none !important;
+  border-bottom: none!important;
 }
 
 #wemd .footnote-item {
@@ -424,17 +377,15 @@
   background: none;
   font-size: 80%;
   line-height: 26px;
-  color: #07c160;
-  font-family:
-    Optima-Regular, Optima, PingFangSC-light, PingFangTC-light, "PingFang SC",
-    Cambria, Cochin, Georgia, Times, "Times New Roman", serif;
+  color: #07C160;
+  font-family: Optima-Regular, Optima, PingFangSC-light, PingFangTC-light, 'PingFang SC', Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
 }
 
 #wemd .footnote-num a,
-#wemd .footnote-item a.footnote-backref {
-  color: #07c160 !important;
+  #wemd .footnote-item a.footnote-backref {
+  color: #07C160 !important;
   text-decoration: none;
-  border-bottom: none !important;
+  border-bottom: none!important;
 }
 
 #wemd .footnote-item p {
@@ -451,12 +402,17 @@
 #wemd .footnotes-sep:before {
   content: "参考资料";
   display: block;
-
-  font-weight: bold;
-  font-size: 18px;
-  color: #07c160;
-  border-left: 4px solid #07c160;
-  padding-left: 10px;
+  
+  
+    font-weight: bold;
+    font-size: 18px;
+    color: #07C160;
+    border-left: 4px solid #07C160;
+    padding-left: 10px;
+  
+  
+  
+  
 }
 
 #wemd .callout {
@@ -529,26 +485,11 @@
   margin: 0 !important;
 }
 
-#wemd .callout-note {
-  border-left: 4px solid #6366f1;
-  background: #f5f5ff;
-}
-#wemd .callout-tip {
-  border-left: 4px solid #10b981;
-  background: #ecfdf5;
-}
-#wemd .callout-important {
-  border-left: 4px solid #8b5cf6;
-  background: #f5f3ff;
-}
-#wemd .callout-warning {
-  border-left: 4px solid #f59e0b;
-  background: #fffbeb;
-}
-#wemd .callout-caution {
-  border-left: 4px solid #ef4444;
-  background: #fff5f5;
-}
+#wemd .callout-note { border-left: 4px solid #6366f1; background: #f5f5ff; }
+#wemd .callout-tip { border-left: 4px solid #10b981; background: #ecfdf5; }
+#wemd .callout-important { border-left: 4px solid #8b5cf6; background: #f5f3ff; }
+#wemd .callout-warning { border-left: 4px solid #f59e0b; background: #fffbeb; }
+#wemd .callout-caution { border-left: 4px solid #ef4444; background: #fff5f5; }
 
 /* Mermaid 样式覆盖 */
 #wemd .mermaid .node foreignObject {

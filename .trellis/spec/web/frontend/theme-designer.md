@@ -37,3 +37,9 @@ Adding a designer field must not change the generated CSS of themes that never s
 ## WeChat border shorthands
 
 The copy pipeline drops border shorthands that contain `var()`. Split into `border-bottom-width` / `-style` / `-color` when emitting a new rule. The follow-theme bold underline still emits the old shorthand to preserve byte-identical output; the accent-mode branch uses longhands.
+
+## Frozen CSS baselines must escape formatting
+
+Byte-exact generator baselines are stored under `apps/web/src/__tests__/fixtures/designer-baseline/`. The pre-commit hook runs `prettier --write` on `*.{json,md,css}`, which silently reflows `.css` fixtures and breaks every assertion.
+
+That directory is listed in `.prettierignore`. When adding another frozen-output fixture, keep it out of any lint-staged glob, and regenerate baselines from the **pre-change** code (stash the edits, freeze, restore) so a regression cannot be baked into the baseline.
