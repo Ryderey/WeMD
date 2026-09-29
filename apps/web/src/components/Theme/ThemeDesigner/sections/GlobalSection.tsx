@@ -154,8 +154,23 @@ export function GlobalSection({
             unit="px"
           />
         </div>
+        <div className="designer-field-row">
+          <span>根节点统一给行高与断行</span>
+          <label className="designer-switch">
+            <input
+              type="checkbox"
+              checked={variables.rootTypography === true}
+              onChange={(e) =>
+                updateVariable("rootTypography", e.target.checked)
+              }
+            />
+            <span className="switch-slider"></span>
+          </label>
+        </div>
         <p className="designer-field-hint">
           内容最大宽度设为 0 表示不限制；设定后正文按该宽度居中排版。
+          开启根节点排版后，图注、提示块等没有单独声明行高的元素也会跟着正文的节奏走，
+          链接不再从单词中间断开。
         </p>
       </details>
 

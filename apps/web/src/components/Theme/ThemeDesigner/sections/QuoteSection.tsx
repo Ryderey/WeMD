@@ -234,6 +234,15 @@ export function QuoteSection({ variables, updateVariable }: SectionProps) {
           />
         </div>
         <div className="designer-field">
+          <label>引用上下外距</label>
+          <SliderInput
+            value={variables.quoteOuterMargin ?? variables.paragraphMargin}
+            onChange={(val) => updateVariable("quoteOuterMargin", val)}
+            min={0}
+            max={60}
+          />
+        </div>
+        <div className="designer-field">
           <label>引用字体</label>
           <div className="designer-options">
             <button

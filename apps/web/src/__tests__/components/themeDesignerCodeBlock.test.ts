@@ -66,9 +66,11 @@ describe("code block inner box", () => {
     );
   });
 
-  it("contain-width keeps a long line inside the column and scrolls it", () => {
+  it("contain-width 把长行留在列内：不撑破外框，且能换行看到", () => {
     const css = v({ codeBlockContainWidth: true, codeBlockRadius: 4 });
     expect(inner(css)).toContain("min-width: 0;");
+    // 外框改成不滚动后，长行必须换成行内断词，否则会被裁掉且滚不到
+    expect(inner(css)).toContain("word-break: break-word;");
     expect(outer(css)).toContain("overflow-x: hidden;");
     expect(outer(css)).toContain("border-radius: 4px;");
   });

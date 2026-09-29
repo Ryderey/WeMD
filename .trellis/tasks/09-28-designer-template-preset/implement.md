@@ -193,3 +193,12 @@ pnpm --filter @wemd/web run build
   - **D（纯数据回填，已改）**：h5/h6 外距实测基准是 `30px / 15px`，种子已从估值 26/10 回填，并加断言。
 - 按方案「未通过保真验收不得登记」：**五款仍未挂到 `builtInThemes.ts`**，等 A 类决策与 A+B 修完后重跑对照台再登记。
 - 对照台本身：`.tmp/fidelity/`（页面构建、探针、比较脚本、原始 JSON、全页截图）。构建脚本临时放在 `apps/web/src/__tests__/services/zzFidelityBuild.test.ts`，**未提交**；Stage 3 收尾时要么转正为常规工具、要么删除，不能长期混在测试目录里。
+
+### Stage 3 第三段：A/B 修完 + 复测通过（2026-09-29）
+
+- 用户决策：A 类**做成 opt-in**，不改默认输出，55 条冻结基线不动。落地为 `rootTypography`（根节点行高 + 断行 + 链接不再 `break-all`）。
+- B 类全部实施：`codeBlockContainWidth` 补换行（原来是「裁掉且滚不到」的可达性缺陷）、悬挂脚注编号同色/等宽数字/条目段后距、阅读式列表 `li section` 外距、滑动容器 26px、新可选 `quoteOuterMargin`；顺带把块级公式居中与横向滚动并入 `equationMaxWidth`。
+- 复测：10 份采样（五款 × 两宽度）的全文总高偏差从 **-5.1%~-6.3%** 收进 **±0.7%**；差异模式 227 → 131，剩余基本都是已记录的 C 类接受项。**验收判定：通过（附偏差清单）。**
+- 偏离方案一处并说明：五款的 `builtInThemes.ts` 登记并入 Stage 4 第一个提交，避免在 `ThemePanel` 陈旧闭包问题修好之前，先让带 `editorMode: "visual"` 的内置条目出现在所有选择器里。
+- 证据与复现方式全部写在 `research/fidelity-stage3.md`。修复后截图未取到（应用内 Browser 表面进入后台，`take_screenshot` 报视口不可用），数值证据完整。
+- 全量：697 tests / 64 files 通过（另 1 条为显式重新冻结用的 skip）、lint 0 errors、build 通过；55 条基线仍逐字一致 + 1 条审核过的追加。

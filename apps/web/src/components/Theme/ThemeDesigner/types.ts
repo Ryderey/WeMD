@@ -39,6 +39,11 @@ export interface DesignerVariables {
   pagePaddingY?: number;
   /** 正文最大宽度并居中；未设置时不输出任何宽度声明 */
   pageMaxWidth?: number;
+  /**
+   * 让排版从根节点开始自包含：`#wemd` 带上正文行高与 `word-break: break-word`，
+   * 并把链接的 `break-all` 收回到 `break-word`。缺省不开，旧主题输出逐字不变。
+   */
+  rootTypography?: boolean;
   baseLetterSpacing: number;
 
   // 标题
@@ -85,6 +90,8 @@ export interface DesignerVariables {
   quoteParagraphGap?: number;
   /** 引用专用字体；全局 p 自带字体，因此必须同时写到引用内的 p */
   quoteFontFamily?: string;
+  /** 引用上下外距(px)；未设置时沿用段距变量 */
+  quoteOuterMargin?: number;
 
   // 代码
   codeBackground: string;

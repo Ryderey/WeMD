@@ -24,6 +24,18 @@ const borderDeclarations = (width: number, color: string, sides: string) =>
 export function generateOptionalOverrides(v: DesignerVariables): string {
   const blocks: string[] = [];
 
+  if (v.rootTypography === true) {
+    // 可视化主题的 CSS 是自包含的，根节点不给行高与断行，未显式声明的节点就全部落到
+    // 浏览器默认（normal / 不断词），整篇节奏会比模板紧 5% 左右。
+    blocks.push(`#wemd {
+  line-height: var(--wemd-line-height);
+  word-break: break-word;
+}`);
+    blocks.push(`#wemd a {
+  word-break: break-word;
+}`);
+  }
+
   if (v.linkUnderlineMode === "text") {
     const offset = optionalLength(v.linkUnderlineOffset, 10) ?? 2;
     const underlined = v.linkUnderline !== false;
@@ -59,6 +71,8 @@ export function generateOptionalOverrides(v: DesignerVariables): string {
   font-size: ${fontSize}px;
   font-weight: 400;
   line-height: ${lineHeight};
+  font-variant-numeric: tabular-nums;
+  color: ${v.footnoteColor || "#666"};
   opacity: 1;
 }
 #wemd .footnote-item p {
@@ -67,6 +81,7 @@ export function generateOptionalOverrides(v: DesignerVariables): string {
   text-indent: -${numberWidth}px;
   font-size: ${fontSize}px;
   line-height: ${lineHeight};
+  margin: 0 0 8px;
   word-break: normal;
 }`);
   }
@@ -111,10 +126,15 @@ const quoteBlocks = (v: DesignerVariables): string[] => {
   const indent = optionalLength(v.quoteIndent, 40);
   const gap = optionalLength(v.quoteParagraphGap, 40);
   const family = optionalFontStack(v.quoteFontFamily);
+  const outerMargin = optionalLength(v.quoteOuterMargin, 80);
 
   const outer: string[] = [];
   const indentValue =
     indent === null ? null : indent === 0 ? "0px" : `-${indent}px`;
+  if (outerMargin !== null) {
+    // 基础规则的外距带 !important，这里必须同样带上才压得住。
+    outer.push(`margin: ${outerMargin}px 0 !important;`);
+  }
   if (v.quoteBorderEdges === "top-bottom") {
     // 素笺式引用只有上下横线：左线由预设写出，这里用长属性把它压回 0。
     outer.push("border-width: var(--wemd-quote-border-width) 0;");
@@ -221,7 +241,7 @@ const imageflowBlocks = (v: DesignerVariables): string[] => {
   if (v.imageflowLayout !== "reading") return [];
   return [
     `#wemd .imageflow-layer1 {
-  margin: var(--wemd-paragraph-margin) 0 8px;
+  margin: 26px 0 8px;
 }
 #wemd .imageflow-img {
   margin: 0;
@@ -239,7 +259,11 @@ const imageflowBlocks = (v: DesignerVariables): string[] => {
 const equationBlocks = (v: DesignerVariables): string[] => {
   if (v.equationMaxWidth !== true) return [];
   return [
-    `#wemd .block-equation svg {
+    `#wemd .block-equation {
+  text-align: center;
+  overflow-x: auto;
+}
+#wemd .block-equation svg {
   max-width: 100% !important;
 }
 #wemd .inline-equation svg {
@@ -328,7 +352,7 @@ const listBlocks = (v: DesignerVariables): string[] => {
   font-weight: 400;
   line-height: var(--wemd-line-height);
   color: var(--wemd-text-color);
-  margin: 0;
+  margin: 5px 0;
 }`,
   ];
 };
@@ -363,7 +387,11 @@ const codeBlockBlocks = (v: DesignerVariables): string[] => {
     inner.push(`padding: ${paddingY ?? 0}px ${paddingX ?? 0}px;`);
   }
   if (lineHeight !== null) inner.push(`line-height: ${lineHeight};`);
-  if (containWidth) inner.push("min-width: 0;");
+  if (containWidth) {
+    inner.push("min-width: 0;");
+    // 外框已经改成 overflow-x: hidden，若不换成行内断词，超长行会被裁掉且滚不到。
+    inner.push("word-break: break-word;");
+  }
 
   const blocks: string[] = [];
   if (outer.length) {

@@ -89,7 +89,20 @@ describe("hanging footnote layout", () => {
     expect(item).toContain("display: block;");
     expect(item).toContain("padding-left: 22px;");
     expect(item).toContain("text-indent: -22px;");
+    expect(item).toContain("margin: 0 0 8px;");
     expect(item).toContain("word-break: normal;");
+  });
+
+  it("编号与正文同色，不再跟着栏目标题走主题色", () => {
+    const css = v({
+      footnoteLayout: "hanging",
+      footnoteColor: "#6D786F",
+      footnoteHeaderColor: "#27675C",
+    });
+    const num = css.slice(css.lastIndexOf("#wemd .footnote-num {"));
+    expect(num).toContain("color: #6D786F;");
+    expect(num).toContain("font-variant-numeric: tabular-nums;");
+    expect(num).not.toContain("color: #27675C;");
   });
 
   it("悬挂布局同时给脚注区自己的分隔间距", () => {

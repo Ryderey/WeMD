@@ -100,6 +100,8 @@ describe("reading list preset", () => {
     expect(section).toContain("font-size: var(--wemd-font-size);");
     expect(section).toContain("font-weight: 400;");
     expect(section).toContain("line-height: var(--wemd-line-height);");
+    // 基准 composition 里条目正文带 5px 上下外距，全为 0 会让列表比模板紧一截
+    expect(section).toContain("margin: 5px 0;");
     expect(section).toContain("color: var(--wemd-text-color);");
   });
 

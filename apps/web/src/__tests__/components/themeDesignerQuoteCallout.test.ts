@@ -80,6 +80,14 @@ describe("quote asymmetric padding, indent, paragraph gap and font", () => {
     expect(block.split(family)).toHaveLength(3);
   });
 
+  it("引用外距独立于段距，且必须带 !important 才压得住基础规则", () => {
+    expect(ov({ quoteOuterMargin: 26 })).toContain(
+      `${QUOTE_CONTAINERS}\n  margin: 26px 0 !important;\n}`,
+    );
+    expect(ov({ quoteOuterMargin: 500 })).toBe("");
+    expect(ov({ quoteOuterMargin: "26" as never })).toBe("");
+  });
+
   it("只有上下横线的引用把预设自带的左线压回 0，且不引入居中", () => {
     const block = ov({ quoteBorderEdges: "top-bottom" });
     expect(block).toContain(

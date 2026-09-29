@@ -109,6 +109,8 @@ const buildEdition = (
     pagePaddingY: 5,
     pageMaxWidth: 677,
     baseLetterSpacing: 0,
+    // 自包含输出必须在根节点给行高与断行，否则未声明的节点全部落到 normal
+    rootTypography: true,
 
     // 段落：只有段后距
     paragraphMargin: paragraphGap,
@@ -184,6 +186,7 @@ const buildEdition = (
     quoteBorderEdges: quote.edgesTopBottom ? "top-bottom" : "left",
     quoteIndent: 16,
     quoteParagraphGap: 10,
+    quoteOuterMargin: 26,
     quoteFontFamily: quote.fontFamily,
 
     // 正文内联样式

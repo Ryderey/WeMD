@@ -25,7 +25,7 @@ describe("imageflow reading layout", () => {
     expect(ov({ imageflowLayout: "reading" })).toBe(
       `
 #wemd .imageflow-layer1 {
-  margin: var(--wemd-paragraph-margin) 0 8px;
+  margin: 26px 0 8px;
 }
 #wemd .imageflow-img {
   margin: 0;
@@ -64,9 +64,13 @@ describe("imageflow reading layout", () => {
 });
 
 describe("equation width guard", () => {
-  it("给块级与行内公式的 svg 补上 max-width", () => {
+  it("给块级公式居中与横向滚动，并给 svg 补 max-width", () => {
     expect(ov({ equationMaxWidth: true })).toBe(
       `
+#wemd .block-equation {
+  text-align: center;
+  overflow-x: auto;
+}
 #wemd .block-equation svg {
   max-width: 100% !important;
 }

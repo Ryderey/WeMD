@@ -13,6 +13,25 @@ const frozenDefault = readFileSync(
 const v = (overrides: Partial<DesignerVariables>) =>
   generateCSS({ ...defaultVariables, ...overrides });
 
+describe("root typography switch", () => {
+  it("开启后根节点给出行高与断行，并把链接的 break-all 收回", () => {
+    const css = v({ rootTypography: true });
+    expect(css).toContain(`#wemd {
+  line-height: var(--wemd-line-height);
+  word-break: break-word;
+}`);
+    expect(css).toContain(`#wemd a {
+  word-break: break-word;
+}`);
+  });
+
+  it("缺省与非布尔值都不产生任何覆盖", () => {
+    expect(v({})).toBe(frozenDefault);
+    expect(v({ rootTypography: "yes" as never })).toBe(frozenDefault);
+    expect(v({ rootTypography: false })).toBe(frozenDefault);
+  });
+});
+
 describe("page geometry fields", () => {
   it("emits the vertical page padding when set", () => {
     expect(v({ pagePaddingY: 5 })).toContain(

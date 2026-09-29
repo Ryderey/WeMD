@@ -444,6 +444,60 @@ describe("imageflow and equation controls", () => {
   });
 });
 
+describe("root typography and quote outer margin controls", () => {
+  type UpdateVariable = SectionProps["updateVariable"];
+
+  it("根节点排版开关写布尔值", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    render(
+      <GlobalSection
+        variables={defaultVariables}
+        updateVariable={updateVariable}
+        handlePrimaryColorChange={vi.fn()}
+      />,
+    );
+
+    openAdvanced("页面高级选项");
+    fireEvent.click(
+      screen
+        .getByText("根节点统一给行高与断行")
+        .parentElement!.querySelector("input") as Element,
+    );
+    expect(updateVariable).toHaveBeenCalledWith("rootTypography", true);
+    expect(screen.getByText(/链接不再从单词中间断开/)).toBeInTheDocument();
+  });
+
+  it("引用上下外距写入 quoteOuterMargin", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    render(
+      <QuoteSection
+        variables={defaultVariables}
+        updateVariable={updateVariable}
+      />,
+    );
+
+    const details = openAdvanced("引用高级选项");
+    setRange(details, "引用上下外距", "26");
+    expect(updateVariable).toHaveBeenCalledWith("quoteOuterMargin", 26);
+  });
+
+  it("外距滑块默认显示段距", () => {
+    render(
+      <QuoteSection
+        variables={{ ...defaultVariables, paragraphMargin: 25 }}
+        updateVariable={vi.fn()}
+      />,
+    );
+    const details = openAdvanced("引用高级选项");
+    const field = Array.from(details.querySelectorAll(".designer-field")).find(
+      (f) => f.querySelector("label")?.textContent?.trim() === "引用上下外距",
+    );
+    expect(
+      field?.querySelector<HTMLInputElement>('input[type="range"]')?.value,
+    ).toBe("25");
+  });
+});
+
 describe("structural presets", () => {
   type UpdateVariable = SectionProps["updateVariable"];
 

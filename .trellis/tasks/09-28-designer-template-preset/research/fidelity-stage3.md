@@ -77,3 +77,50 @@
   `.tmp/fidelity/patterns.cjs`（差异模式）、`.tmp/fidelity/heights.cjs`（总高）。
 - 原始数据：`.tmp/fidelity/reports/*.json`；截图：`.tmp/fidelity/shots/*.jpeg`（每款全页，含基准/生成 × 两宽度四块）。
 - 采样环境固定：视口 813px、图片 `800x450` + 内嵌 `1x1`、`MathJax=ok`（SVG 输出，非 KaTeX 回退）。
+
+## 第二轮复测：A/B 修完之后（同日）
+
+用户选择把 A 类做成 opt-in 字段而不是改默认输出，因此 55 条冻结基线不动。已实施：
+
+- A → 新可选 `rootTypography`：开启时追加 `#wemd { line-height: var(--wemd-line-height); word-break: break-word; }`
+  与 `#wemd a { word-break: break-word; }`。五份种子全部开启。
+- B1 → `codeBlockContainWidth` 追加 `word-break: break-word`：外框改成不滚动后，长行必须能换行看到，
+  否则是被裁掉的可达性缺陷。
+- B2 → 悬挂脚注：编号改用 `footnoteColor`（原先被 `footnoteHeaderColor` 牵成主题色）、补
+  `font-variant-numeric: tabular-nums`、条目补 `margin: 0 0 8px`。
+- B3 → 阅读式列表 `li section` 外距 `5px 0`；B4 → 滑动容器 `margin: 26px 0 8px`（不再跟段距）；
+  B5 → 新可选 `quoteOuterMargin`（基础规则的外距带 `!important`，覆盖也必须带）。种子设 26px。
+- 另补：`equationMaxWidth` 一并给出 `.block-equation { text-align: center; overflow-x: auto; }`。
+
+### 全文总高偏差（基准 → 生成）
+
+| 款   | @362 修复前 → 修复后 | @677 修复前 → 修复后 |
+| ---- | -------------------- | -------------------- |
+| 素笺 | -5.5% → +0.4%        | -5.4% → -0.1%        |
+| 墨刊 | -5.1% → +0.1%        | -5.1% → -0.3%        |
+| 青岚 | -5.3% → +0.6%        | -5.3% → +0.2%        |
+| 蓝图 | -6.3% → -0.3%        | -6.1% → -0.7%        |
+| 朱砂 | -5.4% → +0.3%        | -5.3% → -0.2%        |
+
+10 份采样全部收进 ±0.7%；差异模式数从 227 降到 131，剩下的几乎全是上面 C 类的已接受项
+（提示块五变体分色、callout 外距 1–2px 与标题字距、脚注编号 12 vs 13px、`figure` 的 flex/block
+与图注派生宽度、`blockquote strong` 600 vs 700、`h2/h3/h4 .content` inline-block）。
+
+### 判定
+
+**通过**，附 C 类已记录偏差。生成 CSS 在统一样例上的真实计算样式与
+`basic + reading + codeGithub` 基准在 ±0.7% 总高内一致；公式是 MathJax SVG 路径，图片解码正常。
+
+### 登记时机的偏离说明
+
+方案原写「通过验收后即挂载 `builtInThemes.ts`」。实际把登记并入 Stage 4 的第一个提交：内置列表一旦
+出现 `editorMode: "visual"` 的条目，就会立刻出现在所有主题选择器里，而那时 `ThemePanel` 仍有
+「按名字查对象 + 陈旧闭包」的已知问题——先登记会留下一个明知有缺陷的中间状态。验收证据在本文件与
+`.tmp/fidelity/` 里保持可查。
+
+### 未取到的证据
+
+修复后的全页截图没拿到：复测采集完成后应用内 Browser 表面进入后台
+（`visibilityState=hidden`），`take_screenshot` 报 `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`。
+数值证据完整（`reports/` 为修复后，`reports-before/` 为修复前）；需要视觉存证时把内嵌 Browser
+切到前台，访问 `http://127.0.0.1:5199/<id>.html` 重截即可。
