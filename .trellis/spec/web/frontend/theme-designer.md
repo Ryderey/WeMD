@@ -67,3 +67,37 @@ Status (2026-09-29): **not fixed by default.** `delCoversStrikethrough` adds a m
 `#wemd s` rule, but it stays opt-in because turning it on by default would change the
 output of every existing visual theme, which the frozen baselines forbid. Flipping the
 default requires an explicit decision plus a re-frozen baseline.
+
+Measured through the real copy sequence (`buildCopyCss` → `processHtml(…, true, true)` →
+`resolveInlineStyleVariablesForCopy`), with `正文 **加粗** ~~删除线~~ 与 <del>手写del</del>。`:
+
+- opt-in off: `<s>` → **bare `<s>`, no inline style at all**; `<del>` → `color: #999`.
+- opt-in on: `<s style="text-decoration: line-through; text-decoration-color: #999; color: #999; font-style: normal;">`.
+
+So with the default the line is drawn by WeChat's own styling and the theme's strikethrough
+color silently does not apply.
+
+**The same gap exists one layer down**: `packages/core/src/themes/basic.ts` styles only
+`#wemd del`, so all ~13 composed CSS built-ins (`basic + X + codeGithub`) share it. Across the
+whole `packages/core/src/themes/` tree the only file that covers `#wemd s` is
+`reading-editions.ts` — which no longer has any consumer since the five editions became
+variable-generated templates (keep the file: it is the fidelity reference for those seeds).
+
+Fixing it therefore has two independent halves:
+
+| Layer                    | Change                                                      | Cost                                                                                                      |
+| ------------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| CSS-mode built-ins       | add an `#wemd s` rule to `basic.ts`                         | one file; no designer baselines involved; every composed built-in changes appearance (the intended fix)   |
+| Visual themes (designer) | default `delCoversStrikethrough` to `true` in `defaults.ts` | all 54 frozen fixtures gain the block → full `FREEZE_DESIGNER_BASELINE=1` re-freeze with a written reason |
+
+Two consequences to plan for when flipping the designer default:
+
+- Stored themes are regenerated from their stored variables, so they stay unchanged — but opening
+  an old theme in the panel and saving it (even without touching this control) merges the new
+  default through `normalizeDesignerVariables` and adds the rule.
+- The WeChat payload for `~~text~~` changes from a bare tag to one carrying inline styles, so the
+  manual paste check has to be repeated.
+
+Do not "fix" it by making the parser emit `<del>` instead of `<s>`: that would change the DOM
+contract for every theme at once (`themeSampleDomCoverage.test.ts` requires `s`), and user-written
+CSS themes that target `s` would silently stop applying.
