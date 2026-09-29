@@ -83,6 +83,24 @@ export interface DesignerVariables {
   showMacBar: boolean;
   codeTheme: string;
 
+  // 代码块细项（缺省时不输出任何覆盖规则）
+  /** 代码块外框形态；缺省沿用基础主题的边框设置 */
+  codeBlockBorder?: "none" | "full" | "left";
+  codeBlockBorderColor?: string;
+  codeBlockBorderWidth?: number;
+  codeBlockRadius?: number;
+  codeBlockPaddingX?: number;
+  codeBlockPaddingY?: number;
+  codeBlockLineHeight?: number;
+  /** 让长行在框内横向滚动，而不是把代码块撑破正文宽度 */
+  codeBlockContainWidth?: boolean;
+
+  // 行内代码细项
+  inlineCodeFontSize?: number;
+  inlineCodeBorderWidth?: number;
+  inlineCodePaddingX?: number;
+  inlineCodePaddingY?: number;
+
   // 图片
   imageMargin: number;
   imageBorderRadius: number;

@@ -43,3 +43,14 @@ The copy pipeline drops border shorthands that contain `var()`. Split into `bord
 Byte-exact generator baselines are stored under `apps/web/src/__tests__/fixtures/designer-baseline/`. The pre-commit hook runs `prettier --write` on `*.{json,md,css}`, which silently reflows `.css` fixtures and breaks every assertion.
 
 That directory is listed in `.prettierignore`. When adding another frozen-output fixture, keep it out of any lint-staged glob, and regenerate baselines from the **pre-change** code (stash the edits, freeze, restore) so a regression cannot be baked into the baseline.
+
+## Known defect: the strikethrough color control misses `<s>`
+
+Markdown-it renders `~~text~~` as `<s>`, but the designer's `删除线颜色` (`delColor`) only emits
+`#wemd del { ... }`. The control therefore has no effect on strikethrough produced from
+markdown text — it only affects hand-written `<del>` in the source.
+
+Status (2026-09-29): **not fixed by default.** `delCoversStrikethrough` adds a mirroring
+`#wemd s` rule, but it stays opt-in because turning it on by default would change the
+output of every existing visual theme, which the frozen baselines forbid. Flipping the
+default requires an explicit decision plus a re-frozen baseline.

@@ -5,6 +5,7 @@ import { GlobalSection } from "../../components/Theme/ThemeDesigner/sections/Glo
 import { ParagraphSection } from "../../components/Theme/ThemeDesigner/sections/ParagraphSection";
 import { HeadingSection } from "../../components/Theme/ThemeDesigner/sections/HeadingSection";
 import { OtherSection } from "../../components/Theme/ThemeDesigner/sections/OtherSection";
+import { CodeSection } from "../../components/Theme/ThemeDesigner/sections/CodeSection";
 import type {
   HeadingLevel,
   HeadingStyle,
@@ -262,5 +263,53 @@ describe("link, strikethrough and footnote controls", () => {
     updateVariable.mockClear();
     clickOption(details, "默认");
     expect(updateVariable).toHaveBeenCalledWith("footnoteLayout", undefined);
+  });
+});
+
+describe("code block advanced controls", () => {
+  type UpdateVariable = SectionProps["updateVariable"];
+
+  const renderCode = (updateVariable: UpdateVariable) =>
+    render(
+      <CodeSection
+        variables={defaultVariables}
+        updateVariable={updateVariable}
+        setVariables={vi.fn() as never}
+      />,
+    );
+
+  const clickOption = (container: HTMLElement | null, label: string) => {
+    const button = Array.from(
+      container?.querySelectorAll<HTMLButtonElement>(".option-btn") ?? [],
+    ).find((b) => b.textContent === label);
+    expect(button, `找不到选项「${label}」`).toBeTruthy();
+    fireEvent.click(button as Element);
+  };
+
+  it("外框、圆角与长行滚动写入对应变量", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    renderCode(updateVariable);
+
+    const details = openAdvanced("代码块高级选项");
+    expect(updateVariable).not.toHaveBeenCalled();
+
+    clickOption(details, "仅左线");
+    expect(updateVariable).toHaveBeenCalledWith("codeBlockBorder", "left");
+
+    updateVariable.mockClear();
+    setRange(details, "圆角", "4");
+    expect(updateVariable).toHaveBeenCalledWith("codeBlockRadius", 4);
+
+    updateVariable.mockClear();
+    fireEvent.click(
+      screen
+        .getByText("长行在框内滚动")
+        .parentElement!.querySelector("input") as Element,
+    );
+    expect(updateVariable).toHaveBeenCalledWith("codeBlockContainWidth", true);
+
+    expect(
+      screen.getByText(/超长代码行不会把代码块撑破正文宽度/),
+    ).toBeInTheDocument();
   });
 });

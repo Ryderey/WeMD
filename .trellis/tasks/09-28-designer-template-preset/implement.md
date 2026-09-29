@@ -128,3 +128,16 @@ pnpm --filter @wemd/web run build
 - **发现一个既有缺陷（未擅自改默认行为）**：设计器的「删除线颜色」此前只作用于 `#wemd del`，而 Markdown 的 `~~文本~~` 实际产出 `<s>`，也就是说该控件对正文里的删除线一直无效。本片提供 `delCoversStrikethrough` 开关来修正，但**没有默认打开**——默认打开会改变所有既有 visual 主题的输出，越过基线冻结的边界。是否将其设为默认（并重新冻结基线）需要决策。
 - 测试：`themeDesignerTextLinks.test.ts` 22 条（枚举白名单、布尔严格比较、越界取值被夹住、覆盖块只追加不穿插）；控件测试增至 10 条。
 - 全量：594 tests / 58 files 通过、lint 0 errors、build 通过。
+
+### 2.5 完成记录（2026-09-29）
+
+- 仍走「追加覆盖块」：`optionalOverrides.ts` 里分 `codeBlockBlocks` 与 `inlineCodeBlocks` 两段，外框落在 `#wemd pre, #wemd pre.custom`、内层落在 `#wemd pre code` + `pre code.hljs` + `pre code:not(.hljs)` 三条选择器上，hljs 与非 hljs 分支都覆盖到。缺省时不产生任何新行，55 条基线仍全绿。
+- 边框全部写成 `border-width` / `border-style` / `border-color` 长属性（含行内代码用 `var(--wemd-primary-color-50)` 兜底色的情况），不出现 `border:` 简写，符合微信复制链路的既有约定。
+- `codeBlockContainWidth` 同时给出 `min-width: 0`（内层）与 `overflow-x: hidden`（外框），解决超长行把代码块撑破正文宽度的问题。
+- 颜色非法（`red`、注入串）时退回默认 `#DDE7DF`，绝不把原始输入写进 CSS；越界的宽度/圆角/行高分别退回 1px、不输出、或整块不输出。
+- 控件在代码分区「代码块高级选项」折叠区（外框三态、边框色/宽、圆角、横纵内距、行高、长行滚动开关、行内代码字号与边框）。
+- 测试：`themeDesignerCodeBlock.test.ts` 28 条；控件测试增至 11 条。全量 623 tests / 59 files、lint 0 errors、build 通过。
+
+### 需要随本任务一起交接的既有缺陷（用户已确认暂不改默认）
+
+设计器「删除线颜色」只作用于 `#wemd del`，而 Markdown 的 `~~文本~~` 产出 `<s>`，因此该控件对正文删除线**一直无效**。2.4 提供 `delCoversStrikethrough` 开关修正，但**默认关闭**：默认打开会改变所有既有可视化主题的输出，越过冻结基线。已同时记入 `.trellis/spec/web/frontend/theme-designer.md` 的「Known defect」一节与本任务记录，避免被遗忘。
