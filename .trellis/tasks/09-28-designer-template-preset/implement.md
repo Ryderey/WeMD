@@ -202,3 +202,26 @@ pnpm --filter @wemd/web run build
 - 偏离方案一处并说明：五款的 `builtInThemes.ts` 登记并入 Stage 4 第一个提交，避免在 `ThemePanel` 陈旧闭包问题修好之前，先让带 `editorMode: "visual"` 的内置条目出现在所有选择器里。
 - 证据与复现方式全部写在 `research/fidelity-stage3.md`。修复后截图未取到（应用内 Browser 表面进入后台，`take_screenshot` 报视口不可用），数值证据完整。
 - 全量：697 tests / 64 files 通过（另 1 条为显式重新冻结用的 skip）、lint 0 errors、build 通过；55 条基线仍逐字一致 + 1 条审核过的追加。
+
+### Stage 4 完成记录（2026-09-29，提交 c6c08f0）
+
+- **登记**：`builtInThemes.ts` 里五款改为由 `designerPresets` 生成（`editorMode: "visual"` + 完整变量 + `generateCSS` 出来的自包含 CSS），id 与名称不变，所以选中、localStorage、分享都不受影响。同时导出 `designerTemplateIds` 供面板剔除。
+  - 语义变化需要知道：这五款从「`basic + reading + codeGithub` 组合」变成「自包含生成」，即保真验收里 ±0.7% 的那一版；要回到旧组合就是回滚这个提交。
+- **`duplicateTheme` 深拷贝**：可视化主题先 `structuredClone` 变量再 `generateCSS`，副本与模板/内置条目彻底脱钩（原来把引用直接传进副本，改副本会碰到模板本身）。CSS 主题维持原路径。
+- **`ThemePanel`**：抽出 `applyThemeToPanel`（新建 / 复制 / 普通点击共用一条初始化路径）；按 id 取主题改为读 store 实时状态，去掉渲染期列表快照；复制直接用 `duplicateTheme` 返回的副本对象；保存后同步 `cssInput` / `visualCss` / `originalCss` / `originalVariables` 四份状态。
+- **`ThemePanelView`**：侧栏拆成「模板 · 复制后编辑」（每项带文字 `[模板]` 标识，组内一行「模板不可修改，复制后可进行可视化微调」）、「我的主题」（空态一行）、「内置主题」（已剔除五款）；模板只读，动作只有「复制并微调」+「应用主题」，保存/删除/导出不出现；设计器按主题 id 加 `key`，切换主题不再复用上一份内部状态。`ThemePanel.css` 只补了角标与组内提示三条规则。
+- 测试：`store/themeStore.test.ts` 3 条（深拷贝独立性、两次复制互不影响、CSS 主题不带变量）；`ThemePanel.test.tsx` 增至 10 条（模板分组与标识、模板只读动作集、复制后直接用副本初始化、我的主题空态）。
+
+### Stage 5 验证（2026-09-29）
+
+| 命令                                                                                                                      | 结果                              |
+| ------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| `vitest run ThemePanel.test.tsx themeDesignerVariables.test.ts wechatCopyCssIntegration.test.ts store/themeStore.test.ts` | 4 files / 77 tests 通过           |
+| `pnpm --filter @wemd/web run test -- --run`（全量）                                                                       | 64 files / 703 passed + 1 skipped |
+| `pnpm --filter @wemd/web run lint`                                                                                        | 0 errors / 18 条既有 warnings     |
+| `pnpm --filter @wemd/web run build`                                                                                       | 通过（tsc + vite）                |
+
+- **复制链路检查（自动化替身，非微信人工验证）**：用 `renderOffscreenContent` 的真实顺序（`buildCopyCss` → `stripCounterPseudoRules` → `materializeCounterPseudoContent` → `processHtml` → `resolveInlineStyleVariablesForCopy`）跑五款模板 + 统一样例：内联后不再有 `var(--wemd-*)`；页面内距为 `padding: 5px 22px`；代码块外框是 `border-width`/`border-style` 长属性；素笺/朱砂的分隔线保留 `width: 28px` 短线；行高与字体落到具体元素。
+  - 注意：`processHtml` 单独调用**不会**解析变量（325 处 `var()` 会留在子元素上），必须先 `resolveInlineStyleVariablesForCopy`；这是复制链路既有的两步结构，不是本次改动引入的。
+- **微信侧人工验证未执行**：本机无法驱动微信客户端完成「粘贴 → 保存 → 重开」。上面那条自动化检查只覆盖「内联后样式是否还在」这一类会静默丢失的问题，不能替代真机粘贴；发布前需要在微信里过一遍五款。
+- 对照台与复制检查的脚本已从测试目录移出到 `.tmp/fidelity/scratch/`（`.tmp/` 已被 gitignore），仓库测试目录不再混入临时文件。
