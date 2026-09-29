@@ -3,6 +3,16 @@ import { describe, expect, it, vi } from "vitest";
 import { defaultVariables } from "../../components/Theme/ThemeDesigner/defaults";
 import { GlobalSection } from "../../components/Theme/ThemeDesigner/sections/GlobalSection";
 import { ParagraphSection } from "../../components/Theme/ThemeDesigner/sections/ParagraphSection";
+import { HeadingSection } from "../../components/Theme/ThemeDesigner/sections/HeadingSection";
+import type {
+  HeadingLevel,
+  HeadingStyle,
+} from "../../components/Theme/ThemeDesigner/types";
+
+type UpdateHeading = (
+  level: HeadingLevel,
+  style: Partial<HeadingStyle>,
+) => void;
 
 const openAdvanced = (summaryText: string) => {
   const summary = screen.getByText(summaryText);
@@ -106,5 +116,52 @@ describe("advanced page and paragraph controls", () => {
     };
     expect(readValue("段前距")).toBe("18");
     expect(readValue("段后距")).toBe("18");
+  });
+});
+
+describe("heading advanced controls", () => {
+  const renderHeading = (updateHeading: UpdateHeading) =>
+    render(
+      <HeadingSection
+        variables={defaultVariables}
+        updateVariable={vi.fn() as never}
+        activeHeading="h1"
+        setActiveHeading={vi.fn()}
+        updateHeading={updateHeading}
+      />,
+    );
+
+  it("只展开高级选项不会写任何字段", () => {
+    const updateHeading = vi.fn<UpdateHeading>();
+    renderHeading(updateHeading);
+    openAdvanced("标题高级选项");
+    expect(updateHeading).not.toHaveBeenCalled();
+  });
+
+  it("细线与字体写入当前标题层级", () => {
+    const updateHeading = vi.fn<UpdateHeading>();
+    renderHeading(updateHeading);
+    const details = openAdvanced("标题高级选项");
+
+    setRange(details, "下方细线宽度", "1");
+    expect(updateHeading).toHaveBeenCalledWith("h1", { ruleBelowWidth: 1 });
+
+    updateHeading.mockClear();
+    setRange(details, "细线与文字距离", "8");
+    expect(updateHeading).toHaveBeenCalledWith("h1", { ruleBelowGap: 8 });
+
+    updateHeading.mockClear();
+    setRange(details, "行高", "1.55");
+    expect(updateHeading).toHaveBeenCalledWith("h1", { lineHeight: 1.55 });
+
+    updateHeading.mockClear();
+    fireEvent.click(
+      Array.from(
+        details.querySelectorAll<HTMLButtonElement>(".option-btn"),
+      ).find((b) => b.textContent === "跟随全局") as Element,
+    );
+    expect(updateHeading).toHaveBeenCalledWith("h1", { fontFamily: undefined });
+
+    expect(screen.getByText(/细线宽度设为 0 表示不显示/)).toBeInTheDocument();
   });
 });

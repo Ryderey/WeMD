@@ -13,6 +13,14 @@ export interface HeadingStyle {
   centered?: boolean;
   fontWeight?: string;
   letterSpacing?: number;
+  /** 标题行高（无单位倍数）；未设置时沿用正文行高 */
+  lineHeight?: number;
+  /** 标题独立字体栈；未设置时沿用全局字体 */
+  fontFamily?: string;
+  /** 标题下方细线：宽度(px)、颜色、与文字的距离(px)。未设置时不输出任何装饰 */
+  ruleBelowWidth?: number;
+  ruleBelowColor?: string;
+  ruleBelowGap?: number;
 }
 
 /**
@@ -38,6 +46,9 @@ export interface DesignerVariables {
   h2: HeadingStyle;
   h3: HeadingStyle;
   h4: HeadingStyle;
+  /** 五级、六级标题：首批不开放控件，但种子与序列化需要保留 */
+  h5?: HeadingStyle;
+  h6?: HeadingStyle;
 
   // 段落
   paragraphMargin: number;

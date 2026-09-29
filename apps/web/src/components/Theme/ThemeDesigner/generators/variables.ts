@@ -1,6 +1,6 @@
 import type { DesignerVariables } from "../types";
 import { resolveStrongAccentColor } from "./strongAccent";
-import { optionalLength } from "./optionalLength";
+import { optionalLength } from "./safeCssValue";
 
 const toAlphaColor = (color: string, alpha: number): string => {
   const trimmed = color.trim();
