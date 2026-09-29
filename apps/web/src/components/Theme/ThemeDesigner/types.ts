@@ -73,6 +73,8 @@ export interface DesignerVariables {
   quoteFontSize: number;
   quoteLineHeight: number;
   quoteTextCentered: boolean;
+  /** 引用横线落在哪两侧；top-bottom = 只有上下细线（预设自带的左线会被压回 0） */
+  quoteBorderEdges?: "left" | "top-bottom";
   /** 左侧内距覆盖值；未设置时取 quotePaddingX */
   quotePaddingLeft?: number;
   /** 右侧内距覆盖值；未设置时取 quotePaddingX */

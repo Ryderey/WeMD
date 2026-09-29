@@ -48,7 +48,12 @@ export function generateOptionalOverrides(v: DesignerVariables): string {
     const numberWidth = optionalLength(v.footnoteNumberWidth, 60, 8) ?? 22;
     const lineHeight = optionalUnitless(v.footnoteLineHeight, 1, 3) ?? 1.8;
     const fontSize = optionalLength(v.footnoteFontSize, 32, 8) ?? 12;
-    blocks.push(`#wemd .footnote-num {
+    blocks.push(`#wemd .footnotes-sep {
+  border-top-width: 0;
+  padding: 2px 0 4px;
+  margin: 34px 0 22px;
+}
+#wemd .footnote-num {
   display: inline-block;
   width: ${numberWidth}px;
   font-size: ${fontSize}px;
@@ -63,6 +68,17 @@ export function generateOptionalOverrides(v: DesignerVariables): string {
   font-size: ${fontSize}px;
   line-height: ${lineHeight};
   word-break: normal;
+}`);
+  }
+
+  // 纯文字脚注标题：extras.ts 的样式分支都不匹配时，那里只留下 content 与 display，
+  // 排版由这段追加规则给出。不改 extras.ts 的模板，是为了不给既有分支插入额外的空白字节。
+  if (v.footnoteHeaderStyle === "plain") {
+    blocks.push(`#wemd .footnotes-sep:before {
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 14px;
 }`);
   }
 
@@ -99,6 +115,12 @@ const quoteBlocks = (v: DesignerVariables): string[] => {
   const outer: string[] = [];
   const indentValue =
     indent === null ? null : indent === 0 ? "0px" : `-${indent}px`;
+  if (v.quoteBorderEdges === "top-bottom") {
+    // 素笺式引用只有上下横线：左线由预设写出，这里用长属性把它压回 0。
+    outer.push("border-width: var(--wemd-quote-border-width) 0;");
+    outer.push("border-style: var(--wemd-quote-border-style);");
+    outer.push("border-color: var(--wemd-quote-border-color);");
+  }
   if (left !== null || right !== null) {
     outer.push(
       `padding: ${v.quotePaddingY}px ${right ?? v.quotePaddingX}px ${
@@ -273,14 +295,14 @@ const imageBlocks = (v: DesignerVariables): string[] => {
   return [
     `#wemd img {
   width: 100%;
-  margin: var(--wemd-image-margin) 0;
+  margin: var(--wemd-image-margin) 0 8px;
 }
 #wemd figure {
   margin: 0;
 }
 #wemd figcaption {
   line-height: 1.65;
-  margin: 8px 0 var(--wemd-image-margin);
+  margin: 0 0 var(--wemd-image-margin);
 }`,
   ];
 };
@@ -292,7 +314,7 @@ const listBlocks = (v: DesignerVariables): string[] => {
     `#wemd ul,
 #wemd ol {
   padding-left: 1.25em;
-  margin: var(--wemd-paragraph-margin) 0;
+  margin: 18px 0 var(--wemd-paragraph-margin);
 }
 #wemd ul ul,
 #wemd ol ol {

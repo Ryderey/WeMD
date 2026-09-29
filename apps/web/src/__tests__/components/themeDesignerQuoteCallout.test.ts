@@ -80,6 +80,23 @@ describe("quote asymmetric padding, indent, paragraph gap and font", () => {
     expect(block.split(family)).toHaveLength(3);
   });
 
+  it("只有上下横线的引用把预设自带的左线压回 0，且不引入居中", () => {
+    const block = ov({ quoteBorderEdges: "top-bottom" });
+    expect(block).toContain(
+      `${QUOTE_CONTAINERS}
+  border-width: var(--wemd-quote-border-width) 0;
+  border-style: var(--wemd-quote-border-style);
+  border-color: var(--wemd-quote-border-color);
+}`,
+    );
+    expect(block).not.toContain("text-align");
+  });
+
+  it("left 与非法值都不产生覆盖", () => {
+    expect(ov({ quoteBorderEdges: "left" })).toBe("");
+    expect(ov({ quoteBorderEdges: "top" as never })).toBe("");
+  });
+
   it("组合输出与预期逐字一致", () => {
     expect(
       ov({

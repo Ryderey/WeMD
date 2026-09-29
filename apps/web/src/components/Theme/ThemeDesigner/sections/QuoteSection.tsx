@@ -168,6 +168,33 @@ export function QuoteSection({ variables, updateVariable }: SectionProps) {
 
       <details className="designer-advanced">
         <summary>引用高级选项</summary>
+        <div className="designer-field">
+          <label>横线位置</label>
+          <div className="designer-options mini">
+            {[
+              { id: "left", label: "左竖线" },
+              { id: "top-bottom", label: "上下横线" },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                className={`option-btn ${
+                  (variables.quoteBorderEdges ?? "left") === opt.id
+                    ? "active"
+                    : ""
+                }`}
+                aria-pressed={(variables.quoteBorderEdges ?? "left") === opt.id}
+                onClick={() =>
+                  updateVariable(
+                    "quoteBorderEdges",
+                    opt.id as "left" | "top-bottom",
+                  )
+                }
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="designer-row">
           <div className="designer-field half">
             <label>左侧内距</label>

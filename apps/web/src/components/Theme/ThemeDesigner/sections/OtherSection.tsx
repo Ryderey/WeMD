@@ -253,13 +253,14 @@ export function OtherSection({ variables, updateVariable }: SectionProps) {
       </div>
       <div className="designer-field">
         <label>标题样式</label>
-        <div className="designer-options col-5">
+        <div className="designer-options col-3">
           {[
             { id: "simple", label: "简约" },
             { id: "left-border", label: "竖线" },
             { id: "bottom-border", label: "下划线" },
             { id: "background", label: "背景块" },
             { id: "pill", label: "胶囊" },
+            { id: "plain", label: "纯文字" },
           ].map((style) => (
             <button
               key={style.id}

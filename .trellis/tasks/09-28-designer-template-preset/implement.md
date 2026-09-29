@@ -166,3 +166,19 @@ pnpm --filter @wemd/web run build
 - 控件：`QuoteSection`「引用高级选项」「提示块高级选项」、`ImageSection`「图片高级选项」加滑动图片形态、`OtherSection`「公式高级选项」开关。
 - 测试：`themeDesignerQuoteCallout.test.ts` 14 条、`themeDesignerImageflowEquation.test.ts` 6 条（含「不提高特异性」与逐字输出断言）、控件测试增至 20 条（含「只展开不写字段」「滑块显示旧默认值」）。全量：665 tests / 62 files 通过、lint 0 errors（18 条既有 warnings）、build 通过；基线 56 条断言：55 逐字一致 + 1 条审核过的追加。
 - 遗留（Stage 3 保真验收要逐条列出）：五变体左线各自分色的配色无法表达（`primary` 会拉平成主题色）；引用外距 26px 依赖 `paragraphMargin`，与模板可能差 1–2px；`quoteFontFamily` 只能取 `fontFamilyOptions` 里的字体栈，与墨刊的 `Songti SC, Noto Serif CJK SC, …` 不完全一致。
+
+### Stage 3 第一段：五份变量种子 + 写种子时暴露的表达能力缺口（2026-09-29）
+
+- 新增 `apps/web/src/store/themes/designerPresets.ts`：五份完整 `DesignerVariables`（含 h5/h6 与提示块），取值逐条来自 `reading-editions.ts`。共享排版用工厂 `buildEdition`，五份只差调色板与少量分块参数——与参考实现同构，避免五份近乎重复的数据。**尚未登记到 `builtInThemes.ts`**：按方案，保真验收通过前不进内置列表。
+- 写种子时暴露 4 个真实缺口，已在本段补掉（都走「追加覆盖」，缺省输出不变）：
+  1. 素笺式引用只有上下横线且正文左对齐 → 新可选 `quoteBorderEdges: "top-bottom"`，用长属性把预设自带的左线压回 0。
+  2. 满宽图片的图注间距：`fill` 之前给 `img` 上下等距 + 图注 `margin-top: 8px`，与模板的「图上 26 / 下 8、图注下 26」不符，实测会多出 18px → 改为 `img { margin: var(--wemd-image-margin) 0 8px }` + `figcaption { margin: 0 0 var(--wemd-image-margin) }`。
+  3. 阅读式列表容器距：模板是「上 18、下 = 段距」→ 改成 `margin: 18px 0 var(--wemd-paragraph-margin)`。
+  4. 脚注区：模板的「参考资料」标题是 13px/600/无装饰，且脚注区前有独立间距 → 新增 `footnoteHeaderStyle: "plain"`（追加块实现）并在 `footnoteLayout: "hanging"` 里带上 `.footnotes-sep` 的 `margin: 34px 0 22px`、`padding: 2px 0 4px`、`border-top-width: 0`。
+- **本段最重要的过程教训**：第 4 项最初是往 `extras.ts` 的 `footnoteHeaderStyle` 三元链里加分支，结果 54 条基线**全红**。两个独立原因叠在一起：
+  1. 编辑工具把 `extras.ts` 从 LF 整体改写成 CRLF，而它是 CSS 模板字符串的源头，换行符直接进入产物字节；
+  2. 即便换行修好，往那条链里加分支也会在输出里多插一段 `\n  ` 空白（模板里每个 `${}` 之间的字面文本都会输出），因此对既有分支**不是**无操作。
+     处理：`git checkout --` 还原 `extras.ts`（逐字节比对确认与 HEAD 一致），把 "plain" 改为在覆盖块里追加规则（不匹配任何既有分支时，`extras.ts` 只留下 `content` 与 `display`）。教训：改任何含 CSS 模板字面量的文件后必须看换行符，且「加一个条件分支」不等于「输出不变」。
+- 测试：`themeDesignerEditionSeeds.test.ts` 18 条（每份种子必须自包含地含 h5/h6、引用、提示块五变体、脚注、滑动图片、公式、表格容器、`li section` 等节点规则；种子值被校验器静默丢弃是最难发现的失败，因此按款钉住关键声明）+ 2.7 文件补 2 条 `quoteBorderEdges`、脚注文件补 2 条（含「既有分支输出逐字不变」）。
+- 全量：688 tests / 63 files 通过（另 1 条为显式重新冻结用的 skip）、lint 0 errors（18 条既有 warnings）、build 通过；55 条旧输出基线仍逐字一致 + 1 条审核过的 `calloutStyle-primary` 追加。
+- 已知并接受/待确认的偏差（浏览器对照时逐条核）：提示块五变体左线在 `primary` 下拉平为主题色（模板是 accent/muted/ink/两个暖色）；表格容器顶线、th 底线在模板里各自有色差，种子统一用 `tableBorderColor`；提示块外距用段距（模板 24/26）；行内代码 `margin: 0 2px` 无法表达；引用内 `strong` 字重 700（模板 600）；h5/h6 外距是估值 26/10，模板靠 UA 默认，需要浏览器实测后回填。

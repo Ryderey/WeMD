@@ -63,13 +63,14 @@ describe("fill image preset", () => {
   it("makes small images span the column and spaces the caption", () => {
     const css = v({ imageLayout: "fill" });
     expect(blockAt(css, "#wemd img {")).toContain("width: 100%;");
+    // 图与图注之间只留 8px，图注下方才是整段的外距。
     expect(blockAt(css, "#wemd img {")).toContain(
-      "margin: var(--wemd-image-margin) 0;",
+      "margin: var(--wemd-image-margin) 0 8px;",
     );
     expect(blockAt(css, "#wemd figure {")).toContain("margin: 0;");
     const caption = blockAt(css, "#wemd figcaption {");
     expect(caption).toContain("line-height: 1.65;");
-    expect(caption).toContain("margin: 8px 0 var(--wemd-image-margin);");
+    expect(caption).toContain("margin: 0 0 var(--wemd-image-margin);");
   });
 
   it.each([
@@ -86,7 +87,7 @@ describe("reading list preset", () => {
     const css = v({ listLayout: "reading" });
     const list = blockAt(css, "#wemd ul,\n#wemd ol {");
     expect(list).toContain("padding-left: 1.25em;");
-    expect(list).toContain("margin: var(--wemd-paragraph-margin) 0;");
+    expect(list).toContain("margin: 18px 0 var(--wemd-paragraph-margin);");
     expect(blockAt(css, "#wemd li {")).toContain("margin: 0 0 6px;");
     expect(blockAt(css, "#wemd ul ul,\n#wemd ol ol {")).toContain(
       "margin: 6px 0 0;",

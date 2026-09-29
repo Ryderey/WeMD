@@ -92,6 +92,26 @@ describe("hanging footnote layout", () => {
     expect(item).toContain("word-break: normal;");
   });
 
+  it("悬挂布局同时给脚注区自己的分隔间距", () => {
+    const css = v({ footnoteLayout: "hanging" });
+    const sep = css.slice(css.lastIndexOf("#wemd .footnotes-sep {"));
+    expect(sep).toContain("border-top-width: 0;");
+    expect(sep).toContain("margin: 34px 0 22px;");
+    expect(sep).toContain("padding: 2px 0 4px;");
+  });
+
+  it("纯文字标题只追加排版，不改 extras.ts 里任何既有分支", () => {
+    const css = v({ footnoteHeaderStyle: "plain" });
+    const before = css.slice(css.lastIndexOf("#wemd .footnotes-sep:before {"));
+    expect(before).toContain("font-weight: 600;");
+    expect(before).toContain("font-size: 13px;");
+    expect(before).toContain("line-height: 1.6;");
+    expect(before).toContain("margin-bottom: 14px;");
+    expect(before).not.toContain("border-left:");
+    // 既有样式分支的输出必须一字不变
+    expect(v({ footnoteHeaderStyle: "left-border" })).toBe(frozenDefault);
+  });
+
   it("keeps number and indent widths in sync", () => {
     const css = v({ footnoteLayout: "hanging", footnoteNumberWidth: 26 });
     expect(css).toContain("width: 26px;");
