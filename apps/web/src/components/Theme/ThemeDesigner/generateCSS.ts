@@ -10,6 +10,7 @@ import { generateGlobal } from "./generators/global";
 import { generateTypography } from "./generators/typography";
 import { generateComponents } from "./generators/components";
 import { generateExtras } from "./generators/extras";
+import { generateOptionalOverrides } from "./generators/optionalOverrides";
 
 // 重新导出以兼容旧引用（如有）
 export { getHeadingPresetCSS, getQuotePresetCSS };
@@ -64,7 +65,7 @@ export function generateCSS(v: DesignerVariables): string {
     "'",
   );
 
-  return [
+  const parts = [
     "/* 可视化设计器生成 */",
     "/* CSS 变量说明：apps/web/src/components/Theme/ThemeDesigner/VARIABLES.md */",
     generateVariables(v, safeFontFamily),
@@ -77,5 +78,10 @@ export function generateCSS(v: DesignerVariables): string {
     }),
     generateComponents(v, { quotePreset }),
     generateExtras(v, { headingExtras, quoteExtras: quotePreset.extra }),
-  ].join("\n\n");
+  ];
+
+  const overrides = generateOptionalOverrides(v);
+  if (overrides) parts.push(overrides);
+
+  return parts.join("\n\n");
 }

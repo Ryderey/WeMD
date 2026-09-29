@@ -4,9 +4,11 @@ import { defaultVariables } from "../../components/Theme/ThemeDesigner/defaults"
 import { GlobalSection } from "../../components/Theme/ThemeDesigner/sections/GlobalSection";
 import { ParagraphSection } from "../../components/Theme/ThemeDesigner/sections/ParagraphSection";
 import { HeadingSection } from "../../components/Theme/ThemeDesigner/sections/HeadingSection";
+import { OtherSection } from "../../components/Theme/ThemeDesigner/sections/OtherSection";
 import type {
   HeadingLevel,
   HeadingStyle,
+  SectionProps,
 } from "../../components/Theme/ThemeDesigner/types";
 
 type UpdateHeading = (
@@ -195,5 +197,70 @@ describe("divider advanced controls", () => {
     expect(updateVariable).toHaveBeenCalledWith("hrAlign", "center");
 
     expect(screen.getByText(/宽度设为 0 表示通栏/)).toBeInTheDocument();
+  });
+});
+
+describe("link, strikethrough and footnote controls", () => {
+  type UpdateVariable = SectionProps["updateVariable"];
+
+  const renderOther = (updateVariable: UpdateVariable) =>
+    render(
+      <OtherSection
+        variables={defaultVariables}
+        updateVariable={updateVariable}
+      />,
+    );
+
+  const clickOption = (container: HTMLElement | null, label: string) => {
+    const button = Array.from(
+      container?.querySelectorAll<HTMLButtonElement>(".option-btn") ?? [],
+    ).find((b) => b.textContent === label);
+    expect(button, `找不到选项「${label}」`).toBeTruthy();
+    fireEvent.click(button as Element);
+  };
+
+  it("链接高级选项写下划线形态与偏移", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    renderOther(updateVariable);
+
+    const details = openAdvanced("链接高级选项");
+    expect(updateVariable).not.toHaveBeenCalled();
+
+    clickOption(details, "文字下划线");
+    expect(updateVariable).toHaveBeenCalledWith("linkUnderlineMode", "text");
+
+    updateVariable.mockClear();
+    setRange(details, "下划线偏移", "4");
+    expect(updateVariable).toHaveBeenCalledWith("linkUnderlineOffset", 4);
+    expect(screen.getByText(/随换行逐行绘制/)).toBeInTheDocument();
+  });
+
+  it("删除线覆盖开关写入布尔值", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    renderOther(updateVariable);
+
+    fireEvent.click(
+      screen
+        .getByText("同时覆盖删除线文本")
+        .parentElement!.querySelector("input") as Element,
+    );
+    expect(updateVariable).toHaveBeenCalledWith("delCoversStrikethrough", true);
+  });
+
+  it("脚注高级选项写布局与编号宽度", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    renderOther(updateVariable);
+
+    const details = openAdvanced("脚注高级选项");
+    clickOption(details, "悬挂缩进");
+    expect(updateVariable).toHaveBeenCalledWith("footnoteLayout", "hanging");
+
+    updateVariable.mockClear();
+    setRange(details, "编号宽度", "26");
+    expect(updateVariable).toHaveBeenCalledWith("footnoteNumberWidth", 26);
+
+    updateVariable.mockClear();
+    clickOption(details, "默认");
+    expect(updateVariable).toHaveBeenCalledWith("footnoteLayout", undefined);
   });
 });

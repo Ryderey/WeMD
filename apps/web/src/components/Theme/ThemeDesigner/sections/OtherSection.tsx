@@ -1,5 +1,6 @@
 import type { SectionProps } from "../types";
 import { ColorSelector } from "../../ColorSelector";
+import { SliderInput } from "../SliderInput";
 
 export function OtherSection({ variables, updateVariable }: SectionProps) {
   return (
@@ -26,6 +27,42 @@ export function OtherSection({ variables, updateVariable }: SectionProps) {
         </label>
       </div>
 
+      <details className="designer-advanced">
+        <summary>链接高级选项</summary>
+        <div className="designer-field">
+          <label>下划线形态</label>
+          <div className="designer-options mini">
+            <button
+              className={`option-btn ${variables.linkUnderlineMode !== "text" ? "active" : ""}`}
+              aria-pressed={variables.linkUnderlineMode !== "text"}
+              onClick={() => updateVariable("linkUnderlineMode", "border")}
+            >
+              边框线
+            </button>
+            <button
+              className={`option-btn ${variables.linkUnderlineMode === "text" ? "active" : ""}`}
+              aria-pressed={variables.linkUnderlineMode === "text"}
+              onClick={() => updateVariable("linkUnderlineMode", "text")}
+            >
+              文字下划线
+            </button>
+          </div>
+        </div>
+        <div className="designer-field">
+          <label>下划线偏移</label>
+          <SliderInput
+            value={variables.linkUnderlineOffset ?? 2}
+            onChange={(val) => updateVariable("linkUnderlineOffset", val)}
+            min={0}
+            max={10}
+            step={0.5}
+          />
+        </div>
+        <p className="designer-field-hint">
+          文字下划线随换行逐行绘制；边框线只在末行下方画一条。
+        </p>
+      </details>
+
       {/* 文本样式 */}
       <div className="designer-group-label mt-4">文本样式</div>
       <div className="designer-field">
@@ -43,6 +80,19 @@ export function OtherSection({ variables, updateVariable }: SectionProps) {
           presets={["#999", "#ccc", "#666", variables.primaryColor]}
           onChange={(color) => updateVariable("delColor", color)}
         />
+      </div>
+      <div className="designer-field-row">
+        <span>同时覆盖删除线文本</span>
+        <label className="designer-switch">
+          <input
+            type="checkbox"
+            checked={variables.delCoversStrikethrough === true}
+            onChange={(e) =>
+              updateVariable("delCoversStrikethrough", e.target.checked)
+            }
+          />
+          <span className="switch-slider"></span>
+        </label>
       </div>
       <div className="designer-field">
         <label>下划线样式</label>
@@ -137,6 +187,52 @@ export function OtherSection({ variables, updateVariable }: SectionProps) {
           ))}
         </div>
       </div>
+      <details className="designer-advanced">
+        <summary>脚注高级选项</summary>
+        <div className="designer-field">
+          <label>布局</label>
+          <div className="designer-options mini">
+            <button
+              className={`option-btn ${variables.footnoteLayout !== "hanging" ? "active" : ""}`}
+              aria-pressed={variables.footnoteLayout !== "hanging"}
+              onClick={() => updateVariable("footnoteLayout", undefined)}
+            >
+              默认
+            </button>
+            <button
+              className={`option-btn ${variables.footnoteLayout === "hanging" ? "active" : ""}`}
+              aria-pressed={variables.footnoteLayout === "hanging"}
+              onClick={() => updateVariable("footnoteLayout", "hanging")}
+            >
+              悬挂缩进
+            </button>
+          </div>
+        </div>
+        <div className="designer-field">
+          <label>编号宽度</label>
+          <SliderInput
+            value={variables.footnoteNumberWidth ?? 22}
+            onChange={(val) => updateVariable("footnoteNumberWidth", val)}
+            min={8}
+            max={60}
+            step={1}
+          />
+        </div>
+        <div className="designer-field">
+          <label>脚注行高</label>
+          <SliderInput
+            value={Number(variables.footnoteLineHeight ?? 1.8)}
+            onChange={(val) => updateVariable("footnoteLineHeight", val)}
+            min={1}
+            max={3}
+            step={0.01}
+          />
+        </div>
+        <p className="designer-field-hint">
+          悬挂缩进让编号固定宽度、正文换行后与首行文字对齐。
+        </p>
+      </details>
+
       <div className="designer-field">
         <label>栏目标题</label>
         <input

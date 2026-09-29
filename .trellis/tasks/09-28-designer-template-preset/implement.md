@@ -117,3 +117,14 @@ pnpm --filter @wemd/web run build
 - 控件在段落分区「分隔线高级选项」折叠区：宽度（0 = 通栏）、对齐（靠左 / 居中，带 `aria-pressed`）、上下边距独立。
 - 新增 `themeDesignerHr.test.ts` 19 条（含 5 组非法宽度、4 组非法上边距、3 组非法对齐必须逐字等于冻结 default）；控件测试增至 7 条。
 - 全量：569 tests / 57 files 通过、lint 0 errors、build 通过。
+
+### 2.4 完成记录（2026-09-29）
+
+- 实现方式改为**追加覆盖块**（新 `generators/optionalOverrides.ts`，整段拼在输出末尾）：选择器与既有规则相同，靠出现顺序覆盖，因此不需要改动 `components.ts` / `extras.ts` 内部，缺省时也不产生任何新行。55 条旧输出基线仍全绿。
+- 新增可选：`linkUnderlineMode`（`border` / `text`）、`linkUnderlineOffset`（0–10px）、`delCoversStrikethrough`（严格 `=== true` 才生效）、`footnoteLayout`（`hanging`）、`footnoteNumberWidth`（8–60px）、`footnoteLineHeight`（1–3）。
+- 过程中修掉两个自己造的语义/实现漏洞：
+  1. 初版把宽度声明放在样式块之前，会被 pill 预设自带的 `width: 20%` 覆盖（2.3 已修，本片的覆盖块同样置于末尾）。
+  2. text 模式下若用户关掉了「显示下划线」，覆盖块会强行加回下划线；现按 `linkUnderline !== false` 决定，并有断言。
+- **发现一个既有缺陷（未擅自改默认行为）**：设计器的「删除线颜色」此前只作用于 `#wemd del`，而 Markdown 的 `~~文本~~` 实际产出 `<s>`，也就是说该控件对正文里的删除线一直无效。本片提供 `delCoversStrikethrough` 开关来修正，但**没有默认打开**——默认打开会改变所有既有 visual 主题的输出，越过基线冻结的边界。是否将其设为默认（并重新冻结基线）需要决策。
+- 测试：`themeDesignerTextLinks.test.ts` 22 条（枚举白名单、布尔严格比较、越界取值被夹住、覆盖块只追加不穿插）；控件测试增至 10 条。
+- 全量：594 tests / 58 files 通过、lint 0 errors、build 通过。

@@ -94,8 +94,14 @@ export interface DesignerVariables {
   // 链接/文本
   linkColor: string;
   linkUnderline: boolean;
+  /** 链接下划线形态；缺省沿用 border-bottom 旧输出 */
+  linkUnderlineMode?: "border" | "text";
+  /** text 模式下划线偏移(px) */
+  linkUnderlineOffset?: number;
   italicColor: string;
   delColor: string;
+  /** 让删除线样式同时覆盖 Markdown ~~文本~~ 产出的 <s> */
+  delCoversStrikethrough?: boolean;
   markBackground: string;
   markColor: string;
   underlineStyle: "solid" | "wavy" | "dotted" | "dashed";
@@ -142,6 +148,10 @@ export interface DesignerVariables {
   // 脚注
   footnoteColor: string;
   footnoteFontSize: number;
+  /** 脚注布局：hanging = 编号固定宽度 + 正文悬挂缩进 */
+  footnoteLayout?: "hanging";
+  footnoteNumberWidth?: number;
+  footnoteLineHeight?: number;
   footnoteHeader: string;
   footnoteHeaderColor: string;
   footnoteHeaderStyle: string;
