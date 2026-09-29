@@ -119,6 +119,14 @@ export interface DesignerVariables {
   hrHeight: number;
   hrMargin: number;
   hrStyle: "solid" | "dashed" | "dotted" | "double" | "pill" | "gradient";
+  /** 分隔线宽度(px)；未设置时不输出宽度声明 */
+  hrWidth?: number;
+  /** 短分隔线的水平对齐；仅在设了宽度时有视觉差异 */
+  hrAlign?: "left" | "center";
+  /** 分隔线上边距覆盖值；未设置时取 hrMargin */
+  hrMarginTop?: number;
+  /** 分隔线下边距覆盖值；未设置时取 hrMargin */
+  hrMarginBottom?: number;
 
   // 列表
   ulStyle: string;

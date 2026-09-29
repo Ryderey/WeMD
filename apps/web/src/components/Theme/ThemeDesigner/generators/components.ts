@@ -1,5 +1,6 @@
 import type { DesignerVariables } from "../types";
 import { getCodeThemeCSS } from "./codeTheme";
+import { optionalLength } from "./safeCssValue";
 
 interface ComponentPresets {
   quotePreset: { base: string; extra: string };
@@ -14,6 +15,23 @@ export function generateComponents(
   const underlineColor = "var(--wemd-underline-color)";
   const hrColor = "var(--wemd-hr-color)";
   const hrHeight = "var(--wemd-hr-height)";
+
+  // 分隔线的宽度、对齐与上下独立间距均为可选；未设置时输出与旧版逐字一致。
+  const hrWidth = optionalLength(v.hrWidth, 600, 1);
+  const hrMarginTop = optionalLength(v.hrMarginTop, 120);
+  const hrMarginBottom = optionalLength(v.hrMarginBottom, 120);
+  const hrCentered = v.hrAlign === "center";
+  const hrMargin =
+    hrMarginTop === null && hrMarginBottom === null && !hrCentered
+      ? "margin: var(--wemd-hr-margin) 0;"
+      : `margin: ${
+          hrMarginTop === null ? "var(--wemd-hr-margin)" : `${hrMarginTop}px`
+        } ${hrCentered ? "auto" : "0"} ${
+          hrMarginBottom === null
+            ? "var(--wemd-hr-margin)"
+            : `${hrMarginBottom}px`
+        };`;
+  const hrWidthDeclaration = hrWidth === null ? "" : `\n  width: ${hrWidth}px;`;
 
   return `#wemd blockquote, 
 #wemd .multiquote-1, 
@@ -127,7 +145,7 @@ ${getCodeThemeCSS(v.codeTheme)}
 }
 
 #wemd hr {
-  margin: var(--wemd-hr-margin) 0;
+  ${hrMargin}
   border: 0;
   ${(() => {
     const style = v.hrStyle || "solid";
@@ -155,7 +173,7 @@ ${getCodeThemeCSS(v.codeTheme)}
     return `
     border-top: ${height} ${style} ${color};
     `;
-  })()}
+  })()}${hrWidthDeclaration}
 }
 #wemd table {
   width: 100%;

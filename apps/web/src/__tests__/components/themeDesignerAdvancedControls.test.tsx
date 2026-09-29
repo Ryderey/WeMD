@@ -165,3 +165,35 @@ describe("heading advanced controls", () => {
     expect(screen.getByText(/细线宽度设为 0 表示不显示/)).toBeInTheDocument();
   });
 });
+
+describe("divider advanced controls", () => {
+  it("只展开不会写字段，细项写入对应变量", () => {
+    const updateVariable = vi.fn();
+    render(
+      <ParagraphSection
+        variables={defaultVariables}
+        updateVariable={updateVariable}
+      />,
+    );
+
+    const details = openAdvanced("分隔线高级选项");
+    expect(updateVariable).not.toHaveBeenCalled();
+
+    setRange(details, "宽度", "28");
+    expect(updateVariable).toHaveBeenCalledWith("hrWidth", 28);
+
+    updateVariable.mockClear();
+    setRange(details, "上边距", "36");
+    expect(updateVariable).toHaveBeenCalledWith("hrMarginTop", 36);
+
+    updateVariable.mockClear();
+    fireEvent.click(
+      Array.from(
+        details.querySelectorAll<HTMLButtonElement>(".option-btn"),
+      ).find((b) => b.textContent === "居中") as Element,
+    );
+    expect(updateVariable).toHaveBeenCalledWith("hrAlign", "center");
+
+    expect(screen.getByText(/宽度设为 0 表示通栏/)).toBeInTheDocument();
+  });
+});

@@ -107,3 +107,13 @@ pnpm --filter @wemd/web run build
 - 测试：`themeDesignerHeadingDecor.test.ts` 28 条（含 5 组字体栈注入、4 组颜色、4 组宽度、5 组行高必须**逐字等于冻结 default**）；`themeDesignerAdvancedControls.test.tsx` 增至 6 条（只展开不写字段、写入落在当前层级、`跟随全局` 写 `undefined`）。
 - 全量：549 tests / 56 files 通过、lint 0 errors、build 通过。
 - 遗留：h5/h6 无控件（方案允许）；标题高级控件尚未做「跟随全局」以外的字体校验提示（生成侧已拒绝，UI 侧只从 `fontFamilyOptions` 取值，不产生非法值）。
+
+### 2.3 完成记录（2026-09-29）
+
+- 新增可选 `hrWidth`（1–600px）、`hrAlign`（`left` / `center` 白名单）、`hrMarginTop` / `hrMarginBottom`（0–120px）。缺省时 `#wemd hr` 输出与旧版逐字一致（6 条 `hrStyle-*` 基线仍全绿）。
+- 宽度声明放在样式块**之后**：pill 预设自带 `width: 20%`，若把用户宽度写在前面会被它覆盖；现在显式宽度稳定胜出。
+- 对齐只在有宽度时产生视觉差异；`hrAlign: "left"` 在无其它覆盖时不产生任何差异（已断言逐字等于冻结 default）。
+- 测试期间抓到一个真实 bug：`optionalLength` 返回数字，`margin` 拼接时漏了 `px` 单位，输出成 `margin: 36 0 16;`。已由测试断言 `margin: 36px 0 16px;` 捕获并修正。
+- 控件在段落分区「分隔线高级选项」折叠区：宽度（0 = 通栏）、对齐（靠左 / 居中，带 `aria-pressed`）、上下边距独立。
+- 新增 `themeDesignerHr.test.ts` 19 条（含 5 组非法宽度、4 组非法上边距、3 组非法对齐必须逐字等于冻结 default）；控件测试增至 7 条。
+- 全量：569 tests / 57 files 通过、lint 0 errors、build 通过。

@@ -119,6 +119,63 @@ export function ParagraphSection({ variables, updateVariable }: SectionProps) {
           step={5}
         />
       </div>
+
+      <details className="designer-advanced">
+        <summary>分隔线高级选项</summary>
+        <div className="designer-field">
+          <label>宽度</label>
+          <SliderInput
+            value={variables.hrWidth ?? 0}
+            onChange={(val) => updateVariable("hrWidth", val)}
+            min={0}
+            max={600}
+            step={1}
+            unit="px"
+          />
+        </div>
+        <div className="designer-field">
+          <label>对齐</label>
+          <div className="designer-options mini">
+            <button
+              className={`option-btn ${variables.hrAlign !== "center" ? "active" : ""}`}
+              aria-pressed={variables.hrAlign !== "center"}
+              onClick={() => updateVariable("hrAlign", "left")}
+            >
+              靠左
+            </button>
+            <button
+              className={`option-btn ${variables.hrAlign === "center" ? "active" : ""}`}
+              aria-pressed={variables.hrAlign === "center"}
+              onClick={() => updateVariable("hrAlign", "center")}
+            >
+              居中
+            </button>
+          </div>
+        </div>
+        <div className="designer-field">
+          <label>上边距</label>
+          <SliderInput
+            value={variables.hrMarginTop ?? variables.hrMargin}
+            onChange={(val) => updateVariable("hrMarginTop", val)}
+            min={0}
+            max={120}
+            step={1}
+          />
+        </div>
+        <div className="designer-field">
+          <label>下边距</label>
+          <SliderInput
+            value={variables.hrMarginBottom ?? variables.hrMargin}
+            onChange={(val) => updateVariable("hrMarginBottom", val)}
+            min={0}
+            max={120}
+            step={1}
+          />
+        </div>
+        <p className="designer-field-hint">
+          宽度设为 0 表示通栏；设为固定长度后可以用「对齐」把它靠左或居中。
+        </p>
+      </details>
     </div>
   );
 }
