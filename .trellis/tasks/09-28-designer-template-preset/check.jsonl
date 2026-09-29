@@ -1,0 +1,2 @@
+{"file": ".trellis/spec/web/frontend/theme-designer.md", "reason": "verify no old-theme output change"}
+{"file": ".trellis/spec/web/frontend/quality.md", "reason": "lint and type-check gates"}
