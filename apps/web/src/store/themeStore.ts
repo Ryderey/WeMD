@@ -335,13 +335,22 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
       throw new Error(`主题 ${id} 未找到`);
     }
 
-    // 复制时保留源主题的编辑模式和变量
-    const editorMode = sourceTheme.editorMode || "css";
+    // 可视化主题深拷贝变量：模板与内置条目共享模块级对象，浅传递会让副本改到原件
+    if (sourceTheme.editorMode === "visual" && sourceTheme.designerVariables) {
+      const variables = structuredClone(sourceTheme.designerVariables);
+      return state.createTheme(
+        newName,
+        "visual",
+        generateCSS(variables),
+        variables,
+      );
+    }
+
     return state.createTheme(
       newName,
-      editorMode,
+      sourceTheme.editorMode || "css",
       sourceTheme.css,
-      sourceTheme.designerVariables,
+      undefined,
     );
   },
 

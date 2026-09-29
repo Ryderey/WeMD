@@ -17,11 +17,6 @@ import {
   receiptTheme,
   sunsetFilmTheme,
   templateTheme,
-  jadeNotesTheme,
-  plainPaperTheme,
-  inkJournalTheme,
-  blueprintTheme,
-  cinnabarTheme,
 } from "@wemd/core";
 
 // 从 ThemeDesigner 导入共享类型（解决类型重复定义问题）
@@ -29,7 +24,33 @@ import type {
   DesignerVariables,
   HeadingStyle,
 } from "../../components/Theme/ThemeDesigner/types";
+import { generateCSS } from "../../components/Theme/ThemeDesigner/generateCSS";
+import { designerPresets } from "./designerPresets";
 export type { DesignerVariables, HeadingStyle };
+
+/**
+ * 五款阅读版式模板。
+ *
+ * 它们同时是「内置主题」和「可视化模板」：CSS 由变量种子自包含生成（不叠加 basicTheme），
+ * 面板里以「模板 · 复制后编辑」独立成组、只读，复制后才是可编辑的可视化主题。
+ */
+export const designerTemplateThemes: CustomTheme[] = designerPresets.map(
+  (preset) => ({
+    id: preset.id,
+    name: preset.name,
+    css: generateCSS(preset.variables),
+    isBuiltIn: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    editorMode: "visual",
+    designerVariables: preset.variables,
+  }),
+);
+
+/** 模板 id，用于把五款从「内置主题」分组里剔除 */
+export const designerTemplateIds = new Set(
+  designerPresets.map((preset) => preset.id),
+);
 
 /**
  * 自定义主题接口
@@ -156,46 +177,8 @@ export const builtInThemes: CustomTheme[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
-  {
-    id: "jade-notes",
-    name: "青岚",
-    css: basicTheme + "\n" + jadeNotesTheme + "\n" + codeGithubTheme,
-    isBuiltIn: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "plain-paper",
-    name: "素笺",
-    css: basicTheme + "\n" + plainPaperTheme + "\n" + codeGithubTheme,
-    isBuiltIn: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "ink-journal",
-    name: "墨刊",
-    css: basicTheme + "\n" + inkJournalTheme + "\n" + codeGithubTheme,
-    isBuiltIn: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "blueprint",
-    name: "蓝图",
-    css: basicTheme + "\n" + blueprintTheme + "\n" + codeGithubTheme,
-    isBuiltIn: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: "cinnabar",
-    name: "朱砂",
-    css: basicTheme + "\n" + cinnabarTheme + "\n" + codeGithubTheme,
-    isBuiltIn: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
+  // 五款阅读版式模板：CSS 自包含生成，面板里只读，复制后才是可编辑的可视化主题
+  ...designerTemplateThemes,
 ];
 
 /**
