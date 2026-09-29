@@ -1,4 +1,5 @@
 import type { DesignerVariables } from "../types";
+import { optionalLength } from "./optionalLength";
 
 interface HeadingPreset {
   content: string;
@@ -19,11 +20,22 @@ export function generateTypography(
 ): string {
   const { h1Preset, h2Preset, h3Preset, h4Preset } = presets;
 
+  const marginTop = optionalLength(v.paragraphMarginTop, 64);
+  const marginBottom = optionalLength(v.paragraphMarginBottom, 64);
+  const paragraphMargin =
+    marginTop === null && marginBottom === null
+      ? "margin: var(--wemd-paragraph-margin) 0;"
+      : `margin: ${marginTop !== null ? `${marginTop}px` : "var(--wemd-paragraph-margin)"} 0 ${
+          marginBottom !== null
+            ? `${marginBottom}px`
+            : "var(--wemd-paragraph-margin)"
+        };`;
+
   return `#wemd p {
   font-family: ${safeFontFamily};
   font-size: var(--wemd-font-size);
   line-height: var(--wemd-line-height);
-  margin: var(--wemd-paragraph-margin) 0;
+  ${paragraphMargin}
   padding: var(--wemd-paragraph-padding) 0;
   letter-spacing: var(--wemd-letter-spacing);
   ${v.textIndent ? "text-indent: 2em;" : ""}

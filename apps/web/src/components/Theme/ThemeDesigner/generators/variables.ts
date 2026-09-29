@@ -1,5 +1,6 @@
 import type { DesignerVariables } from "../types";
 import { resolveStrongAccentColor } from "./strongAccent";
+import { optionalLength } from "./optionalLength";
 
 const toAlphaColor = (color: string, alpha: number): string => {
   const trimmed = color.trim();
@@ -73,6 +74,12 @@ export function generateVariables(
   const pageBackgroundDeclaration =
     pageBackgroundColor && pageBackgroundColor.toLowerCase() !== "transparent"
       ? `  background-color: ${pageBackgroundColor};\n`
+      : "";
+  const pagePaddingY = optionalLength(v.pagePaddingY, 48);
+  const pageMaxWidth = optionalLength(v.pageMaxWidth, 1200, 240);
+  const pageWidthDeclaration =
+    pageMaxWidth !== null
+      ? `  max-width: ${pageMaxWidth}px;\n  margin: 0 auto;\n`
       : "";
   return `#wemd {
   /* CSS 变量 - 可在 CSS 编辑模式下覆盖 */
@@ -164,7 +171,9 @@ export function generateVariables(
   --wemd-list-marker-color-l2: ${v.listMarkerColorL2};
 
   font-family: ${safeFontFamily};
-${pageBackgroundDeclaration}  padding: 0 var(--wemd-page-padding);
+${pageBackgroundDeclaration}${pageWidthDeclaration}  padding: ${
+    pagePaddingY !== null ? `${pagePaddingY}px` : "0"
+  } var(--wemd-page-padding);
   color: var(--wemd-text-color);
   overflow-wrap: break-word;
 }`;

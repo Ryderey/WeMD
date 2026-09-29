@@ -41,6 +41,33 @@ export function ParagraphSection({ variables, updateVariable }: SectionProps) {
         </label>
       </div>
 
+      <details className="designer-advanced">
+        <summary>段落高级选项</summary>
+        <div className="designer-field">
+          <label>段前距</label>
+          <SliderInput
+            value={variables.paragraphMarginTop ?? variables.paragraphMargin}
+            onChange={(val) => updateVariable("paragraphMarginTop", val)}
+            min={0}
+            max={64}
+            step={1}
+          />
+        </div>
+        <div className="designer-field">
+          <label>段后距</label>
+          <SliderInput
+            value={variables.paragraphMarginBottom ?? variables.paragraphMargin}
+            onChange={(val) => updateVariable("paragraphMarginBottom", val)}
+            min={0}
+            max={64}
+            step={1}
+          />
+        </div>
+        <p className="designer-field-hint">
+          不调整时段落仍使用上方「段落间距」的上下等距；调整后上下可分别设定。
+        </p>
+      </details>
+
       <div className="designer-group-label mt-4">分割线</div>
       <div className="designer-field">
         <label>样式</label>

@@ -131,6 +131,34 @@ export function GlobalSection({
         />
       </div>
 
+      <details className="designer-advanced">
+        <summary>页面高级选项</summary>
+        <div className="designer-field">
+          <label>页面上下间距</label>
+          <SliderInput
+            value={variables.pagePaddingY ?? 0}
+            onChange={(val) => updateVariable("pagePaddingY", val)}
+            min={0}
+            max={48}
+            step={0.1}
+          />
+        </div>
+        <div className="designer-field">
+          <label>内容最大宽度</label>
+          <SliderInput
+            value={variables.pageMaxWidth ?? 0}
+            onChange={(val) => updateVariable("pageMaxWidth", val)}
+            min={0}
+            max={1200}
+            step={1}
+            unit="px"
+          />
+        </div>
+        <p className="designer-field-hint">
+          内容最大宽度设为 0 表示不限制；设定后正文按该宽度居中排版。
+        </p>
+      </details>
+
       <div className="designer-field">
         <label>正文颜色</label>
         <ColorSelector

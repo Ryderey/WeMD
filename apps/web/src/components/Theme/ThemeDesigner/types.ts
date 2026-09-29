@@ -27,6 +27,10 @@ export interface DesignerVariables {
   pageBackgroundColor?: string;
   lineHeight: string;
   pagePadding: number;
+  /** 页面上下内边距；未设置时沿用「只设左右」的旧输出 */
+  pagePaddingY?: number;
+  /** 正文最大宽度并居中；未设置时不输出任何宽度声明 */
+  pageMaxWidth?: number;
   baseLetterSpacing: number;
 
   // 标题
@@ -37,6 +41,10 @@ export interface DesignerVariables {
 
   // 段落
   paragraphMargin: number;
+  /** 段前距覆盖值；未设置时取 paragraphMargin */
+  paragraphMarginTop?: number;
+  /** 段后距覆盖值；未设置时取 paragraphMargin */
+  paragraphMarginBottom?: number;
   paragraphPadding: number;
   paragraphColor: string;
   textIndent: boolean;
