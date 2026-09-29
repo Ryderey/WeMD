@@ -73,6 +73,16 @@ export interface DesignerVariables {
   quoteFontSize: number;
   quoteLineHeight: number;
   quoteTextCentered: boolean;
+  /** 左侧内距覆盖值；未设置时取 quotePaddingX */
+  quotePaddingLeft?: number;
+  /** 右侧内距覆盖值；未设置时取 quotePaddingX */
+  quotePaddingRight?: number;
+  /** 悬挂缩进(px)，同时作用到引用容器与引用内的段落 */
+  quoteIndent?: number;
+  /** 多段引用的段间距(px)；末段不带段后距 */
+  quoteParagraphGap?: number;
+  /** 引用专用字体；全局 p 自带字体，因此必须同时写到引用内的 p */
+  quoteFontFamily?: string;
 
   // 代码
   codeBackground: string;
@@ -107,6 +117,8 @@ export interface DesignerVariables {
   imageShadow: boolean;
   /** 图片布局：fill = 小图也撑满正文宽度 */
   imageLayout?: "contain" | "fill";
+  /** 滑动图片布局：reading = 清除普通图片与段落规则对专用元素的影响 */
+  imageflowLayout?: "default" | "reading";
   imageCaptionColor: string;
   imageCaptionFontSize: number;
   imageCaptionTextAlign: string;
@@ -181,10 +193,26 @@ export interface DesignerVariables {
   footnoteHeaderStyle: string;
 
   // 提示块
+  /**
+   * default = 五变体各自的固定配色（旧输出）；
+   * primary = 统一底色、左线与标题跟随主题色。
+   * 下面的显式细项总是排在模式之后，优先于模式取值。
+   */
   calloutStyle: "default" | "primary";
+  calloutBackground?: string;
+  calloutPaddingX?: number;
+  calloutPaddingY?: number;
+  calloutTitleFontSize?: number;
+  calloutTitleColor?: string;
+  calloutBodyFontSize?: number;
+  calloutBodyColor?: string;
 
   // Mermaid
   mermaidTheme: "base" | "forest" | "dark" | "neutral" | "default";
+
+  // 公式
+  /** 给公式 svg 补 max-width，防止长公式撑破正文宽度 */
+  equationMaxWidth?: boolean;
 }
 
 /**

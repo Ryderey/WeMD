@@ -41,15 +41,15 @@
 
 每片的固定做法：先添加旧输出基线断言与新能力失败用例 → `types.ts` 加可选字段 → `generators/*.ts` 读取并输出（缺省走原规则）→ `VARIABLES.md` 记录新变量 → 验证缺省输出逐字等于冻结 fixture、新值达到明确预期 → 最后在 sections 加控件（细项放对应分区「高级」折叠区）。禁止用修改后两条调用路径彼此相等来证明旧输出兼容。
 
-| 片                            | 覆盖缺口       | 备注                                                                                                                                                                                        |
-| ----------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2.1 页面与段落 ✅             | G1 G2          | 已交付 `pagePaddingY` / `pageMaxWidth` / `paragraphMarginTop` / `paragraphMarginBottom`；确认 `textJustify: false` 已可表达左对齐，未新增对齐字段                                           |
-| 2.2 标题                      | G3 G4 G5       | h5/h6 生成与序列化保留、标题行高与字体、h1 细线（结构化装饰，不用 2px 文字下划线近似）                                                                                                      |
-| 2.3 分隔线                    | G7             | `hrWidth`（px/%）、对齐、上下间距；缺省保持 solid/pill/gradient 旧输出                                                                                                                      |
-| 2.4 链接与脚注                | G13 G14        | 链接下划线模式 + offset；`s` 与 `del` 同规则；脚注编号宽度/悬挂缩进/行高                                                                                                                    |
-| 2.5 代码                      | G8 G9          | 代码块边框/圆角/行高、内距与溢出（区分 pre 与 code 职责）；分别验证 hljs 与非 hljs 分支及超长行；行内代码参数                                                                               |
-| 2.6 表格/图片与图注/列表      | G10 G11 G12    | 横线表格 preset + 尺寸配色；图片全宽、非对称间距、figure 外距、小图撑满；图注独立行高/底距和链接图片路径；列表独立间距与 li section                                                         |
-| 2.7 引用/提示块/滑动图片/公式 | G6 G15 G16 G17 | 引用左右不对称内距/缩进/段距/字体（作用到引用内 p）；提示块参数与 default/primary 优先级；滑动容器间距、图片零外距/2px 圆角、caption 间距及内部级联，不为假设组合提高特异性；公式 max-width |
+| 片                               | 覆盖缺口       | 备注                                                                                                                                                              |
+| -------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2.1 页面与段落 ✅                | G1 G2          | 已交付 `pagePaddingY` / `pageMaxWidth` / `paragraphMarginTop` / `paragraphMarginBottom`；确认 `textJustify: false` 已可表达左对齐，未新增对齐字段                 |
+| 2.2 标题                         | G3 G4 G5       | h5/h6 生成与序列化保留、标题行高与字体、h1 细线（结构化装饰，不用 2px 文字下划线近似）                                                                            |
+| 2.3 分隔线                       | G7             | `hrWidth`（px/%）、对齐、上下间距；缺省保持 solid/pill/gradient 旧输出                                                                                            |
+| 2.4 链接与脚注                   | G13 G14        | 链接下划线模式 + offset；`s` 与 `del` 同规则；脚注编号宽度/悬挂缩进/行高                                                                                          |
+| 2.5 代码                         | G8 G9          | 代码块边框/圆角/行高、内距与溢出（区分 pre 与 code 职责）；分别验证 hljs 与非 hljs 分支及超长行；行内代码参数                                                     |
+| 2.6 表格/图片与图注/列表         | G10 G11 G12    | 横线表格 preset + 尺寸配色；图片全宽、非对称间距、figure 外距、小图撑满；图注独立行高/底距和链接图片路径；列表独立间距与 li section                               |
+| 2.7 引用/提示块/滑动图片/公式 ✅ | G6 G15 G16 G17 | 已交付 `quotePaddingLeft/Right`、`quoteIndent`、`quoteParagraphGap`、`quoteFontFamily`；接通 `calloutStyle` 并加提示块细项；`imageflowLayout`、`equationMaxWidth` |
 
 **Review gate 2**：生成器测试全绿且「缺省不改变旧输出」有测试证明。
 
@@ -153,3 +153,16 @@ pnpm --filter @wemd/web run build
 - 过程失误两处，都被工具挡住：批量生成控件的模板把「类型转换」也复用了同一个占位符，产出 `opt.id as (variables.x ?? "y")` 的废代码，由 `tsc` 拦下；preset 控件测试初版是 `expect(true).toBe(true)` 的假断言，被拦后改成三节各自显式断言（含默认项 `aria-pressed` 与「只展开不写字段」）。
 - 测试：`themeDesignerTableImageList.test.ts` 13 条（含非法枚举不产生覆盖、三 preset 同时开启时冻结基线仍是前缀）；控件测试增至 14 条。
 - 全量：639 tests / 60 files 通过、lint 0 errors、build 通过；55 条旧输出基线仍全绿。
+
+### 2.7 完成记录（2026-09-29）
+
+- 新增可选字段：引用 `quotePaddingLeft` / `quotePaddingRight`（单侧缺省回退 `quotePaddingX`，垂直沿用 `quotePaddingY`）、`quoteIndent`（悬挂缩进，0 表示显式取消）、`quoteParagraphGap`（多段引用段距，末段用 `:last-child` 归零）、`quoteFontFamily`；提示块 `calloutBackground` / `calloutPaddingX` / `calloutPaddingY` / `calloutTitleFontSize` / `calloutTitleColor` / `calloutBodyFontSize` / `calloutBodyColor`；`imageflowLayout`、`equationMaxWidth`。
+- **接通了死字段 `calloutStyle`**：此前生成器完全不读它。`primary` = 统一底色（`var(--wemd-primary-color-20)`，实际 12%）+ 五变体左线与标题跟随主题色；`default`（含缺省）逐字保持旧输出。模式块在前、显式细项在后，所以细项永远优先——这是方案里「default/primary 优先级」的落地方式。
+- 这是本片唯一改变旧输出的地方，按「不重新冻结」处理：`designerBaseline.test.ts` 新增 `reviewedChanges`，该配置断言为 `旧基线 + 逐字钉住的追加内容`，其余 55 条仍逐字一致。机制与本任务理由已写入 `.trellis/spec/web/frontend/theme-designer.md`（Waking a dead field 一节）。影响面：无控件，只有导入/手改 JSON 才可能带 `"primary"`，这类主题现在才真正生效。
+- 引用的级联关键点：全局 `#wemd p` 自带 `font-family` 与 `margin`，基础规则又写了 `margin: 0 !important`，所以字体/缩进必须**同时**写到容器和 `blockquote p`，段距必须带 `!important`；`p:last-child` 归零段后距。这一条不只靠推理：`themeDesignerQuoteCallout.test.ts` 直接用真实复制链路 `processHtml`（juice）内联两段引用的 HTML，断言首段带 `margin: 0 0 10px !important` 与 `text-indent: -16px`、末段带 `margin-bottom: 0 !important`。
+- 滑动图片只使用设计器自身已有的选择器（`#wemd .imageflow-img` 等），没有按参考模板写成 `img.imageflow-img` / `section.imageflow-layer1` 去为假设中的 basic/github 组合提特异性；清掉的正是普通 `#wemd img`（外距、阴影）与 `#wemd p`（首行缩进）落到专用元素上的那些值。
+- 公式原本在 visual 侧没有任何规则，长公式会撑破正文：`equationMaxWidth` 给块级 `max-width: 100% !important`、行内 `max-width: 100%` + `vertical-align: middle`。真实浏览器里的 MathJax SVG 效果仍未确认（KaTeX 回退不算通过），留到 Stage 3/5。
+- 未新增 CSS 变量（追加块直接落声明，只复用既有 `--wemd-*`），因此 `VARIABLES.md` 本片无新增条目。
+- 控件：`QuoteSection`「引用高级选项」「提示块高级选项」、`ImageSection`「图片高级选项」加滑动图片形态、`OtherSection`「公式高级选项」开关。
+- 测试：`themeDesignerQuoteCallout.test.ts` 14 条、`themeDesignerImageflowEquation.test.ts` 6 条（含「不提高特异性」与逐字输出断言）、控件测试增至 20 条（含「只展开不写字段」「滑块显示旧默认值」）。全量：665 tests / 62 files 通过、lint 0 errors（18 条既有 warnings）、build 通过；基线 56 条断言：55 逐字一致 + 1 条审核过的追加。
+- 遗留（Stage 3 保真验收要逐条列出）：五变体左线各自分色的配色无法表达（`primary` 会拉平成主题色）；引用外距 26px 依赖 `paragraphMargin`，与模板可能差 1–2px；`quoteFontFamily` 只能取 `fontFamilyOptions` 里的字体栈，与墨刊的 `Songti SC, Noto Serif CJK SC, …` 不完全一致。

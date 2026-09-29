@@ -61,8 +61,34 @@ export function ImageSection({ variables, updateVariable }: SectionProps) {
             ))}
           </div>
         </div>
+        <div className="designer-field">
+          <label>滑动图片</label>
+          <div className="designer-options mini">
+            {[
+              { id: "default", label: "跟随图片" },
+              { id: "reading", label: "阅读式" },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                className={`option-btn ${(variables.imageflowLayout ?? "default") === opt.id ? "active" : ""}`}
+                aria-pressed={
+                  (variables.imageflowLayout ?? "default") === opt.id
+                }
+                onClick={() =>
+                  updateVariable(
+                    "imageflowLayout",
+                    opt.id as "default" | "reading",
+                  )
+                }
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <p className="designer-field-hint">
           撑满正文让小图也拉满正文宽度，图注另起一行按行高排布。
+          阅读式让滑动图片清掉普通图片与段落带上来的外距、阴影与首行缩进。
         </p>
       </details>
 

@@ -9,6 +9,7 @@ import { CodeSection } from "../../components/Theme/ThemeDesigner/sections/CodeS
 import { TableHrSection } from "../../components/Theme/ThemeDesigner/sections/TableHrSection";
 import { ImageSection } from "../../components/Theme/ThemeDesigner/sections/ImageSection";
 import { ListSection } from "../../components/Theme/ThemeDesigner/sections/ListSection";
+import { QuoteSection } from "../../components/Theme/ThemeDesigner/sections/QuoteSection";
 import type {
   HeadingLevel,
   HeadingStyle,
@@ -314,6 +315,132 @@ describe("code block advanced controls", () => {
     expect(
       screen.getByText(/超长代码行不会把代码块撑破正文宽度/),
     ).toBeInTheDocument();
+  });
+});
+
+describe("quote and callout advanced controls", () => {
+  type UpdateVariable = SectionProps["updateVariable"];
+
+  const renderQuote = (updateVariable: UpdateVariable) =>
+    render(
+      <QuoteSection
+        variables={defaultVariables}
+        updateVariable={updateVariable}
+      />,
+    );
+
+  const clickOption = (container: HTMLElement | null, label: string) => {
+    const button = Array.from(
+      container?.querySelectorAll<HTMLButtonElement>(".option-btn") ?? [],
+    ).find((b) => b.textContent === label);
+    expect(button, `找不到选项「${label}」`).toBeTruthy();
+    fireEvent.click(button as Element);
+  };
+
+  it("引用高级选项写左右内距、悬挂缩进与段间距", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    renderQuote(updateVariable);
+
+    const details = openAdvanced("引用高级选项");
+    expect(updateVariable).not.toHaveBeenCalled();
+
+    setRange(details, "左侧内距", "32");
+    setRange(details, "右侧内距", "8");
+    setRange(details, "悬挂缩进", "16");
+    setRange(details, "引用内段间距", "10");
+    expect(updateVariable).toHaveBeenCalledWith("quotePaddingLeft", 32);
+    expect(updateVariable).toHaveBeenCalledWith("quotePaddingRight", 8);
+    expect(updateVariable).toHaveBeenCalledWith("quoteIndent", 16);
+    expect(updateVariable).toHaveBeenCalledWith("quoteParagraphGap", 10);
+  });
+
+  it("引用字体可以回到跟随全局", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    render(
+      <QuoteSection
+        variables={{ ...defaultVariables, quoteFontFamily: "serif" }}
+        updateVariable={updateVariable}
+      />,
+    );
+
+    const details = openAdvanced("引用高级选项");
+    clickOption(details, "跟随全局");
+    expect(updateVariable).toHaveBeenCalledWith("quoteFontFamily", undefined);
+  });
+
+  it("提示块高级选项写模式、内距与字号", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    renderQuote(updateVariable);
+
+    const details = openAdvanced("提示块高级选项");
+    expect(updateVariable).not.toHaveBeenCalled();
+
+    clickOption(details, "跟随主题色");
+    expect(updateVariable).toHaveBeenCalledWith("calloutStyle", "primary");
+
+    updateVariable.mockClear();
+    setRange(details, "水平内距", "20");
+    setRange(details, "标题字号", "13");
+    expect(updateVariable).toHaveBeenCalledWith("calloutPaddingX", 20);
+    expect(updateVariable).toHaveBeenCalledWith("calloutTitleFontSize", 13);
+
+    expect(
+      screen.getByText(/这里设置的细项排在模式之后，永远优先/),
+    ).toBeInTheDocument();
+  });
+
+  it("未设细项时滑块显示旧默认值", () => {
+    renderQuote(vi.fn());
+    const details = openAdvanced("提示块高级选项");
+    const fields = Array.from(details.querySelectorAll(".designer-field"));
+    const readValue = (label: string) => {
+      const field = fields.find(
+        (f) => f.querySelector("label")?.textContent?.trim() === label,
+      );
+      return field?.querySelector<HTMLInputElement>('input[type="range"]')
+        ?.value;
+    };
+    expect(readValue("水平内距")).toBe("16");
+    expect(readValue("垂直内距")).toBe("12");
+  });
+});
+
+describe("imageflow and equation controls", () => {
+  type UpdateVariable = SectionProps["updateVariable"];
+
+  it("滑动图片切到阅读式写入 imageflowLayout", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    render(
+      <ImageSection
+        variables={defaultVariables}
+        updateVariable={updateVariable}
+      />,
+    );
+
+    const details = openAdvanced("图片高级选项");
+    const button = Array.from(
+      details.querySelectorAll<HTMLButtonElement>(".option-btn"),
+    ).find((b) => b.textContent === "阅读式");
+    fireEvent.click(button as Element);
+    expect(updateVariable).toHaveBeenCalledWith("imageflowLayout", "reading");
+  });
+
+  it("公式宽度开关写入 equationMaxWidth", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    render(
+      <OtherSection
+        variables={defaultVariables}
+        updateVariable={updateVariable}
+      />,
+    );
+
+    openAdvanced("公式高级选项");
+    fireEvent.click(
+      screen
+        .getByText("公式限制在正文宽度内")
+        .parentElement!.querySelector("input") as Element,
+    );
+    expect(updateVariable).toHaveBeenCalledWith("equationMaxWidth", true);
   });
 });
 

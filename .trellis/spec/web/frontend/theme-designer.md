@@ -44,6 +44,14 @@ Byte-exact generator baselines are stored under `apps/web/src/__tests__/fixtures
 
 That directory is listed in `.prettierignore`. When adding another frozen-output fixture, keep it out of any lint-staged glob, and regenerate baselines from the **pre-change** code (stash the edits, freeze, restore) so a regression cannot be baked into the baseline.
 
+## Waking a dead field is a reviewed baseline exception
+
+Some fields exist in `DesignerVariables` and in `defaults.ts` but are read by no generator and have no control — they were pure decoration. The baseline sweep includes such a branch (`calloutStyle-primary` did), so wiring the field up legitimately changes that one config's output while every other config must stay byte-identical.
+
+Do not re-freeze in that case. Keep the fixture as evidence of the old output and register the config in `reviewedChanges` in `designerBaseline.test.ts`: the assertion becomes `output === frozen + <pinned delta>`, so the only permitted difference is the appended rule, spelled out verbatim next to the reason.
+
+**Consequence for users**: a theme that carried the dead value (only reachable through imported or hand-edited JSON, since there was no control) now renders what it always claimed to. Say so in the commit message.
+
 ## Known defect: the strikethrough color control misses `<s>`
 
 Markdown-it renders `~~text~~` as `<s>`, but the designer's `删除线颜色` (`delColor`) only emits

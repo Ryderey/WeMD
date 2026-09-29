@@ -271,6 +271,27 @@ export function OtherSection({ variables, updateVariable }: SectionProps) {
           ))}
         </div>
       </div>
+
+      <details className="designer-advanced">
+        <summary>公式高级选项</summary>
+        <div className="designer-field-row">
+          <span>公式限制在正文宽度内</span>
+          <label className="designer-switch">
+            <input
+              type="checkbox"
+              checked={variables.equationMaxWidth === true}
+              onChange={(e) =>
+                updateVariable("equationMaxWidth", e.target.checked)
+              }
+            />
+            <span className="switch-slider"></span>
+          </label>
+        </div>
+        <p className="designer-field-hint">
+          长公式的 SVG
+          会超出正文宽度；开启后块级公式按宽度缩放，行内公式垂直居中。
+        </p>
+      </details>
     </div>
   );
 }
