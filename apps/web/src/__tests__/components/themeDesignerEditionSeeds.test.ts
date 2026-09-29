@@ -42,6 +42,13 @@ describe("designer edition seeds generate", () => {
     }
   });
 
+  it("h5/h6 外距按浏览器对照实测值回填", () => {
+    for (const preset of designerPresets) {
+      expect(cssOf(preset)).toContain("#wemd h5 { margin: 30px 0 15px; }");
+      expect(cssOf(preset)).toContain("#wemd h6 { margin: 30px 0 15px; }");
+    }
+  });
+
   it("五份种子互不相同，且都追加了覆盖块", () => {
     const outputs = designerPresets.map(cssOf);
     expect(new Set(outputs).size).toBe(5);

@@ -89,8 +89,9 @@ const buildEdition = (
     color: ink,
     fontWeight: "700",
     letterSpacing: 0,
-    marginTop: 26,
-    marginBottom: 10,
+    // 浏览器对照实测：基准 composition 的 h5/h6 外距是 30px / 15px
+    marginTop: 30,
+    marginBottom: 15,
     ...overrides,
   });
 

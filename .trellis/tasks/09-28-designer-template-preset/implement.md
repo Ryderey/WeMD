@@ -182,3 +182,14 @@ pnpm --filter @wemd/web run build
 - 测试：`themeDesignerEditionSeeds.test.ts` 18 条（每份种子必须自包含地含 h5/h6、引用、提示块五变体、脚注、滑动图片、公式、表格容器、`li section` 等节点规则；种子值被校验器静默丢弃是最难发现的失败，因此按款钉住关键声明）+ 2.7 文件补 2 条 `quoteBorderEdges`、脚注文件补 2 条（含「既有分支输出逐字不变」）。
 - 全量：688 tests / 63 files 通过（另 1 条为显式重新冻结用的 skip）、lint 0 errors（18 条既有 warnings）、build 通过；55 条旧输出基线仍逐字一致 + 1 条审核过的 `calloutStyle-primary` 追加。
 - 已知并接受/待确认的偏差（浏览器对照时逐条核）：提示块五变体左线在 `primary` 下拉平为主题色（模板是 accent/muted/ink/两个暖色）；表格容器顶线、th 底线在模板里各自有色差，种子统一用 `tableBorderColor`；提示块外距用段距（模板 24/26）；行内代码 `margin: 0 2px` 无法表达；引用内 `strong` 字重 700（模板 600）；h5/h6 外距是估值 26/10，模板靠 UA 默认，需要浏览器实测后回填。
+
+### Stage 3 第二段：浏览器保真验收已完成，结论见 `research/fidelity-stage3.md`
+
+- 对照台：真实 Chrome，每款一页四块（基准 / 生成 × 362px / 677px），CSS 只把 `#wemd` 改写成带作用域的 id，**特异性仍是 id 级**；等字体、图片（实测 `800x450` 与内嵌 `1x1`，无解码失败）与 MathJax `typesetPromise` 全部就绪后采集 60 节点 × 44 计算属性。五款均报 `MathJax=ok`，公式是真实 MathJax SVG 路径，不是 KaTeX 回退——这条满足了方案里「只得到 KaTeX 回退不算 SVG 样式覆盖通过」的前置。
+- 结果：五款总高一致偏短 **-5.1% ~ -6.3%**，方向与幅度都相同，指向同一条根级缺失，而不是逐块取值错。差异已分为 A/B/C/D 四类并逐条给出结论。
+  - **A（需用户拍板，会改所有 visual 主题输出）**：生成的 `#wemd` 缺 `line-height` 与 `word-break`，`#wemd a` 是 `break-all`。三者都属于「自包含输出该给全」的范围，但必然改动 55 条冻结基线 → 需要「人工审核 + 重新冻结」。
+  - **B（不动旧输出，可直接做）**：`codeBlockContainWidth` 的超长行既不换行也滚不到（可达性缺陷）；悬挂脚注缺编号同色/段后距/等宽数字；阅读式列表 `li section` 外距；滑动容器上距 26px；引用外距需要 `quoteOuterMargin`。
+  - **C（接受并记录）**：提示块五变体分色、表格三处细线色差、1–2px 外距、行内代码 margin、`.content` inline-block、脚注编号 12 vs 13px。
+  - **D（纯数据回填，已改）**：h5/h6 外距实测基准是 `30px / 15px`，种子已从估值 26/10 回填，并加断言。
+- 按方案「未通过保真验收不得登记」：**五款仍未挂到 `builtInThemes.ts`**，等 A 类决策与 A+B 修完后重跑对照台再登记。
+- 对照台本身：`.tmp/fidelity/`（页面构建、探针、比较脚本、原始 JSON、全页截图）。构建脚本临时放在 `apps/web/src/__tests__/services/zzFidelityBuild.test.ts`，**未提交**；Stage 3 收尾时要么转正为常规工具、要么删除，不能长期混在测试目录里。
