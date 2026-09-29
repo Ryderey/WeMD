@@ -105,6 +105,8 @@ export interface DesignerVariables {
   imageMargin: number;
   imageBorderRadius: number;
   imageShadow: boolean;
+  /** 图片布局：fill = 小图也撑满正文宽度 */
+  imageLayout?: "contain" | "fill";
   imageCaptionColor: string;
   imageCaptionFontSize: number;
   imageCaptionTextAlign: string;
@@ -137,6 +139,8 @@ export interface DesignerVariables {
   tableHeaderColor: string;
   tableBorderColor: string;
   tableZebra: boolean;
+  /** 表格形态：rules = 只画横向分隔线、固定布局与等宽数字 */
+  tableStyle?: "grid" | "rules";
 
   // 分割线
   hrColor: string;
@@ -158,6 +162,8 @@ export interface DesignerVariables {
   olStyle: string;
   olStyleL2: string;
   listSpacing: number;
+  /** 列表布局：reading = 缩进/容器距/条目距分离，正文落在 li section */
+  listLayout?: "default" | "reading";
   listMarkerColor: string;
   listMarkerColorL2: string;
   ulFontSize: string;

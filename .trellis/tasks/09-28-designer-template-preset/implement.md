@@ -141,3 +141,15 @@ pnpm --filter @wemd/web run build
 ### 需要随本任务一起交接的既有缺陷（用户已确认暂不改默认）
 
 设计器「删除线颜色」只作用于 `#wemd del`，而 Markdown 的 `~~文本~~` 产出 `<s>`，因此该控件对正文删除线**一直无效**。2.4 提供 `delCoversStrikethrough` 开关修正，但**默认关闭**：默认打开会改变所有既有可视化主题的输出，越过冻结基线。已同时记入 `.trellis/spec/web/frontend/theme-designer.md` 的「Known defect」一节与本任务记录，避免被遗忘。
+
+### 2.6 完成记录（2026-09-29）
+
+- 按方案「固定结构用有限 preset 表达」，这片没有做逐声明旋钮，而是三个枚举 preset：
+  - `tableStyle: "rules"`：容器顶线 + `table-layout: fixed` + `separate`/`border-spacing: 0` + 等宽数字 + 只画横向分隔线（`border-width` / `-style` / `-color` 长属性）+ 13.5px 单元格 + 透明单元格底。
+  - `imageLayout: "fill"`：`width: 100%`（小图也撑满正文）、figure 零外距、图注行高 1.65 与底距。
+  - `listLayout: "reading"`：`1.25em` 缩进、容器距与条目距分离、嵌套 6px、`li section` 统一字号/字重 400/行高/正文色。
+- 修正差异表的一处判断：`figure a + figcaption` 的深色浮层来自 `basicTheme`，而 visual 主题 CSS 自包含、不叠加 basic，因此**不需要**在生成器里抵消；G11 该项对 visual 侧不适用。
+- 斑马纹无需新增能力：`tableZebra: false` 本来就不输出 `tr:nth-child(even)`，自包含场景下等效于「无斑马」。
+- 过程失误两处，都被工具挡住：批量生成控件的模板把「类型转换」也复用了同一个占位符，产出 `opt.id as (variables.x ?? "y")` 的废代码，由 `tsc` 拦下；preset 控件测试初版是 `expect(true).toBe(true)` 的假断言，被拦后改成三节各自显式断言（含默认项 `aria-pressed` 与「只展开不写字段」）。
+- 测试：`themeDesignerTableImageList.test.ts` 13 条（含非法枚举不产生覆盖、三 preset 同时开启时冻结基线仍是前缀）；控件测试增至 14 条。
+- 全量：639 tests / 60 files 通过、lint 0 errors、build 通过；55 条旧输出基线仍全绿。

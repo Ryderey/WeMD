@@ -39,6 +39,33 @@ export function ImageSection({ variables, updateVariable }: SectionProps) {
       </div>
 
       <div className="designer-group-label mt-4">图片说明</div>
+      <details className="designer-advanced">
+        <summary>图片高级选项</summary>
+        <div className="designer-field">
+          <label>形态</label>
+          <div className="designer-options mini">
+            {[
+              { id: "contain", label: "适应宽度" },
+              { id: "fill", label: "撑满正文" },
+            ].map((opt) => (
+              <button
+                key={opt.id}
+                className={`option-btn ${(variables.imageLayout ?? "contain") === opt.id ? "active" : ""}`}
+                aria-pressed={(variables.imageLayout ?? "contain") === opt.id}
+                onClick={() =>
+                  updateVariable("imageLayout", opt.id as "contain" | "fill")
+                }
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p className="designer-field-hint">
+          撑满正文让小图也拉满正文宽度，图注另起一行按行高排布。
+        </p>
+      </details>
+
       <div className="designer-field">
         <label>说明文字颜色</label>
         <ColorSelector

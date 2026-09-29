@@ -67,9 +67,96 @@ export function generateOptionalOverrides(v: DesignerVariables): string {
 
   blocks.push(...codeBlockBlocks(v));
   blocks.push(...inlineCodeBlocks(v));
+  blocks.push(...tableBlocks(v));
+  blocks.push(...imageBlocks(v));
+  blocks.push(...listBlocks(v));
 
   return blocks.length ? `\n${blocks.join("\n\n")}\n` : "";
 }
+
+/** 横线表格：只有横向分隔线，固定布局与等宽数字。 */
+const tableBlocks = (v: DesignerVariables): string[] => {
+  if (v.tableStyle !== "rules") return [];
+  return [
+    `#wemd .table-container {
+  margin: 24px 0 28px;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: var(--wemd-table-border-color);
+}
+#wemd table {
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+#wemd th,
+#wemd td {
+  border-width: 0;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: var(--wemd-table-border-color);
+  padding: 10px 8px;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.7;
+  text-align: left;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+#wemd th {
+  font-weight: 600;
+  line-height: 1.65;
+}
+#wemd td {
+  background-color: transparent;
+}`,
+  ];
+};
+
+/** 满宽图片：小图也撑满正文宽度，图注按行高与底距排布。 */
+const imageBlocks = (v: DesignerVariables): string[] => {
+  if (v.imageLayout !== "fill") return [];
+  return [
+    `#wemd img {
+  width: 100%;
+  margin: var(--wemd-image-margin) 0;
+}
+#wemd figure {
+  margin: 0;
+}
+#wemd figcaption {
+  line-height: 1.65;
+  margin: 8px 0 var(--wemd-image-margin);
+}`,
+  ];
+};
+
+/** 阅读式列表：缩进、容器距与条目距分离，正文落在 li section 上。 */
+const listBlocks = (v: DesignerVariables): string[] => {
+  if (v.listLayout !== "reading") return [];
+  return [
+    `#wemd ul,
+#wemd ol {
+  padding-left: 1.25em;
+  margin: var(--wemd-paragraph-margin) 0;
+}
+#wemd ul ul,
+#wemd ol ol {
+  margin: 6px 0 0;
+}
+#wemd li {
+  margin: 0 0 6px;
+}
+#wemd li section {
+  font-size: var(--wemd-font-size);
+  font-weight: 400;
+  line-height: var(--wemd-line-height);
+  color: var(--wemd-text-color);
+  margin: 0;
+}`,
+  ];
+};
 
 /** 代码块：外框（pre / pre.custom）与内层（code）分工不同，分别覆盖。 */
 const codeBlockBlocks = (v: DesignerVariables): string[] => {

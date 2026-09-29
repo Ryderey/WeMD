@@ -6,6 +6,9 @@ import { ParagraphSection } from "../../components/Theme/ThemeDesigner/sections/
 import { HeadingSection } from "../../components/Theme/ThemeDesigner/sections/HeadingSection";
 import { OtherSection } from "../../components/Theme/ThemeDesigner/sections/OtherSection";
 import { CodeSection } from "../../components/Theme/ThemeDesigner/sections/CodeSection";
+import { TableHrSection } from "../../components/Theme/ThemeDesigner/sections/TableHrSection";
+import { ImageSection } from "../../components/Theme/ThemeDesigner/sections/ImageSection";
+import { ListSection } from "../../components/Theme/ThemeDesigner/sections/ListSection";
 import type {
   HeadingLevel,
   HeadingStyle,
@@ -311,5 +314,65 @@ describe("code block advanced controls", () => {
     expect(
       screen.getByText(/超长代码行不会把代码块撑破正文宽度/),
     ).toBeInTheDocument();
+  });
+});
+
+describe("structural presets", () => {
+  type UpdateVariable = SectionProps["updateVariable"];
+
+  const clickOption = (container: HTMLElement | null, label: string) => {
+    const button = Array.from(
+      container?.querySelectorAll<HTMLButtonElement>(".option-btn") ?? [],
+    ).find((b) => b.textContent === label);
+    expect(button, `找不到选项「${label}」`).toBeTruthy();
+    fireEvent.click(button as Element);
+  };
+
+  it("表格形态切到横线式写入 tableStyle", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    render(
+      <TableHrSection
+        variables={defaultVariables}
+        updateVariable={updateVariable}
+      />,
+    );
+
+    const details = openAdvanced("表格高级选项");
+    expect(updateVariable).not.toHaveBeenCalled();
+    clickOption(details, "横线式");
+    expect(updateVariable).toHaveBeenCalledWith("tableStyle", "rules");
+  });
+
+  it("图片布局切到撑满正文写入 imageLayout", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    render(
+      <ImageSection
+        variables={defaultVariables}
+        updateVariable={updateVariable}
+      />,
+    );
+
+    const details = openAdvanced("图片高级选项");
+    clickOption(details, "撑满正文");
+    expect(updateVariable).toHaveBeenCalledWith("imageLayout", "fill");
+  });
+
+  it("列表布局切到阅读式写入 listLayout，且默认项标记为选中", () => {
+    const updateVariable = vi.fn<UpdateVariable>();
+    render(
+      <ListSection
+        variables={defaultVariables}
+        updateVariable={updateVariable}
+      />,
+    );
+
+    const details = openAdvanced("列表高级选项");
+    const defaultButton = Array.from(
+      details.querySelectorAll<HTMLButtonElement>(".option-btn"),
+    ).find((b) => b.textContent === "默认");
+    expect(defaultButton).toHaveAttribute("aria-pressed", "true");
+
+    clickOption(details, "阅读式");
+    expect(updateVariable).toHaveBeenCalledWith("listLayout", "reading");
   });
 });
