@@ -17,8 +17,12 @@
 - [x] 按 515px 和窄正文宽度实际浏览器对照，验证长标题与两行布局；记录最终内联 HTML 和剩余人工验收边界。
 - [x] 完整审阅只涉及本任务的 diff，列出 commit-plan.md，保留其他改动。
 - [x] 用户报告验证通过，并批准最终提交计划、推送与任务归档。
-- [ ] 按项目流程分别提交工作、归档和日志记录，推送当前分支；不 amend。
+- [x] 工作改动提交为 6d849da，正常提交钩子通过；其余 54 个 CSS 基线及 manifest 哈希不变。
 
-复现命令：从仓库根目录运行 powershell -NoProfile -File .trellis/tasks/09-30-chapter-label-reference/research/check.ps1。修正前以参考样式断言失败；修正后应通过，并输出真实实现对照。
+- [x] 使用 Trellis archive 命令归档到 archive/2026-09/09-30-chapter-label-reference，状态为 completed，并清除活动任务指针。
+
+用户随后指定合并回 bugfix：归档和日志记录分别提交后，将功能分支合并回 bugfix 并推送；不 amend。用户的 server 与已有 docs 改动不纳入。
+
+归档后的复现命令：从仓库根目录运行 powershell -NoProfile -File .trellis/tasks/archive/2026-09/09-30-chapter-label-reference/research/check.ps1。修正前以参考样式断言失败；修正后应通过，并输出真实实现对照。
 
 实施与验证已完成，见 research/verification.md。diff 已审阅；用户已批准提交、推送和归档，按 commit-plan.md 执行。

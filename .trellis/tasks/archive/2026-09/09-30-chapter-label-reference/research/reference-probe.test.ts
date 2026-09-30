@@ -49,7 +49,7 @@ describe("chapter label reference diagnostic", () => {
     };
     console.log("@@REFERENCE_DIFF@@", JSON.stringify(actual));
     const reference = '<h2 style="font-size:20px;line-height:1.5;font-weight:750;color:#FFA900;letter-spacing:0.2px;border-left:3px solid #F96E57;padding-left:13px;margin:0 8px;"><span style="display:block;font-size:10px;line-height:1.4;font-weight:700;color:#F96E57;letter-spacing:1.6px;margin-bottom:4px;">SECTION 01</span><span style="display:block;">建立阅读层级</span></h2>';
-    const evidence = resolve(process.cwd(), "../../.trellis/tasks/09-30-chapter-label-reference/research");
+    const evidence = resolve(process.cwd(), "../../.trellis/tasks/archive/2026-09/09-30-chapter-label-reference/research");
     const longRaw = createMarkdownParser().render(
       '## <span class="chapter-label">SECTION 02</span>建立阅读层级，让较长的章节标题在窄正文中自然换行',
     );

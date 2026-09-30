@@ -33,5 +33,7 @@ final HTML styles are checked through the actual offscreen copy renderer.
 
 The user reported verification passed on 2026-09-30 and explicitly approved
 committing, pushing and archiving this task. Keep the exclusions above. Create
-the work commit first, then separate archive and journal commits, and push the
-current `feat/chapter-label-heading-preset` branch to `origin`. Do not amend.
+the work commit first, then separate archive and journal commits. The user
+subsequently specified merging
+`feat/chapter-label-heading-preset` back into `bugfix` and pushing `bugfix`.
+Do not amend.

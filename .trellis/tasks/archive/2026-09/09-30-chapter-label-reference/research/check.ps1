@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$chapterRepo = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..\..\..')).Path
+$chapterRepo = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..\..\..\..\..')).Path
 $chapterTarget = [IO.Path]::GetFullPath((Join-Path $chapterRepo 'apps\web\src\__tests__\services\chapterLabelReference.probe.test.ts'))
 if (-not $chapterTarget.StartsWith($chapterRepo + [IO.Path]::DirectorySeparatorChar)) { throw 'Probe target is outside the repository.' }
 if (Test-Path -LiteralPath $chapterTarget) { throw 'Temporary probe target already exists; refusing to overwrite it.' }
