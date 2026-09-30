@@ -9,6 +9,12 @@ DOM 覆盖检查要求见 implement.md Stage 1；缺节点时不能记为样式�
 
 Intro 段落，含 **加粗**、_斜体_、**_加粗斜体_**、~~删除线~~、++下划线++、==高亮==、`行内代码`、[链接](https://example.com)。
 
+---
+
+## <span class="chapter-label">SECTION 01</span>章节标签标题
+
+标题里显式写的 span 配合「章节标签」预设生成上小字、下主标题的两行结构。
+
 ## 二级标题 H2
 
 ### 三级标题 H3

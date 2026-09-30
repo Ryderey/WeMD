@@ -1,0 +1,54 @@
+[
+  {
+    "borderLeft": "3px solid rgb(249, 110, 87)",
+    "color": "rgb(255, 169, 0)",
+    "fontSize": "20px",
+    "fontWeight": "750",
+    "height": 48,
+    "label": {
+      "color": "rgb(249, 110, 87)",
+      "display": "block",
+      "fontSize": "10px",
+      "letterSpacing": "1.6px",
+      "lineHeight": "14px",
+      "marginBottom": "4px",
+      "text": "SECTION 01"
+    },
+    "letterSpacing": "0.2px",
+    "lineHeight": "30px",
+    "paddingLeft": "13px",
+    "text": "SECTION 01建立阅读层级"
+  },
+  {
+    "borderLeft": "3px solid rgb(249, 110, 87)",
+    "color": "rgb(255, 169, 0)",
+    "fontSize": "20px",
+    "fontWeight": "750",
+    "height": 30,
+    "label": null,
+    "letterSpacing": "0.2px",
+    "lineHeight": "30px",
+    "paddingLeft": "13px",
+    "text": "1. 未标注的普通标题"
+  },
+  {
+    "borderLeft": "3px solid rgb(249, 110, 87)",
+    "color": "rgb(255, 169, 0)",
+    "fontSize": "20px",
+    "fontWeight": "750",
+    "height": 48,
+    "label": {
+      "color": "rgb(249, 110, 87)",
+      "display": "block",
+      "fontSize": "10px",
+      "letterSpacing": "1.6px",
+      "lineHeight": "14px",
+      "marginBottom": "4px",
+      "text": "SECTION 02"
+    },
+    "letterSpacing": "0.2px",
+    "lineHeight": "30px",
+    "paddingLeft": "13px",
+    "text": "SECTION 02建立 阅读 层级"
+  }
+]

@@ -40,6 +40,7 @@ const REQUIRED: { label: string; selector: string; min?: number }[] = [
   { label: "h5 内容层", selector: "h5 .content" },
   { label: "h6 内容层", selector: "h6 .content" },
   { label: "标题前后缀槽", selector: "h2 .prefix" },
+  { label: "章节标签", selector: "h2 .content .chapter-label" },
   { label: "多段引用", selector: "blockquote p", min: 2 },
   { label: "三级引用容器", selector: ".multiquote-3" },
   { label: "三级引用内标题", selector: ".multiquote-3 h3" },

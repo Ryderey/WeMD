@@ -1,4 +1,5 @@
 import type { HeadingSectionProps, HeadingLevel } from "../types";
+import toast from "react-hot-toast";
 import { ColorSelector } from "../../ColorSelector";
 import { SliderInput } from "../SliderInput";
 import {
@@ -15,12 +16,29 @@ const headingTabs: { id: HeadingLevel; label: string }[] = [
   { id: "h4", label: "H4" },
 ];
 
+const chapterLabelSnippet = '<span class="chapter-label">SECTION 01</span>';
+
 export function HeadingSection({
   variables,
   activeHeading,
   setActiveHeading,
   updateHeading,
 }: HeadingSectionProps) {
+  const copyChapterLabel = async () => {
+    try {
+      if (window.electron?.clipboard?.writeText) {
+        const result =
+          await window.electron.clipboard.writeText(chapterLabelSnippet);
+        if (!result.success) throw new Error("复制失败");
+      } else {
+        await navigator.clipboard.writeText(chapterLabelSnippet);
+      }
+      toast.success("标签已复制，请粘贴到正文标题文字前，并修改编号");
+    } catch {
+      toast.error("复制失败，请手动复制示例中的标签代码");
+    }
+  };
+
   return (
     <div className="designer-section">
       <div className="designer-subtabs">
@@ -66,13 +84,48 @@ export function HeadingSection({
                 key={preset.id}
                 className={`option-btn ${variables[activeHeading].preset === preset.id ? "active" : ""}`}
                 onClick={() =>
-                  updateHeading(activeHeading, { preset: preset.id })
+                  updateHeading(
+                    activeHeading,
+                    preset.id === "chapter-label"
+                      ? {
+                          preset: preset.id,
+                          fontSize: 20,
+                          color: "#FFA900",
+                          lineHeight: 1.5,
+                          fontWeight: "750",
+                          letterSpacing: 0.2,
+                          marginTop: 0,
+                          marginBottom: 24,
+                          centered: false,
+                        }
+                      : { preset: preset.id },
+                  )
                 }
               >
                 {preset.label}
               </button>
             ))}
         </div>
+        {variables[activeHeading].preset === "chapter-label" && (
+          <>
+            <p className="designer-field-hint">
+              将标签粘贴到正文标题文字前，修改 SECTION 01 编号。例如：
+              <br />
+              <code>
+                {`${"#".repeat(Number(activeHeading.slice(1)))} ${chapterLabelSnippet}建立阅读层级`}
+              </code>
+              <br />
+              标签和编号需手动填写，预设不会自动生成。
+            </p>
+            <button
+              className="option-btn"
+              type="button"
+              onClick={copyChapterLabel}
+            >
+              复制标签代码
+            </button>
+          </>
+        )}
       </div>
 
       <div className="designer-field">
