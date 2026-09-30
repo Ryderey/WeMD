@@ -114,6 +114,7 @@ export const headingStylePresets: StylePresetOption[] = [
   { id: "numbered-label", label: "编号标签" },
   { id: "corner-brackets", label: "双角括号" },
   { id: "bracket", label: "括号装饰" },
+  { id: "chapter-label", label: "章节标签" },
 ];
 
 export const boldStyleOptions = [

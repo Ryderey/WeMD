@@ -124,6 +124,31 @@ const headingPresetTemplates: Record<
             box-shadow: 5px 5px 0 var(--wemd-primary-color-30);
         `,
   }),
+  "chapter-label": (tag) => ({
+    content: `
+            display: inline-block;
+            width: -webkit-fit-content;
+            width: -moz-fit-content;
+            width: fit-content;
+            max-width: 100%;
+            box-sizing: border-box;
+            border-left-width: 3px;
+            border-left-style: solid;
+            border-left-color: var(--wemd-primary-color);
+            padding-left: 13px;
+        `,
+    extra: `
+        #wemd ${tag} .content .chapter-label {
+            display: block;
+            font-size: 10px;
+            line-height: 1.4;
+            font-weight: 700;
+            color: var(--wemd-primary-color);
+            letter-spacing: 1.6px;
+            margin-bottom: 4px;
+        }
+        `,
+  }),
   "corner-brackets": (tag) => ({
     content: `
             display: inline-block;

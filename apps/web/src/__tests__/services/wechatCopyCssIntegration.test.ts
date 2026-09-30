@@ -67,6 +67,74 @@ describe("wechat copy css integration", () => {
     expect(legacyS?.style.textDecorationColor).toBe("");
   });
 
+  describe("chapter-label heading preset", () => {
+    const copyChapterLabel = (preset: string) => {
+      const css = generateCSS({
+        ...defaultVariables,
+        h2: { ...defaultVariables.h2, preset },
+      });
+      const container = document.createElement("div");
+      container.innerHTML = resolveInlineStyleVariablesForCopy(
+        processHtml(
+          createMarkdownParser().render(
+            '## <span class="chapter-label">SECTION 01</span>建立阅读层级\n\n## 没有标签的二级标题\n',
+          ),
+          buildCopyCss(css),
+          true,
+          true,
+        ),
+      );
+      normalizeCopyContainer(container);
+      const snapshot = document.createElement("div");
+      snapshot.innerHTML = serializeWechatCopyHtml(container);
+      return snapshot;
+    };
+
+    it("copies the author's label as a real block line over the left rule", () => {
+      const snapshot = copyChapterLabel("chapter-label");
+      expect(snapshot.innerHTML).not.toContain("var(--wemd-");
+
+      const labels = snapshot.querySelectorAll<HTMLElement>(
+        "h2 .content .chapter-label",
+      );
+      expect(labels).toHaveLength(1);
+      expect(labels[0].textContent).toBe("SECTION 01");
+      expect(labels[0].style.display).toBe("block");
+      expect(labels[0].style.fontSize).toBe("10px");
+      expect(labels[0].style.fontWeight).toBe("700");
+      expect(labels[0].style.letterSpacing).toBe("1.6px");
+      expect(labels[0].style.marginBottom).toBe("4px");
+      expect(labels[0].style.color).toBe("rgb(7, 193, 96)");
+
+      const content = labels[0].parentElement as HTMLElement;
+      expect(content.style.borderLeftWidth).toBe("3px");
+      expect(content.style.borderLeftStyle).toBe("solid");
+      expect(content.style.borderLeftColor).toBe("rgb(7, 193, 96)");
+      expect(content.style.paddingLeft).toBe("13px");
+    });
+
+    it("rules every heading of the opted-in level", () => {
+      const snapshot = copyChapterLabel("chapter-label");
+      const contents = snapshot.querySelectorAll<HTMLElement>("h2 .content");
+
+      expect(contents).toHaveLength(2);
+      const plain = contents[1];
+      expect(plain.querySelector(".chapter-label")).toBeNull();
+      expect(plain.style.borderLeftWidth).toBe("3px");
+    });
+
+    it("keeps the label as unstyled author text when the preset is not chosen", () => {
+      const snapshot = copyChapterLabel("simple");
+      const label = snapshot.querySelector<HTMLElement>(
+        "h2 .content .chapter-label",
+      );
+
+      expect(label).not.toBeNull();
+      expect(label?.style.display).toBe("");
+      expect(label?.parentElement?.style.borderLeftStyle).toBe("");
+    });
+  });
+
   it.each(["transparent", "#f5f3ef"])(
     "starts with article content without blank boundary paragraphs (%s)",
     (pageBackgroundColor) => {

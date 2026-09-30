@@ -71,4 +71,41 @@ describe("heading style presets", () => {
     expect(extra).toContain("border-right-width: 3px");
     expect(extra).toContain("border-right-color: var(--wemd-primary-color)");
   });
+
+  it("renders chapter-label as a two-line section label over a left rule", () => {
+    const { content, extra } = getHeadingPresetCSS(
+      "chapter-label",
+      "#07c160",
+      "h2",
+    );
+
+    expect(headingStylePresets.some(({ id }) => id === "chapter-label")).toBe(
+      true,
+    );
+    // 竖线必须拆长属性：含变量的 border 简写会在复制链路里被丢掉
+    expect(content).toContain("border-left-width: 3px");
+    expect(content).toContain("border-left-style: solid");
+    expect(content).toContain("border-left-color: var(--wemd-primary-color)");
+    expect(content).toContain("padding-left: 13px");
+    expect(content).toContain("display: inline-block");
+    expect(content).toContain("width: fit-content");
+    expect(content).toContain("max-width: 100%");
+    expect(content).not.toMatch(/border-left:\s*[\d.]+px/);
+
+    expect(extra).toContain("#wemd h2 .content .chapter-label");
+    expect(extra).toContain("display: block");
+    expect(extra).toContain("font-size: 10px");
+    expect(extra).toContain("line-height: 1.4");
+    expect(extra).toContain("font-weight: 700");
+    expect(extra).toContain("color: var(--wemd-primary-color)");
+    expect(extra).toContain("letter-spacing: 1.6px");
+    expect(extra).toContain("margin-bottom: 4px");
+  });
+
+  it("scopes the chapter label to the heading level that opted in", () => {
+    const { extra } = getHeadingPresetCSS("chapter-label", "#07c160", "h3");
+
+    expect(extra).toContain("#wemd h3 .content .chapter-label");
+    expect(extra).not.toContain("#wemd h2");
+  });
 });
