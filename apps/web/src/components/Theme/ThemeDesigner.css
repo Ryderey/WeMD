@@ -83,6 +83,13 @@
   line-height: 1.5;
 }
 
+.designer-heading-snippet {
+  display: block;
+  margin: 8px 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .designer-gradient-preview {
   flex: none;
 }

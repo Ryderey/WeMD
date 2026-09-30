@@ -3,6 +3,12 @@ import toast from "react-hot-toast";
 import { ColorSelector } from "../../ColorSelector";
 import { SliderInput } from "../SliderInput";
 import {
+  getReadingHeadingPreset,
+  getReadingHeadingDefaults,
+  getReadingHeadingSnippet,
+  resolveReadingHeadingNumbers,
+} from "../readingHeadings";
+import {
   headingSizePresets,
   marginPresets,
   headingStylePresets,
@@ -24,18 +30,22 @@ export function HeadingSection({
   setActiveHeading,
   updateHeading,
 }: HeadingSectionProps) {
-  const copyChapterLabel = async () => {
+  const reading = getReadingHeadingPreset(variables[activeHeading].preset);
+  const readingSnippet = reading ? getReadingHeadingSnippet(reading) : "";
+  const numbers = reading
+    ? resolveReadingHeadingNumbers(reading, variables[activeHeading])
+    : undefined;
+  const copySnippet = async (snippet: string, successMessage: string) => {
     try {
       if (window.electron?.clipboard?.writeText) {
-        const result =
-          await window.electron.clipboard.writeText(chapterLabelSnippet);
+        const result = await window.electron.clipboard.writeText(snippet);
         if (!result.success) throw new Error("复制失败");
       } else {
-        await navigator.clipboard.writeText(chapterLabelSnippet);
+        await navigator.clipboard.writeText(snippet);
       }
-      toast.success("标签已复制，请粘贴到正文标题文字前，并修改编号");
+      toast.success(successMessage);
     } catch {
-      toast.error("复制失败，请手动复制示例中的标签代码");
+      toast.error("复制失败，请手动复制示例中的 HTML 代码");
     }
   };
 
@@ -86,19 +96,21 @@ export function HeadingSection({
                 onClick={() =>
                   updateHeading(
                     activeHeading,
-                    preset.id === "chapter-label"
-                      ? {
-                          preset: preset.id,
-                          fontSize: 20,
-                          color: "#FFA900",
-                          lineHeight: 1.5,
-                          fontWeight: "750",
-                          letterSpacing: 0.2,
-                          marginTop: 0,
-                          marginBottom: 24,
-                          centered: false,
-                        }
-                      : { preset: preset.id },
+                    getReadingHeadingPreset(preset.id)
+                      ? getReadingHeadingDefaults(preset.id)
+                      : preset.id === "chapter-label"
+                        ? {
+                            preset: preset.id,
+                            fontSize: 20,
+                            color: "#FFA900",
+                            lineHeight: 1.5,
+                            fontWeight: "750",
+                            letterSpacing: 0.2,
+                            marginTop: 0,
+                            marginBottom: 24,
+                            centered: false,
+                          }
+                        : { preset: preset.id },
                   )
                 }
               >
@@ -120,10 +132,94 @@ export function HeadingSection({
             <button
               className="option-btn"
               type="button"
-              onClick={copyChapterLabel}
+              onClick={() =>
+                copySnippet(
+                  chapterLabelSnippet,
+                  "标签已复制，请粘贴到正文标题文字前，并修改编号",
+                )
+              }
             >
               复制标签代码
             </button>
+          </>
+        )}
+        {reading && numbers && (
+          <>
+            <p className="designer-field-hint">
+              {reading.label}：将 HTML 结构粘贴到 Markdown 标题的 # 后，修改
+              {` ${reading.numberText ?? "01"} `}
+              和标题文字。编号需手动填写，普通编号标题不会自动转换。
+              <code className="designer-heading-snippet">
+                {`${"#".repeat(Number(activeHeading.slice(1)))} ${readingSnippet}`}
+              </code>
+              结构已包含章前线，无需另加 ---；已有分隔线时请删除重复的线。
+              换主题不会删除正文中的 HTML 结构。
+            </p>
+            <button
+              className="option-btn"
+              type="button"
+              onClick={() =>
+                copySnippet(
+                  readingSnippet,
+                  "标题 HTML 已复制，请粘贴到 Markdown 标题的 # 后，并修改编号和标题",
+                )
+              }
+            >
+              复制标题 HTML
+            </button>
+            <div className="designer-field">
+              <label>编号字号</label>
+              <SliderInput
+                value={numbers.fontSize}
+                onChange={(numberFontSize) =>
+                  updateHeading(activeHeading, { numberFontSize })
+                }
+                min={8}
+                max={48}
+              />
+            </div>
+            <div className="designer-field">
+              <label>编号颜色</label>
+              <ColorSelector
+                value={numbers.color}
+                presets={[
+                  reading.numberColor,
+                  variables.primaryColor,
+                  "#333333",
+                ]}
+                onChange={(numberColor) =>
+                  updateHeading(activeHeading, { numberColor })
+                }
+              />
+            </div>
+            <div className="designer-field">
+              <label>
+                {reading.layout === "inline" ? "编号右间距" : "编号下间距"}
+              </label>
+              <SliderInput
+                value={numbers.gap}
+                onChange={(numberGap) =>
+                  updateHeading(activeHeading, { numberGap })
+                }
+                min={0}
+                max={40}
+              />
+            </div>
+            {numbers.width !== undefined && reading.layout !== "inline" && (
+              <div className="designer-field">
+                <label>
+                  {reading.layout === "hanging" ? "编号栏宽度" : "编号短线长度"}
+                </label>
+                <SliderInput
+                  value={numbers.width}
+                  onChange={(numberWidth) =>
+                    updateHeading(activeHeading, { numberWidth })
+                  }
+                  min={12}
+                  max={120}
+                />
+              </div>
+            )}
           </>
         )}
       </div>
@@ -133,7 +229,10 @@ export function HeadingSection({
         <SliderInput
           value={variables[activeHeading].fontSize}
           onChange={(val) => updateHeading(activeHeading, { fontSize: val })}
-          min={headingSizePresets[activeHeading].min}
+          min={Math.min(
+            headingSizePresets[activeHeading].min,
+            reading?.heading.fontSize ?? headingSizePresets[activeHeading].min,
+          )}
           max={headingSizePresets[activeHeading].max}
         />
       </div>

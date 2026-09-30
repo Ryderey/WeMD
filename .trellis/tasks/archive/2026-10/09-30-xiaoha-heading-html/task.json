@@ -1,0 +1,31 @@
+{
+  "id": "xiaoha-heading-html",
+  "name": "xiaoha-heading-html",
+  "title": "小哈公社编号标题与 HTML 复制",
+  "description": "Add the authored Xiaoha inline numbered heading preset with visual controls and HTML copy guidance.",
+  "status": "completed",
+  "dev_type": "frontend",
+  "scope": "theme",
+  "package": "web",
+  "priority": "P2",
+  "creator": "wemd",
+  "assignee": "wemd",
+  "createdAt": "2026-09-30",
+  "completedAt": "2026-10-01",
+  "branch": "codex/reading-heading-html",
+  "base_branch": "bugfix",
+  "worktree_path": null,
+  "commit": "733ae741c820fab35be899e8d2267d6e964d462b",
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": null,
+  "relatedFiles": [
+    "apps/web/src/components/Theme/ThemeDesigner/readingHeadings.ts",
+    "apps/web/src/components/Theme/ThemeDesigner/generators/presets.ts",
+    "apps/web/src/components/Theme/ThemeDesigner/sections/HeadingSection.tsx",
+    "apps/web/src/__tests__/components/readingHeadingPresets.test.tsx"
+  ],
+  "notes": "User accepted on 2026-10-01 and authorized commit, push, merge into bugfix and task archive. 162 tests pass with 1 intentional skip; see verification.md and xiaoha-heading-ui.png.",
+  "meta": {}
+}

@@ -1,3 +1,9 @@
+import type { HeadingStyle } from "../types";
+import {
+  getReadingHeadingPreset,
+  resolveReadingHeadingNumbers,
+} from "../readingHeadings";
+
 interface HeadingPresetCss {
   content: string;
   extra?: string;
@@ -344,7 +350,73 @@ export function getHeadingPresetCSS(
   presetId: string,
   _color: string,
   tag: string,
+  heading?: HeadingStyle,
 ): { content: string; extra: string } {
+  const reading = getReadingHeadingPreset(presetId);
+  if (reading) {
+    const {
+      fontSize: numberSize,
+      color: numberColor,
+      gap: numberGap,
+      width: numberWidth,
+    } = resolveReadingHeadingNumbers(reading, heading);
+    const scope = `#wemd ${tag} .content .reading-heading`;
+    const hanging = reading.layout === "hanging";
+    const inline = reading.layout === "inline";
+    return {
+      content: "display: block; max-width: 100%;",
+      extra: `${scope} { display: block; max-width: 100%; }
+${scope} .heading-rule {
+  display: block;
+  width: ${typeof reading.ruleWidth === "number" ? `${reading.ruleWidth}px` : (reading.ruleWidth ?? "100%")};
+  max-width: 100%;
+  height: 0;
+  font-size: 0;
+  line-height: 0;
+  text-indent: 0;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-top-color: ${reading.ruleColor};
+  margin: ${reading.ruleMarginTop}px ${reading.ruleCentered ? "auto" : "0"} ${reading.ruleMarginBottom}px;
+}
+${scope} .heading-body {
+  display: block;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding-left: ${hanging ? `${numberWidth}px` : "0"};
+  text-indent: ${hanging ? `-${numberWidth}px` : "0"};
+}
+${scope} .heading-number {
+  display: ${hanging ? "inline-block" : inline ? "inline" : "block"};
+  font-family: ${reading.numberFont};
+  font-size: ${numberSize}px;
+  line-height: ${reading.numberLineHeight};
+  font-weight: ${reading.numberWeight};
+  letter-spacing: ${reading.numberSpacing}px;
+  color: ${numberColor};
+  text-indent: 0;
+  margin-bottom: ${inline ? 0 : numberGap}px;
+  ${numberWidth === undefined || inline ? "" : `width: ${numberWidth}px;`}
+  ${
+    reading.numberRuleColor
+      ? `border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: ${reading.numberRuleColor};
+  padding-bottom: 4px;`
+      : ""
+  }
+}
+${scope} .heading-text { display: ${hanging || inline ? "inline" : "block"}; }
+${scope} .heading-text strong,
+${scope} .heading-text a { color: inherit; background: none; }${
+        inline
+          ? `
+${scope} .heading-number { font-style: ${reading.numberFontStyle ?? "normal"}; margin-right: ${numberGap}px; }
+${scope} .heading-text { font-style: normal; }`
+          : ""
+      }`,
+    };
+  }
   const template =
     headingPresetTemplates[presetId] || headingPresetTemplates.simple;
   const css = template(tag);
