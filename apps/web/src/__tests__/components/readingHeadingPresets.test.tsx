@@ -64,6 +64,16 @@ const cases = [
     gap: "6px",
     rule: "rgb(187, 121, 111)",
   },
+  {
+    id: "reading-xiaoha",
+    label: "小哈编号",
+    size: "25px",
+    color: "rgb(249, 110, 87)",
+    display: "inline",
+    width: "",
+    gap: "0px",
+    rule: "rgb(240, 222, 213)",
+  },
 ];
 
 function panelFor(level: HeadingLevel = "h2") {
@@ -143,7 +153,8 @@ describe("authored reading heading presets", () => {
       const number = result.querySelector<HTMLElement>(".heading-number");
       const rule = result.querySelector<HTMLElement>(".heading-rule");
       const body = result.querySelector<HTMLElement>(".heading-body");
-      expect(number?.textContent).toBe("01");
+      const numberText = expected.id === "reading-xiaoha" ? "1." : "01";
+      expect(number?.textContent).toBe(numberText);
       expect(number?.style.fontSize).toBe(expected.size);
       expect(number?.style.color).toBe(expected.color);
       expect(number?.style.display).toBe(expected.display);
@@ -175,13 +186,36 @@ describe("authored reading heading presets", () => {
         expect(number?.style.borderBottomColor).toBe("rgb(184, 205, 195)");
         expect(number?.style.paddingBottom).toBe("4px");
       }
+      if (expected.id === "reading-xiaoha") {
+        expect(number?.style.fontStyle).toBe("italic");
+        expect(number?.style.fontWeight).toBe("900");
+        expect(number?.style.lineHeight).toBe("1.19");
+        expect(number?.style.letterSpacing).toBe("1px");
+        expect(number?.style.marginRight).toBe("0px");
+        expect(rule?.style.width).toBe("36%");
+        expect(rule?.style.margin).toBe("40px auto 18px");
+        expect(
+          result.querySelector<HTMLElement>("h2 .content")?.style.fontSize,
+        ).toBe("15px");
+        expect(
+          result.querySelector<HTMLElement>("h2 .content")?.style.color,
+        ).toBe("rgb(255, 169, 0)");
+        expect(
+          result.querySelector<HTMLElement>(".heading-text")?.style.fontStyle,
+        ).toBe("normal");
+        expect(result.querySelector(".heading-text")?.textContent).toBe(
+          " 建立 阅读 层级",
+        );
+      }
       fireEvent.click(panel.getByRole("button", { name: "无样式" }));
       expect(panel.queryByRole("button", { name: "复制标题 HTML" })).toBeNull();
       const changed = await finalCopy(`## ${snippet}`, variables());
       expect(
         changed.querySelector<HTMLElement>(".heading-number")?.style.display,
       ).toBe("");
-      expect(changed.querySelector(".heading-number")?.textContent).toBe("01");
+      expect(changed.querySelector(".heading-number")?.textContent).toBe(
+        numberText,
+      );
     },
   );
 
@@ -294,70 +328,107 @@ describe("authored reading heading presets", () => {
     ).toBe(generateCSS(defaultVariables));
   });
 
-  it("keeps edited number fields through the real theme export/import methods", async () => {
-    const previous = useThemeStore.getState().customThemes;
-    const previousStorage = localStorage.getItem("wemd-custom-themes");
-    const NativeURL = URL;
-    let exported: Blob | undefined;
-    vi.stubGlobal(
-      "URL",
-      class extends NativeURL {
-        static createObjectURL(blob: Blob) {
-          exported = blob;
-          return "blob:reading-heading-test";
-        }
-        static revokeObjectURL = vi.fn();
-      },
+  it("edits Xiaoha right spacing and title size on H1 without a fixed number column", async () => {
+    const { panel, variables } = panelFor("h1");
+    fireEvent.click(panel.getByRole("button", { name: "小哈编号" }));
+    const code = panel.getByText(/^# <span/, { selector: "code" });
+    expect(code.textContent).toContain(
+      '<span class="heading-number">1.</span>',
     );
-    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
-      () => undefined,
-    );
-    try {
-      const variables = {
-        ...structuredClone(defaultVariables),
-        h2: {
-          ...getReadingHeadingDefaults("reading-cinnabar"),
-          numberFontSize: 18,
-          numberColor: "#123456",
-          numberGap: 9,
-          numberWidth: 42,
-        },
-      };
-      const original = useThemeStore
-        .getState()
-        .createTheme(
-          "阅读标题 JSON 验证",
-          "visual",
-          generateCSS(variables),
-          variables,
-        );
-      useThemeStore.getState().exportTheme(original.id);
-      const exportedBlob = exported;
-      if (!exportedBlob) throw new Error("No exported JSON blob");
-      const json = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () =>
-          typeof reader.result === "string"
-            ? resolve(reader.result)
-            : reject(new Error("Expected text export"));
-        reader.onerror = () => reject(reader.error);
-        reader.readAsText(exportedBlob);
-      });
-      const file = new File([json], "reading-heading.json", {
-        type: "application/json",
-      });
-      // jsdom File lacks text(); the data still comes from the real export Blob.
-      Object.defineProperty(file, "text", { value: async () => json });
-      expect(await useThemeStore.getState().importTheme(file)).toBe(true);
-      const imported = useThemeStore.getState().customThemes.at(-1);
-      expect(imported?.designerVariables?.h2).toEqual(variables.h2);
-      expect(imported?.css).toBe(generateCSS(variables));
-      expect(imported?.editorMode).toBe("visual");
-    } finally {
-      useThemeStore.setState({ customThemes: previous });
-      if (previousStorage === null)
-        localStorage.removeItem("wemd-custom-themes");
-      else localStorage.setItem("wemd-custom-themes", previousStorage);
+    expect(panel.queryByText("编号下间距", { selector: "label" })).toBeNull();
+    expect(panel.queryByText("编号栏宽度", { selector: "label" })).toBeNull();
+    for (const [label, value] of [
+      ["编号右间距", "8"],
+      ["字号", "15"],
+    ]) {
+      const field = panel
+        .getByText(label, { selector: "label", exact: true })
+        .closest(".designer-field");
+      if (!(field instanceof HTMLElement)) throw new Error(`Missing ${label}`);
+      const input = within(field).getByRole("textbox");
+      fireEvent.change(input, { target: { value } });
+      fireEvent.blur(input);
     }
+    expect(variables().h1.fontSize).toBe(15);
+    const result = await finalCopy(code.textContent ?? "", variables());
+    expect(
+      result.querySelector<HTMLElement>(".heading-number")?.style.marginRight,
+    ).toBe("8px");
+    expect(
+      result.querySelector<HTMLElement>(".heading-number")?.style.width,
+    ).toBe("");
+    expect(
+      result.querySelector<HTMLElement>("h1 .content")?.style.fontSize,
+    ).toBe("15px");
   });
+
+  it.each(["reading-cinnabar", "reading-xiaoha"])(
+    "keeps edited %s number fields through the real theme export/import methods",
+    async (preset) => {
+      const previous = useThemeStore.getState().customThemes;
+      const previousStorage = localStorage.getItem("wemd-custom-themes");
+      const NativeURL = URL;
+      let exported: Blob | undefined;
+      vi.stubGlobal(
+        "URL",
+        class extends NativeURL {
+          static createObjectURL(blob: Blob) {
+            exported = blob;
+            return "blob:reading-heading-test";
+          }
+          static revokeObjectURL = vi.fn();
+        },
+      );
+      vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
+        () => undefined,
+      );
+      try {
+        const variables = {
+          ...structuredClone(defaultVariables),
+          h2: {
+            ...getReadingHeadingDefaults(preset),
+            numberFontSize: 18,
+            numberColor: "#123456",
+            numberGap: 9,
+            numberWidth: 42,
+          },
+        };
+        const original = useThemeStore
+          .getState()
+          .createTheme(
+            "阅读标题 JSON 验证",
+            "visual",
+            generateCSS(variables),
+            variables,
+          );
+        useThemeStore.getState().exportTheme(original.id);
+        const exportedBlob = exported;
+        if (!exportedBlob) throw new Error("No exported JSON blob");
+        const json = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () =>
+            typeof reader.result === "string"
+              ? resolve(reader.result)
+              : reject(new Error("Expected text export"));
+          reader.onerror = () => reject(reader.error);
+          reader.readAsText(exportedBlob);
+        });
+        const file = new File([json], "reading-heading.json", {
+          type: "application/json",
+        });
+        // jsdom File lacks text(); the data still comes from the real export Blob.
+        Object.defineProperty(file, "text", { value: async () => json });
+        expect(await useThemeStore.getState().importTheme(file)).toBe(true);
+        const imported = useThemeStore.getState().customThemes.at(-1);
+        expect(imported?.designerVariables?.h2).toEqual(variables.h2);
+        expect(imported?.css).toBe(generateCSS(variables));
+        expect(imported?.editorMode).toBe("visual");
+      } finally {
+        useThemeStore.setState({ customThemes: previous });
+        if (previousStorage === null)
+          localStorage.removeItem("wemd-custom-themes");
+        else localStorage.setItem("wemd-custom-themes", previousStorage);
+      }
+    },
+  );
 });

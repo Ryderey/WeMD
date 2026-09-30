@@ -44,6 +44,7 @@ const REQUIRED: { label: string; selector: string; min?: number }[] = [
   { label: "阅读编号", selector: "h2 .reading-heading .heading-number" },
   { label: "阅读标题文字", selector: "h2 .reading-heading .heading-text" },
   { label: "阅读章前线", selector: "h2 .reading-heading .heading-rule" },
+  { label: "小哈编号", selector: "h2 .reading-xiaoha .heading-number" },
   { label: "多段引用", selector: "blockquote p", min: 2 },
   { label: "三级引用容器", selector: ".multiquote-3" },
   { label: "三级引用内标题", selector: ".multiquote-3 h3" },

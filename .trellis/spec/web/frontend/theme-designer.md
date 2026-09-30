@@ -140,7 +140,7 @@ negative text-indent on `heading-body`, not the outer wrapper, so the rule keeps
 its full width or its correct short-line alignment. Borders use longhands.
 
 `HeadingStyle.numberFontSize`, `numberColor`, `numberGap`, and `numberWidth` are
-optional and only consumed by these five IDs. Resolve them through the existing
+optional and only consumed by reading-heading preset IDs. Resolve them through the existing
 safe CSS helpers: size 8–48px, gap 0–40px, width 12–120px, and hexadecimal colors.
 Missing or invalid values fall back to the selected preset. The width control
 means the hanging number column, or 青岚's number underline. Keep existing saved
@@ -154,3 +154,18 @@ previews, wrapped titles, and save/reload behavior. The original 55 CSS baseline
 remain byte-identical; explicitly freeze only five new fixtures and their manifest
 entries. Browser clipboard bridges may expose only plain text, so a success toast
 does not establish rich HTML contents; device paste remains a separate check.
+
+`reading-xiaoha` adds the WeDraft `default-business` heading as another authored
+preset, without adding a full-article template. Its sample number is `1.`; keep
+the literal space at the beginning of `heading-text`. The number is 25px, italic,
+weight 900, coral `#F96E57`; title defaults are 15px, weight 700, orange `#FFA900`.
+Both are natural inline text, with no fixed number column or hanging indent.
+`numberGap` is horizontal spacing for this layout: label it 编号右间距 and emit
+`margin-right`. Ignore `numberWidth` for inline layout, including imported values.
+The authored divider is centered, 36% wide, with 40px/18px top/bottom margins.
+Rule widths are internal preset metadata, not imported CSS values.
+
+The active level's title-size control must accept the selected preset's default
+(15px even on H1). Title typography belongs to `hN .content`, so inspect that
+node in final-copy assertions instead of the outer heading. The existing 60
+fixtures remain byte-identical; this preset adds one fixture and manifest entry.

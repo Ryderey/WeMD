@@ -362,12 +362,13 @@ export function getHeadingPresetCSS(
     } = resolveReadingHeadingNumbers(reading, heading);
     const scope = `#wemd ${tag} .content .reading-heading`;
     const hanging = reading.layout === "hanging";
+    const inline = reading.layout === "inline";
     return {
       content: "display: block; max-width: 100%;",
       extra: `${scope} { display: block; max-width: 100%; }
 ${scope} .heading-rule {
   display: block;
-  width: ${reading.ruleWidth ? `${reading.ruleWidth}px` : "100%"};
+  width: ${typeof reading.ruleWidth === "number" ? `${reading.ruleWidth}px` : (reading.ruleWidth ?? "100%")};
   max-width: 100%;
   height: 0;
   font-size: 0;
@@ -386,7 +387,7 @@ ${scope} .heading-body {
   text-indent: ${hanging ? `-${numberWidth}px` : "0"};
 }
 ${scope} .heading-number {
-  display: ${hanging ? "inline-block" : "block"};
+  display: ${hanging ? "inline-block" : inline ? "inline" : "block"};
   font-family: ${reading.numberFont};
   font-size: ${numberSize}px;
   line-height: ${reading.numberLineHeight};
@@ -394,8 +395,8 @@ ${scope} .heading-number {
   letter-spacing: ${reading.numberSpacing}px;
   color: ${numberColor};
   text-indent: 0;
-  margin-bottom: ${numberGap}px;
-  ${numberWidth === undefined ? "" : `width: ${numberWidth}px;`}
+  margin-bottom: ${inline ? 0 : numberGap}px;
+  ${numberWidth === undefined || inline ? "" : `width: ${numberWidth}px;`}
   ${
     reading.numberRuleColor
       ? `border-bottom-width: 1px;
@@ -405,9 +406,15 @@ ${scope} .heading-number {
       : ""
   }
 }
-${scope} .heading-text { display: ${hanging ? "inline" : "block"}; }
+${scope} .heading-text { display: ${hanging || inline ? "inline" : "block"}; }
 ${scope} .heading-text strong,
-${scope} .heading-text a { color: inherit; background: none; }`,
+${scope} .heading-text a { color: inherit; background: none; }${
+        inline
+          ? `
+${scope} .heading-number { font-style: ${reading.numberFontStyle ?? "normal"}; margin-right: ${numberGap}px; }
+${scope} .heading-text { font-style: normal; }`
+          : ""
+      }`,
     };
   }
   const template =

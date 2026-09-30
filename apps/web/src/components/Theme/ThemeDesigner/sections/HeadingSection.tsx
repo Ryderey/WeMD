@@ -146,8 +146,9 @@ export function HeadingSection({
         {reading && numbers && (
           <>
             <p className="designer-field-hint">
-              {reading.label}：将 HTML 结构粘贴到 Markdown 标题的 # 后，修改 01
-              和标题文字。 编号需手动填写，普通编号标题不会自动转换。
+              {reading.label}：将 HTML 结构粘贴到 Markdown 标题的 # 后，修改
+              {` ${reading.numberText ?? "01"} `}
+              和标题文字。编号需手动填写，普通编号标题不会自动转换。
               <code className="designer-heading-snippet">
                 {`${"#".repeat(Number(activeHeading.slice(1)))} ${readingSnippet}`}
               </code>
@@ -192,7 +193,9 @@ export function HeadingSection({
               />
             </div>
             <div className="designer-field">
-              <label>编号下间距</label>
+              <label>
+                {reading.layout === "inline" ? "编号右间距" : "编号下间距"}
+              </label>
               <SliderInput
                 value={numbers.gap}
                 onChange={(numberGap) =>
@@ -202,7 +205,7 @@ export function HeadingSection({
                 max={40}
               />
             </div>
-            {numbers.width !== undefined && (
+            {numbers.width !== undefined && reading.layout !== "inline" && (
               <div className="designer-field">
                 <label>
                   {reading.layout === "hanging" ? "编号栏宽度" : "编号短线长度"}
@@ -226,7 +229,10 @@ export function HeadingSection({
         <SliderInput
           value={variables[activeHeading].fontSize}
           onChange={(val) => updateHeading(activeHeading, { fontSize: val })}
-          min={headingSizePresets[activeHeading].min}
+          min={Math.min(
+            headingSizePresets[activeHeading].min,
+            reading?.heading.fontSize ?? headingSizePresets[activeHeading].min,
+          )}
           max={headingSizePresets[activeHeading].max}
         />
       </div>

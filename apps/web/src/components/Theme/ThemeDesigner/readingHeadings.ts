@@ -9,7 +9,9 @@ interface ReadingHeadingPreset {
   id: string;
   label: string;
   heading: Partial<HeadingStyle>;
-  layout: "stacked" | "hanging";
+  layout: "stacked" | "hanging" | "inline";
+  numberText?: string;
+  numberFontStyle?: "italic";
   numberFont: string;
   numberSize: number;
   numberColor: string;
@@ -20,13 +22,13 @@ interface ReadingHeadingPreset {
   numberWidth?: number;
   numberRuleColor?: string;
   ruleColor: string;
-  ruleWidth?: number;
+  ruleWidth?: number | string;
   ruleCentered?: boolean;
   ruleMarginTop: number;
   ruleMarginBottom: number;
 }
 
-/** WeDraft reading-editions.ts defaults; numbers and rules are authored spans. */
+/** WeDraft heading defaults; numbers and rules are authored spans. */
 export const readingHeadingPresets: ReadingHeadingPreset[] = [
   {
     id: "reading-plain-paper",
@@ -127,6 +129,33 @@ export const readingHeadingPresets: ReadingHeadingPreset[] = [
     ruleMarginTop: 36,
     ruleMarginBottom: 16,
   },
+  {
+    id: "reading-xiaoha",
+    label: "小哈编号",
+    heading: {
+      fontSize: 15,
+      color: "#FFA900",
+      lineHeight: 1.75,
+      fontWeight: "700",
+      letterSpacing: 0.5,
+      marginBottom: 24,
+    },
+    layout: "inline",
+    numberText: "1.",
+    numberFontStyle: "italic",
+    numberFont: SANS,
+    numberSize: 25,
+    numberColor: "#F96E57",
+    numberWeight: 900,
+    numberLineHeight: 1.19,
+    numberSpacing: 1,
+    numberGap: 0,
+    ruleColor: "#F0DED5",
+    ruleWidth: "36%",
+    ruleCentered: true,
+    ruleMarginTop: 40,
+    ruleMarginBottom: 18,
+  },
 ];
 
 export const getReadingHeadingPreset = (id: unknown) =>
@@ -166,4 +195,4 @@ export const resolveReadingHeadingNumbers = (
 });
 
 export const getReadingHeadingSnippet = (preset: ReadingHeadingPreset) =>
-  `<span class="reading-heading ${preset.id}"><span class="heading-rule">&nbsp;</span><span class="heading-body"><span class="heading-number">01</span><span class="heading-text">建立阅读层级</span></span></span>`;
+  `<span class="reading-heading ${preset.id}"><span class="heading-rule">&nbsp;</span><span class="heading-body"><span class="heading-number">${preset.numberText ?? "01"}</span><span class="heading-text">${preset.layout === "inline" ? " " : ""}建立阅读层级</span></span></span>`;
