@@ -93,3 +93,12 @@ The user confirmed: “验证通过，可以提交和推送并进行收尾工作
 Proceed with the approved feature-only commit, task archive and session record;
 push codex/reading-heading-html. This confirms user acceptance without claiming
 that the agent directly inspected a WeChat client paste. No merge was requested.
+
+## Work commit
+
+`e8bff4298c19ce71bebf54ffbad24198b49544e3` —
+`feat(theme): add authored reading heading presets and copy guidance`.
+The commit hook completed successfully. Generator source hashes were unchanged
+by the hook; the original baselines and unrelated working-tree files remain intact.
+Task archive metadata is recorded separately from this work commit. Final remote
+verification and session completion are recorded in the local Trellis journal.
