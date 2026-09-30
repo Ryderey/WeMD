@@ -1,0 +1,3 @@
+{"file":".trellis/spec/web/frontend/theme-designer.md","reason":"Verify all five opt-in presets, both sample sources and 55 unchanged baselines"}
+{"file":".trellis/spec/web/frontend/wechat-copy-pitfalls.md","reason":"Verify final inline serialization separately from device paste"}
+{"file":".trellis/spec/web/frontend/quality.md","reason":"Record actual test, TypeScript, ESLint and Vite results with their limits"}

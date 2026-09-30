@@ -1,3 +1,5 @@
+import { readingHeadingPresets } from "../components/Theme/ThemeDesigner/readingHeadings";
+
 export interface StyleOption<T = string> {
   label: string;
   value: T;
@@ -115,6 +117,7 @@ export const headingStylePresets: StylePresetOption[] = [
   { id: "corner-brackets", label: "双角括号" },
   { id: "bracket", label: "括号装饰" },
   { id: "chapter-label", label: "章节标签" },
+  ...readingHeadingPresets.map(({ id, label }) => ({ id, label })),
 ];
 
 export const boldStyleOptions = [

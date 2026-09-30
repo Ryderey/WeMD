@@ -30,6 +30,10 @@ const PREVIEW_MARKDOWN = `# 一级标题示例
 
 ## 二级标题
 
+## <span class="reading-heading"><span class="heading-rule">&nbsp;</span><span class="heading-body"><span class="heading-number">01</span><span class="heading-text">建立阅读层级</span></span></span>
+
+阅读编号预设通过显式 HTML 分别设置编号、主标题和章前线；普通标题不会自动生成编号。
+
 > 这是一个引用块示例，通常用于强调重要内容或摘录。
 
 | 平台 | 特点 | 适用程度 |

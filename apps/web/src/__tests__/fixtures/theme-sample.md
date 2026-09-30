@@ -20,6 +20,10 @@ Intro 段落，含 **加粗**、_斜体_、**_加粗斜体_**、~~删除线~~、
 
 ## 二级标题 H2
 
+## <span class="reading-heading"><span class="heading-rule">&nbsp;</span><span class="heading-body"><span class="heading-number">01</span><span class="heading-text">建立 **阅读** [层级](https://example.com)</span></span></span>
+
+显式阅读编号结构包含章前线、编号与带行内标记的主标题。
+
 ### 三级标题 H3
 
 #### 四级标题 H4

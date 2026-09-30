@@ -24,21 +24,25 @@ export function generateCSS(v: DesignerVariables): string {
     v.h1.preset || "simple",
     v.primaryColor,
     "h1",
+    v.h1,
   );
   const h2Preset = getHeadingPresetCSS(
     v.h2.preset || "simple",
     v.primaryColor,
     "h2",
+    v.h2,
   );
   const h3Preset = getHeadingPresetCSS(
     v.h3.preset || "simple",
     v.primaryColor,
     "h3",
+    v.h3,
   );
   const h4Preset = getHeadingPresetCSS(
     v.h4.preset || "simple",
     v.primaryColor,
     "h4",
+    v.h4,
   );
   const quotePreset = getQuotePresetCSS(
     v.quotePreset,

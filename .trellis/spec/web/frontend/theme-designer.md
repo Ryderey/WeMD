@@ -87,7 +87,8 @@ target that tag.
 
 Selecting `chapter-label` in `HeadingSection` applies the reviewed reference values to the
 active heading level: 20px, `#FFA900`, line height 1.5, weight `750`, letter spacing 0.2px,
-top/bottom margins 0/24px, and left alignment. Other preset selections only change `preset`.
+top/bottom margins 0/24px, and left alignment. Except for the reading presets below,
+other preset selections only change `preset`.
 These are selection defaults; the generator must continue reading the heading variables so
 the existing controls can change the title afterward. Never seed the global `primaryColor`.
 
@@ -114,3 +115,42 @@ Also verify the real Vite application: select/save/apply the preset, copy the
 snippet, paste it into the editor and inspect both live previews. Explicit-span
 checks do not establish automatic label generation. A copy success toast alone
 does not establish the contents of the native rich-text clipboard.
+
+## Authored reading-heading presets
+
+The five reading templates opt into `reading-plain-paper`, `reading-ink-journal`,
+`reading-jade-notes`, `reading-blueprint`, and `reading-cinnabar` on H2. Selecting
+one applies its reviewed typography to the active level. Keep defaults, option
+labels, number styling and snippets together in `ThemeDesigner/readingHeadings.ts`.
+The existing title controls still override the selected defaults. Never change
+the global theme color when selecting a heading preset.
+
+Route A keeps the parser unchanged. The author pastes a `reading-heading` span
+after the Markdown heading marker; it contains a nonempty `heading-rule` span
+(`&nbsp;`), a `heading-body` wrapper, `heading-number`, and `heading-text`.
+Copy the complete HTML fragment as plain text, without `##`. The guidance must
+show the active level's marker, explain manual numbering, and warn that the
+fragment already contains its chapter line. An additional `---` creates a second
+line. Changing presets leaves this authored HTML in the article.
+
+Only marked headings receive number layout and chapter lines. Scope extra CSS to
+the active level through the existing heading extras channel. 素笺 and 青岚 stack
+the number above the title; 墨刊, 蓝图 and 朱砂 use hanging text. Put padding and
+negative text-indent on `heading-body`, not the outer wrapper, so the rule keeps
+its full width or its correct short-line alignment. Borders use longhands.
+
+`HeadingStyle.numberFontSize`, `numberColor`, `numberGap`, and `numberWidth` are
+optional and only consumed by these five IDs. Resolve them through the existing
+safe CSS helpers: size 8–48px, gap 0–40px, width 12–120px, and hexadecimal colors.
+Missing or invalid values fall back to the selected preset. The width control
+means the hanging number column, or 青岚's number underline. Keep existing saved
+theme copies unchanged; JSON export/import already preserves optional fields.
+
+Both sample sources must contain the explicit structure: `ThemeLivePreview`'s
+inline Markdown and `fixtures/theme-sample.md` (plus its research mirror).
+Exercise actual selection and clipboard calls through parser and final WeChat
+serialization, and verify JSON export/import. Check the real Vite app's two
+previews, wrapped titles, and save/reload behavior. The original 55 CSS baselines
+remain byte-identical; explicitly freeze only five new fixtures and their manifest
+entries. Browser clipboard bridges may expose only plain text, so a success toast
+does not establish rich HTML contents; device paste remains a separate check.

@@ -21,6 +21,11 @@ export interface HeadingStyle {
   ruleBelowWidth?: number;
   ruleBelowColor?: string;
   ruleBelowGap?: number;
+  /** 显式阅读编号结构的覆盖值；缺省采用对应预设，仅作用于作者标记的标题 */
+  numberFontSize?: number;
+  numberColor?: string;
+  numberGap?: number;
+  numberWidth?: number;
 }
 
 /**

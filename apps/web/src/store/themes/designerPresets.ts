@@ -3,6 +3,7 @@ import type {
   HeadingStyle,
 } from "../../components/Theme/ThemeDesigner/types";
 import { defaultVariables } from "../../components/Theme/ThemeDesigner/defaults";
+import { getReadingHeadingDefaults } from "../../components/Theme/ThemeDesigner/readingHeadings";
 
 /**
  * 「模板 · 复制后编辑」的五份变量种子。
@@ -315,12 +316,7 @@ export const plainPaperPreset: DesignerPreset = {
       markBg: "#EFEAE2",
     },
     {
-      h2: {
-        fontSize: 21,
-        lineHeight: 1.55,
-        letterSpacing: 0.5,
-        centered: true,
-      },
+      h2: getReadingHeadingDefaults("reading-plain-paper"),
       quote: {
         background: "#FFFFFF",
         borderWidth: 1,
@@ -366,12 +362,7 @@ export const inkJournalPreset: DesignerPreset = {
       markBg: "#EAEAE6",
     },
     {
-      h2: {
-        fontSize: 22,
-        lineHeight: 1.55,
-        color: "#272727",
-        fontFamily: SERIF,
-      },
+      h2: getReadingHeadingDefaults("reading-ink-journal"),
       quote: {
         background: "#FFFFFF",
         borderWidth: 1,
@@ -420,7 +411,7 @@ export const jadeNotesPreset: DesignerPreset = {
       markBg: "#E4EDE6",
     },
     {
-      h2: { color: "#27675C" },
+      h2: getReadingHeadingDefaults("reading-jade-notes"),
       quote: {
         background: "#F4F8F5",
         borderWidth: 0,
@@ -465,7 +456,7 @@ export const blueprintPreset: DesignerPreset = {
       markBg: "#E3EAF7",
     },
     {
-      h2: { lineHeight: 1.55, color: "#2F3540" },
+      h2: getReadingHeadingDefaults("reading-blueprint"),
       quote: {
         background: "#FFFFFF",
         borderWidth: 2,
@@ -509,7 +500,7 @@ export const cinnabarPreset: DesignerPreset = {
       markBg: "#F2E4DF",
     },
     {
-      h2: { fontSize: 21, lineHeight: 1.55 },
+      h2: getReadingHeadingDefaults("reading-cinnabar"),
       quote: {
         background: "#FCF8F5",
         borderWidth: 0,
