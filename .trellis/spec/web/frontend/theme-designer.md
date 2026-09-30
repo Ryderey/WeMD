@@ -82,3 +82,35 @@ no remaining `var(--wemd-*)` references. Verify an actual paste into WeChat sepa
 
 Keep the parser's `<s>` output: `themeSampleDomCoverage.test.ts` requires it, and user CSS may
 target that tag.
+
+## Chapter-label reference preset
+
+Selecting `chapter-label` in `HeadingSection` applies the reviewed reference values to the
+active heading level: 20px, `#FFA900`, line height 1.5, weight `750`, letter spacing 0.2px,
+top/bottom margins 0/24px, and left alignment. Other preset selections only change `preset`.
+These are selection defaults; the generator must continue reading the heading variables so
+the existing controls can change the title afterward. Never seed the global `primaryColor`.
+
+The label and 3px left rule use the preset's fixed coral `#F96E57`. The author supplies
+`<span class="chapter-label">SECTION 01</span>` inside the Markdown heading. Keep the parser
+unchanged; the label remains author content when another preset is selected. Dividers remain
+explicit `---` blocks.
+
+When this preset is selected, show a Markdown example for the active heading level,
+explain that labels and numbers are authored manually, and offer a copy button.
+Copy exactly `<span class="chapter-label">SECTION 01</span>` as plain text, without
+heading markers or title text. Use the existing Electron clipboard bridge when
+available and the browser Clipboard API otherwise; report failures through toast
+instead of claiming success. Hide the guidance when another preset is selected.
+
+Saved chapter themes retain their stored typography until the preset is selected again;
+their decoration color changes when CSS is regenerated. This reviewed change updates only
+`headingPreset-h2-chapter-label.css`; the other 54 fixtures and manifest stay byte-identical.
+Test the actual selection button through final copy serialization, rather than constructing
+already-correct heading variables in every test. Compare the browser-rendered heading box
+and a wrapped title, and check that final copied styles contain literal colors and no
+`var(--wemd-*)` references. WeChat device paste remains a separate manual check.
+Also verify the real Vite application: select/save/apply the preset, copy the
+snippet, paste it into the editor and inspect both live previews. Explicit-span
+checks do not establish automatic label generation. A copy success toast alone
+does not establish the contents of the native rich-text clipboard.

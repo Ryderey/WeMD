@@ -134,7 +134,7 @@ const headingPresetTemplates: Record<
             box-sizing: border-box;
             border-left-width: 3px;
             border-left-style: solid;
-            border-left-color: var(--wemd-primary-color);
+            border-left-color: #F96E57;
             padding-left: 13px;
         `,
     extra: `
@@ -143,7 +143,7 @@ const headingPresetTemplates: Record<
             font-size: 10px;
             line-height: 1.4;
             font-weight: 700;
-            color: var(--wemd-primary-color);
+            color: #F96E57;
             letter-spacing: 1.6px;
             margin-bottom: 4px;
         }

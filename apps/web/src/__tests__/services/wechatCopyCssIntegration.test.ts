@@ -104,12 +104,12 @@ describe("wechat copy css integration", () => {
       expect(labels[0].style.fontWeight).toBe("700");
       expect(labels[0].style.letterSpacing).toBe("1.6px");
       expect(labels[0].style.marginBottom).toBe("4px");
-      expect(labels[0].style.color).toBe("rgb(7, 193, 96)");
+      expect(labels[0].style.color).toBe("rgb(249, 110, 87)");
 
       const content = labels[0].parentElement as HTMLElement;
       expect(content.style.borderLeftWidth).toBe("3px");
       expect(content.style.borderLeftStyle).toBe("solid");
-      expect(content.style.borderLeftColor).toBe("rgb(7, 193, 96)");
+      expect(content.style.borderLeftColor).toBe("rgb(249, 110, 87)");
       expect(content.style.paddingLeft).toBe("13px");
     });
 
