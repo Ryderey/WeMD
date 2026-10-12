@@ -46,6 +46,7 @@ export const EMOJI_CATEGORIES: EmojiCategory[] = [
       ["🚀", "火箭"],
       ["💡", "灵感"],
       ["✨", "闪亮"],
+      ["🔗", "链接"],
     ),
   },
   {
