@@ -168,6 +168,13 @@ const quoteBlocks = (v: DesignerVariables): string[] => {
       `${quoteSelector(" p:last-child")} {\n  margin-bottom: 0 !important;\n}`,
     );
   }
+  // 超长引用滑动：160–800 之外的值一律按未设置处理（导入 JSON 可能带任意数字）。
+  const maxHeight = optionalLength(v.quoteScrollHeight, 800, 160);
+  if (maxHeight !== null) {
+    blocks.push(
+      `${quoteSelector("")} {\n  max-height: ${maxHeight}px;\n  overflow-y: auto;\n  overflow-x: hidden;\n  -webkit-overflow-scrolling: touch;\n}`,
+    );
+  }
   return blocks;
 };
 

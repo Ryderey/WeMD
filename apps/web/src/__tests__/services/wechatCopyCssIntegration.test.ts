@@ -13,7 +13,10 @@ import { normalizeCopyContainer } from "../../services/wechatCopyService";
 import { serializeWechatCopyHtml } from "../../services/wechatCopyNormalizer";
 import { defaultVariables } from "../../components/Theme/ThemeDesigner/defaults";
 import { generateCSS } from "../../components/Theme/ThemeDesigner/generateCSS";
-import { buildCopyCss } from "../../services/export/renderContainer";
+import {
+  buildCopyCss,
+  renderOffscreenContent,
+} from "../../services/export/renderContainer";
 import { builtInThemes } from "../../store/themes/builtInThemes";
 
 const copyStrikethrough = (css: string) => {
@@ -1065,5 +1068,105 @@ describe("independent strong accent colors survive the copy pipeline", () => {
     expect(strong?.style.color).toBe("rgb(114, 46, 209)");
     expect(strong?.getAttribute("style")).toContain("rgba(114, 46, 209, 0.18)");
     expect(strong?.getAttribute("style")).not.toContain("var(");
+  });
+});
+
+describe("quote scroll in the WeChat copy pipeline", () => {
+  const longQuote =
+    "这是一条专门验证滑动的长提示词，重复足够多遍以越过两百字。".repeat(8);
+
+  const copyQuotes = async (quoteScrollHeight?: number) => {
+    const markdown = [`> ${longQuote}`, "", "> 短引用，不应有提示行。"].join(
+      "\n\n",
+    );
+    const { container, dispose } = await renderOffscreenContent(
+      markdown,
+      generateCSS({
+        ...defaultVariables,
+        ...(quoteScrollHeight === undefined ? {} : { quoteScrollHeight }),
+      }),
+      {
+        forWechat: true,
+        quoteScrollHeight,
+      },
+    );
+    try {
+      const snapshot = document.createElement("div");
+      snapshot.innerHTML = serializeWechatCopyHtml(container);
+      return snapshot;
+    } finally {
+      dispose();
+    }
+  };
+
+  const copyQuotesForExport = async () => {
+    const { container, dispose } = await renderOffscreenContent(
+      `> ${longQuote}`,
+      generateCSS({ ...defaultVariables, quoteScrollHeight: 240 }),
+      { forWechat: false },
+    );
+    try {
+      const snapshot = document.createElement("div");
+      snapshot.innerHTML = serializeWechatCopyHtml(container);
+      return snapshot;
+    } finally {
+      dispose();
+    }
+  };
+
+  it("inlines literal scroll declarations on blockquotes when enabled", async () => {
+    const snapshot = await copyQuotes(240);
+    const quotes = snapshot.querySelectorAll<HTMLElement>("blockquote");
+
+    expect(quotes).toHaveLength(2);
+    for (const quote of quotes) {
+      expect(quote.style.maxHeight).toBe("240px");
+      expect(quote.style.overflowY).toBe("auto");
+      expect(quote.style.overflowX).toBe("hidden");
+      expect(quote.style.getPropertyValue("-webkit-overflow-scrolling")).toBe(
+        "touch",
+      );
+      expect(quote.getAttribute("style")).not.toContain("var(");
+    }
+  });
+
+  it("appends the sliding hint after overflowing quotes and skips short ones", async () => {
+    const snapshot = await copyQuotes(240);
+    const serialized = snapshot.innerHTML;
+    const hints = Array.from(snapshot.querySelectorAll("section")).filter(
+      (node) => node.textContent === "▲上下滑动查看全文",
+    );
+
+    expect(hints).toHaveLength(1);
+    const hint = hints[0] as HTMLElement;
+    expect(hint.parentElement?.children[1]).toBe(hint);
+    expect(hint.style.textAlign).toBe("center");
+    expect((hint.firstElementChild as HTMLElement).style.fontSize).toBe("12px");
+    expect(serialized.split("▲上下滑动查看全文")).toHaveLength(2);
+  });
+
+  it("keeps quotes unstyled and hint-free when the toggle is off", async () => {
+    const snapshot = await copyQuotes(undefined);
+    const serialized = snapshot.innerHTML;
+    const quotes = snapshot.querySelectorAll<HTMLElement>("blockquote");
+
+    expect(quotes).toHaveLength(2);
+    for (const quote of quotes) {
+      expect(quote.style.maxHeight).toBe("");
+      expect(quote.style.overflowY).toBe("");
+    }
+    expect(serialized).not.toContain("▲上下滑动查看全文");
+    expect(serialized).not.toContain("max-height");
+  });
+
+  it("strips scroll styles for the image export pipeline", async () => {
+    const snapshot = await copyQuotesForExport();
+    const quote = snapshot.querySelector<HTMLElement>("blockquote");
+
+    expect(quote).not.toBeNull();
+    expect(quote!.style.maxHeight).toBe("");
+    expect(quote!.style.overflowY).toBe("");
+    expect(quote!.textContent?.trim()).toBe(longQuote);
+    expect(snapshot.innerHTML).not.toContain("▲上下滑动查看全文");
   });
 });
