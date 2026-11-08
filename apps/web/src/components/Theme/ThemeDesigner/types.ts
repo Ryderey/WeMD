@@ -97,6 +97,8 @@ export interface DesignerVariables {
   quoteFontFamily?: string;
   /** 引用上下外距(px)；未设置时沿用段距变量 */
   quoteOuterMargin?: number;
+  /** 引用超长时上下滑动：容器高度(px) 160–800；未设置 = 关闭 */
+  quoteScrollHeight?: number;
 
   // 代码
   codeBackground: string;

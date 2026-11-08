@@ -55,3 +55,9 @@ A payload with no empty paragraphs can still have a leading gap from the first p
 **Symptom:** A per-line heading underline looks correct on one line but crosses the glyphs on the following line after the heading wraps.
 
 **Correct pattern:** Use native `text-decoration` with explicit thickness for per-line underlines. Keep any fixed underline offset small enough for compact heading line-height; the visual theme uses `3px`. Do not combine vertical padding with `border-bottom` on an inline fragment because the padding and border do not expand the line box.
+
+## Scrollable Quote Overflow Declarations Get Rewritten
+
+**Symptom:** A max-height scroll quote pastes into WeChat with `overflow: hidden auto` and no `-webkit-overflow-scrolling`, and the momentum property seems lost.
+
+**Correct pattern:** This is expected. WeChat keeps `max-height` and collapses `overflow-x`/`overflow-y` shorthands into the equivalent pair (`hidden auto` scrolls vertically); it drops `-webkit-overflow-scrolling`, which modern mobile kernels do not need. Do not "fix" this by switching to nonstandard containers — a saved draft reopened keeps the rewritten styles. Quote blocks longer than 300 chars also raise a WeChat compliance warning (warning only; saving works), which is why the scroll quote's hint threshold is measured against that cap.

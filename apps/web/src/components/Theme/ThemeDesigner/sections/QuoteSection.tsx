@@ -262,6 +262,29 @@ export function QuoteSection({ variables, updateVariable }: SectionProps) {
             ))}
           </div>
         </div>
+        <div className="designer-field-row">
+          <span>超长时上下滑动</span>
+          <Switch
+            checked={variables.quoteScrollHeight !== undefined}
+            onChange={(val) =>
+              updateVariable("quoteScrollHeight", val ? 240 : undefined)
+            }
+          />
+        </div>
+        {variables.quoteScrollHeight !== undefined && (
+          <div className="designer-field">
+            <label>滑动高度</label>
+            <SliderInput
+              value={variables.quoteScrollHeight ?? 240}
+              onChange={(val) => updateVariable("quoteScrollHeight", val)}
+              min={160}
+              max={800}
+            />
+          </div>
+        )}
+        <p className="designer-field-hint">
+          开启后，复制进公众号的超长引用在固定高度内上下滚动；导出图片保持完整。
+        </p>
         <p className="designer-field-hint">
           左右内距可以不同；悬挂缩进与段间距会同时作用到引用容器和引用内的每一段，
           末段不带段后距。

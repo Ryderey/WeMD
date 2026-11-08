@@ -16,6 +16,8 @@ export { normalizeCopyContainer, stripCopyMetadata };
 
 interface CopyToWechatOptions {
   showMacBar?: boolean;
+  /** 引用滑动高度(px)；未设置 = 不启用 */
+  quoteScrollHeight?: number;
 }
 
 // ── 剪贴板写入策略 ─────────────────────────────────
@@ -100,6 +102,7 @@ export async function copyToWechat(
       widthPx: 760,
       forWechat: true,
       showMacBar: options.showMacBar,
+      quoteScrollHeight: options.quoteScrollHeight,
     });
     container = rendered.container;
     const html = serializeWechatCopyHtml(container);

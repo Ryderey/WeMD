@@ -20,6 +20,7 @@ import {
 } from "../wechatCounterCompat";
 import { expandCSSVariables } from "../cssVariableExpander";
 import { normalizeCopyContainer } from "../wechatCopyNormalizer";
+import { applyWechatQuoteScroll, stripQuoteScroll } from "../wechatQuoteScroll";
 import { renderMermaidBlocks } from "../wechatMermaidRenderer";
 import { renderTableBlocks } from "../wechatTableRenderer";
 import { shouldRenderMacCodeBarNode } from "../macCodeBar";
@@ -31,6 +32,8 @@ export interface RenderContainerOptions {
   forWechat?: boolean;
   /** Mac 风格代码栏开关（透传给 Markdown 解析器） */
   showMacBar?: boolean;
+  /** 引用滑动高度(px)；仅微信复制链路生效，导出图片语境会剥离滑动样式 */
+  quoteScrollHeight?: number;
 }
 
 export interface OffscreenRenderResult {
@@ -89,7 +92,12 @@ export async function renderOffscreenContent(
   css: string,
   options: RenderContainerOptions = {},
 ): Promise<OffscreenRenderResult> {
-  const { widthPx = 760, forWechat = false, showMacBar } = options;
+  const {
+    widthPx = 760,
+    forWechat = false,
+    showMacBar,
+    quoteScrollHeight,
+  } = options;
   const container = createOffscreenContainer(widthPx);
   const dispose = () => {
     container.remove();
@@ -123,6 +131,12 @@ export async function renderOffscreenContent(
     await renderMermaidBlocks(container);
     await renderTableBlocks(container);
     normalizeCopyContainer(container);
+    // 滑动只属于微信语境：预览样式已由主题 CSS 携带，导出图片需要完整长文。
+    if (forWechat && quoteScrollHeight) {
+      applyWechatQuoteScroll(container, quoteScrollHeight);
+    } else if (!forWechat) {
+      stripQuoteScroll(container);
+    }
 
     return { container, dispose };
   } catch (error) {
