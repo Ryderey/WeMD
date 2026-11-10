@@ -8,13 +8,14 @@ import {
   normalizeCopyContainer,
   serializeWechatCopyHtml,
   stripCopyMetadata,
+  type SerializeCopyOptions,
 } from "./wechatCopyNormalizer";
 import { renderOffscreenContent } from "./export/renderContainer";
 
 // re-export 保持外部引用兼容
 export { normalizeCopyContainer, stripCopyMetadata };
 
-interface CopyToWechatOptions {
+interface CopyToWechatOptions extends SerializeCopyOptions {
   showMacBar?: boolean;
   /** 引用滑动高度(px)；未设置 = 不启用 */
   quoteScrollHeight?: number;
@@ -105,7 +106,9 @@ export async function copyToWechat(
       quoteScrollHeight: options.quoteScrollHeight,
     });
     container = rendered.container;
-    const html = serializeWechatCopyHtml(container);
+    const html = serializeWechatCopyHtml(container, {
+      boldWeightFallback: options.boldWeightFallback,
+    });
 
     let copied = false;
 

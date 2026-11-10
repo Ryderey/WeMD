@@ -1004,6 +1004,7 @@ describe("wechat copy css integration", () => {
 describe("independent strong accent colors survive the copy pipeline", () => {
   const copyStrong = (
     overrides: Partial<Parameters<typeof generateCSS>[0]>,
+    serializeOptions?: { boldWeightFallback?: boolean },
   ) => {
     const container = document.createElement("div");
     container.innerHTML = resolveInlineStyleVariablesForCopy(
@@ -1016,7 +1017,7 @@ describe("independent strong accent colors survive the copy pipeline", () => {
     );
     normalizeCopyContainer(container);
     const snapshot = document.createElement("div");
-    snapshot.innerHTML = serializeWechatCopyHtml(container);
+    snapshot.innerHTML = serializeWechatCopyHtml(container, serializeOptions);
     return snapshot.querySelector<HTMLElement>("strong");
   };
 
@@ -1068,6 +1069,39 @@ describe("independent strong accent colors survive the copy pipeline", () => {
     expect(strong?.style.color).toBe("rgb(114, 46, 209)");
     expect(strong?.getAttribute("style")).toContain("rgba(114, 46, 209, 0.18)");
     expect(strong?.getAttribute("style")).not.toContain("var(");
+  });
+
+  it("labels bold text with a shadow fallback by default for third-party-font phones", () => {
+    const strong = copyStrong({});
+    expect(strong?.style.getPropertyValue("text-shadow")).toBe(
+      "0.2px 0, -0.2px 0, 0 0.2px, 0 -0.2px",
+    );
+  });
+
+  it("adds the shadow fallback to colored and unsupported-tag bold alike", () => {
+    const colored = copyStrong({
+      strongStyle: "color",
+      strongColor: "#FA5151",
+    });
+    expect(colored?.style.getPropertyValue("text-shadow")).toBe(
+      "0.2px 0, -0.2px 0, 0 0.2px, 0 -0.2px",
+    );
+
+    const container = document.createElement("div");
+    container.innerHTML =
+      '<p><b style="font-weight: bold; color: #000000;">手写加粗</b></p>';
+    normalizeCopyContainer(container);
+    const snapshot = document.createElement("div");
+    snapshot.innerHTML = serializeWechatCopyHtml(container);
+    const bold = snapshot.querySelector<HTMLElement>("b");
+    expect(bold?.style.getPropertyValue("text-shadow")).toBe(
+      "0.2px 0, -0.2px 0, 0 0.2px, 0 -0.2px",
+    );
+  });
+
+  it("keeps bold inline styles shadow-free when the designer opts out", () => {
+    const strong = copyStrong({}, { boldWeightFallback: false });
+    expect(strong?.style.getPropertyValue("text-shadow")).toBe("");
   });
 });
 

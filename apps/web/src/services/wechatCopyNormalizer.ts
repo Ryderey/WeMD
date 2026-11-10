@@ -601,13 +601,45 @@ const trimCopyVerticalSpacing = (root: HTMLElement): void => {
  * 复制时只输出根容器的直接内容，避免公众号把中性外层解包为组件两侧的可见空段。
  * 根级继承样式下沉到一级块；首尾不添加占位空段，避免微信粘贴后出现额外空行。
  */
-export const serializeWechatCopyHtml = (container: HTMLElement): string => {
+export interface SerializeCopyOptions {
+  /**
+   * 为加粗元素补四向 text-shadow 兜底：第三方字体的手机内核不为
+   * font-weight 合成加粗，公众号手机预览会退回常规字形。
+   * 显式 false = 关闭；缺省 = 开。
+   */
+  boldWeightFallback?: boolean;
+}
+
+const hasFontWeightDeclaration = (style: string): boolean => {
+  return /(^|[;\s])font-weight\s*:/.test(style);
+};
+
+const applyBoldWeightFallback = (root: HTMLElement): void => {
+  root.querySelectorAll<HTMLElement>("strong, b").forEach((node) => {
+    const style = node.getAttribute("style") || "";
+    if (!hasFontWeightDeclaration(style)) return;
+    if (/text-shadow\s*:/i.test(style)) return;
+    // 省略颜色 = 随文字颜色，彩色加粗同样适用
+    node.style.setProperty(
+      "text-shadow",
+      "0.2px 0, -0.2px 0, 0 0.2px, 0 -0.2px",
+    );
+  });
+};
+
+export const serializeWechatCopyHtml = (
+  container: HTMLElement,
+  options: SerializeCopyOptions = {},
+): string => {
   const root = container.firstElementChild;
   let content = container.innerHTML;
 
   if (root instanceof HTMLElement && container.childElementCount === 1) {
     const copyRoot = root.cloneNode(true) as HTMLElement;
     trimCopyVerticalSpacing(copyRoot);
+    if (options.boldWeightFallback !== false) {
+      applyBoldWeightFallback(copyRoot);
+    }
     Array.from(copyRoot.children).forEach((child) => {
       if (child instanceof HTMLElement) {
         copyInheritedRootStyles(copyRoot, child);

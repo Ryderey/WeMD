@@ -221,4 +221,40 @@ describe("GlobalSection", () => {
     expect(screen.queryByText("加粗颜色")).toBeNull();
     expect(screen.queryByText("加粗文字颜色")).toBeNull();
   });
+
+  it("defaults the wechat bold weight fallback to on and toggles it", () => {
+    const updateVariable = vi.fn();
+    render(
+      <GlobalSection
+        variables={defaultVariables}
+        updateVariable={updateVariable}
+        handlePrimaryColorChange={vi.fn()}
+      />,
+    );
+
+    const toggle = screen
+      .getByText("微信加粗兜底阴影")
+      .parentElement!.querySelector<HTMLInputElement>("input")!;
+    expect(toggle).toBeChecked();
+    fireEvent.click(toggle);
+    expect(updateVariable).toHaveBeenCalledWith("boldWeightFallback", false);
+  });
+
+  it("keeps the weight fallback off when a legacy theme disabled it", () => {
+    const updateVariable = vi.fn();
+    render(
+      <GlobalSection
+        variables={{ ...defaultVariables, boldWeightFallback: false }}
+        updateVariable={updateVariable}
+        handlePrimaryColorChange={vi.fn()}
+      />,
+    );
+
+    const toggle = screen
+      .getByText("微信加粗兜底阴影")
+      .parentElement!.querySelector<HTMLInputElement>("input")!;
+    expect(toggle).not.toBeChecked();
+    fireEvent.click(toggle);
+    expect(updateVariable).toHaveBeenCalledWith("boldWeightFallback", true);
+  });
 });

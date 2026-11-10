@@ -61,3 +61,9 @@ A payload with no empty paragraphs can still have a leading gap from the first p
 **Symptom:** A max-height scroll quote pastes into WeChat with `overflow: hidden auto` and no `-webkit-overflow-scrolling`, and the momentum property seems lost.
 
 **Correct pattern:** This is expected. WeChat keeps `max-height` and collapses `overflow-x`/`overflow-y` shorthands into the equivalent pair (`hidden auto` scrolls vertically); it drops `-webkit-overflow-scrolling`, which modern mobile kernels do not need. Do not "fix" this by switching to nonstandard containers — a saved draft reopened keeps the rewritten styles. Quote blocks longer than 300 chars also raise a WeChat compliance warning (warning only; saving works), which is why the scroll quote's hint threshold is measured against that cap.
+
+## Bold Weight Vanishes on Phones with Third-Party Fonts
+
+**Symptom:** Bold text pasted into WeChat looks regular weight in the mobile preview, on some phones only. The copy payload and editor DOM both keep `font-weight: bold` verbatim (verified through paste and draft save/reopen), and the behavior is device-dependent, not color-dependent.
+
+**Correct pattern:** Phones whose system font is a third-party font without a bold face get no synthesized bold for `font-weight` in WeChat's mobile kernel. Render-layer overrides still work there: four-way `text-shadow: 0.2px` offsets (color omitted, so it follows the text color) and `-webkit-text-stroke: 0.3px` both visibly thicken any font; serialize the WeChat copy payload with the shadow on `<strong>` / `<b>` elements that carry a `font-weight` declaration — it is noise-free on devices whose fonts already render bold. Verified 2026-11-09 on two devices against a six-variant matrix (color ladder, colorless bold, bare `<strong>`, numeric `700`, stroke, four-way `text-shadow`); stroke and shadow were the only variants the third-party-font phone rendered. Do not blame colors or rewrite colors to work around this.

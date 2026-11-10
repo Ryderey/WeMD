@@ -189,9 +189,15 @@ export const useEditorStore = create<EditorStore>((set, get) => ({
     const showMacBar = currentTheme?.designerVariables?.showMacBar ?? false;
     const quoteScrollHeight =
       currentTheme?.designerVariables?.quoteScrollHeight;
+    const boldWeightFallback =
+      currentTheme?.designerVariables?.boldWeightFallback;
 
     try {
-      await execCopyToWechat(markdown, css, { showMacBar, quoteScrollHeight });
+      await execCopyToWechat(markdown, css, {
+        showMacBar,
+        quoteScrollHeight,
+        boldWeightFallback,
+      });
     } catch (error) {
       console.error("复制失败:", error);
     }

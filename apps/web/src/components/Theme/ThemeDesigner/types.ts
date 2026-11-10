@@ -161,6 +161,12 @@ export interface DesignerVariables {
    * 有效纯色 = 同时作为加粗的默认文字色与装饰色，`strongColor` 仍只覆盖文字色。
    */
   strongAccentColor?: string;
+  /**
+   * 微信复制产物的字重兜底阴影。第三方字体的手机内核不为
+   * font-weight 合成加粗，粗体在公众号手机预览会退回常规字形；
+   * 开启后在复制序列化时为加粗元素补充四向 text-shadow 兜底。
+   */
+  boldWeightFallback?: boolean;
 
   // 表格
   tableHeaderBackground: string;

@@ -337,6 +337,26 @@ export function GlobalSection({
           onChange={(color) => updateVariable("strongColor", color)}
         />
       </div>
+
+      <div className="designer-field-row">
+        <span>微信加粗兜底阴影</span>
+        <label className="designer-switch">
+          <input
+            type="checkbox"
+            checked={variables.boldWeightFallback !== false}
+            onChange={(e) =>
+              updateVariable("boldWeightFallback", e.target.checked)
+            }
+          />
+          <span className="switch-slider"></span>
+        </label>
+      </div>
+      <p className="designer-field-hint">
+        复制到公众号时为加粗文字附加 0.2px
+        四向阴影，模拟加粗。使用第三方字体的手机内核不会为 font-weight
+        合成加粗，公众号手机预览会退回常规字形；阴影为渲染层兜底，
+        对正常字体手机视觉无影响。
+      </p>
     </div>
   );
 }
